@@ -70,6 +70,11 @@ small{font-size:13px;color:var(--muted)}
 .addfile{position:relative;overflow:hidden;display:inline-flex;align-items:center;cursor:pointer;font-size:13px;color:var(--accent);margin:0;font-weight:500}
 .addfile input{position:absolute;opacity:0;width:1px;height:1px}
 .pill.blue{color:var(--deep);background:var(--soft)}
+.lchip{font-size:13px;padding:7px 12px;border-radius:18px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.lchip.on{background:var(--soft);border-color:var(--accent);color:var(--deep);font-weight:600}
+.lcontact{display:flex;gap:8px;align-items:center;margin-top:8px;font-size:13px}
+.lcontact span{flex:0 0 38%;min-width:0;overflow-wrap:anywhere}
+.lcontact input{padding:9px 10px;font-size:14px}
 .primary{background:var(--accent);color:var(--on-accent);border-radius:10px;padding:13px 20px;font-weight:600;box-shadow:0 5px 10px var(--shadow)}
 .primary:hover{background:var(--deep)}
 .secondary{border:1px solid var(--line);padding:11px 17px;border-radius:10px;font-size:14px;background:var(--surface);display:inline-flex;align-items:center}
@@ -539,7 +544,8 @@ tbody tr:hover .open,tbody tr:focus-within .open{opacity:1}
   <div class="dialogtop"><div><div class="eyebrow" style="font-size:11px;margin-bottom:7px">LOAN OFFICER REVIEW</div><h2 id="reviewtitle">Get a deeper building review.</h2></div><button type="button" id="closereview" class="close" aria-label="Close">×</button></div>
   <p>Send the building details to your lending contact so they can investigate current project eligibility.</p>
   <form id="reviewform">
-    <div class="field"><label for="reviewemail">Loan officer email</label><input type="email" id="reviewemail" placeholder="Enter your lending contact’s email"><div class="recipientnote">Your preferred loan officer contacts haven’t been added yet.</div></div>
+    <div class="field"><label>Send to lenders that recently financed this building</label><div class="chips" id="lenderpick" role="group" aria-label="Choose lenders"></div><div id="lendercontacts"></div>
+      <label for="reviewemail" style="margin-top:12px;font-size:13px;color:var(--muted)">Other email (optional)</label><input type="email" id="reviewemail" placeholder="Any other loan officer’s email"><div class="recipientnote" id="recipnote">Tap a lender, add your contact there once, and Lendable remembers it on this device.</div></div>
     <div class="field"><label for="reviewsubject">Subject</label><input id="reviewsubject"></div>
     <label for="reviewbody">Review request</label>
     <textarea id="reviewbody"></textarea>
@@ -777,18 +783,30 @@ $('closeupload').onclick=()=>$('uploaddialog').close();$('cancelupload').onclick
 $('adddocuments').onclick=()=>{if(!documentQueue.length)return;if(selected&&$('savedocs').checked){const b=selected,q=documentQueue.slice();ensureSaved(b);(async()=>{for(const x of q){try{await docsAdd(mineId(b),x.file,x.type)}catch(e){}}mineSave();refreshSaveButtons()})()}const list=documentQueue.map(x=>'<span class="docchip">▤ '+esc(x.file.name)+' · '+esc(x.type)+'</span>').join('');$('uploaddialog').close();setView('chat');add('<p><strong>'+documentQueue.length+' document'+(documentQueue.length===1?'':'s')+' selected'+(selected?' for '+esc(selected.address):'')+'.</strong></p>'+list+'<p>This previews document intake. No files have been sent or analyzed. The connected assistant will cite document pages, identify missing information, and outline potential financing paths for lender review.</p>'+choices(selected?['Request a building review','Check another building']:['Check a building']));documentQueue=[]};
 
 /* ---------- review request ---------- */
-function updateMailto(){$('mailreview').href='mailto:'+encodeURIComponent($('reviewemail').value.trim())+'?subject='+encodeURIComponent($('reviewsubject').value)+'&body='+encodeURIComponent($('reviewbody').value)}
+const LC_KEY='lendable:lendercontacts:v1';let LCONTACTS={};try{LCONTACTS=JSON.parse(localStorage.getItem(LC_KEY))||{}}catch(e){}
+let pickedLenders=new Set();
+function recipients(){const r=[...pickedLenders].map(n=>(LCONTACTS[n]||'').trim()).filter(Boolean);const o=$('reviewemail').value.trim();if(o)r.push(o);return [...new Set(r)]}
+function renderLenderPick(b){
+  const names=(b.lenders||[]).map(l=>l.name);
+  $('lenderpick').innerHTML=names.length?names.map(n=>'<button type="button" class="lchip'+(pickedLenders.has(n)?' on':'')+'" data-lpick="'+esc(n)+'">'+(pickedLenders.has(n)?'✓ ':'')+esc(n)+'</button>').join(''):'<small>No identified lenders for this building yet. Use the email box below.</small>';
+  $('lendercontacts').innerHTML=[...pickedLenders].map(n=>'<div class="lcontact"><span>'+esc(n)+'</span><input type="email" data-lemail="'+esc(n)+'" value="'+esc(LCONTACTS[n]||'')+'" placeholder="Your contact’s email"></div>').join('');
+  const r=recipients();$('recipnote').textContent=r.length?'Sending to: '+r.join(', '):'Tap a lender, add your contact there once, and Lendable remembers it on this device.';
+  updateBodyGreeting();updateMailto()}
+function updateBodyGreeting(){const v=$('reviewbody').value;const g=pickedLenders.size?'Hi '+[...pickedLenders].map(n=>SHORT[n]||n).join(' / ')+' team,':'Hi,';$('reviewbody').value=v.replace(/^Hi[^\n]*,/,g)}
+$('lenderpick').addEventListener('click',e=>{const c=e.target.closest('[data-lpick]');if(!c||!selected)return;const n=c.dataset.lpick;pickedLenders.has(n)?pickedLenders.delete(n):pickedLenders.add(n);renderLenderPick(selected);if(pickedLenders.has(n)&&!LCONTACTS[n]){const i=document.querySelector('[data-lemail="'+CSS.escape(n)+'"]');if(i)i.focus()}});
+$('lendercontacts').addEventListener('input',e=>{const i=e.target.closest('[data-lemail]');if(!i)return;LCONTACTS[i.dataset.lemail]=i.value.trim();try{localStorage.setItem(LC_KEY,JSON.stringify(LCONTACTS))}catch(err){}const r=recipients();$('recipnote').textContent=r.length?'Sending to: '+r.join(', '):'';updateMailto()});
+function updateMailto(){$('mailreview').href='mailto:'+recipients().map(encodeURIComponent).join(',')+'?subject='+encodeURIComponent($('reviewsubject').value)+'&body='+encodeURIComponent($('reviewbody').value)}
 function openReview(){
   if(!selected)return;const b=selected;
   $('reviewsubject').value='Building review request: '+b.address;
-  $('reviewbody').value=['Hi,','','Could you review the following building for current project eligibility?','','Building: '+b.address,'Borough: '+b.borough,'Property type: '+b.type,'','Observed financing in our sample:','Financed closings: '+b.closings,'Latest activity: '+b.latest,'Lenders observed: '+(b.lenders.map(l=>l.name).join(', ')||'None identified')+(b.unknown?' (plus '+b.unknown+' closing with lender not identified)':''),
+  $('reviewbody').value=['Hi,','','Could you review the following building for current project eligibility?','','Building: '+b.address,'Borough: '+b.borough,'Property type: '+b.type,'','Recent mortgage activity ('+FIN.window+'):','Financed closings: '+b.closings,'Latest activity: '+b.latest,'Lenders observed: '+(b.lenders.map(l=>l.name).join(', ')||'None identified')+(b.unknown?' (plus '+b.unknown+' closing with lender not identified)':''),
     ...(deal.price?['','Buyer scenario:','Purchase price: '+money(deal.price),'Loan amount: '+money(deal.price*(1-deal.down/100))+' ('+(+(100-deal.down).toFixed(2))+'% LTV)',...(deal.occupancy?['Occupancy: '+deal.occupancy]:[]),...(deal.credit?['Credit score: ~'+deal.credit]:[])]:[]),
     '','This is historical financing activity; current project approval has not been verified.','','Please confirm:','• Whether the building is currently eligible for your financing programs.','• Any project restrictions or outstanding review items.','• Which questionnaires, financials, insurance documents, or other materials you need.','','Thank you,',$('username').textContent].join('\n');
-  $('reviewnotice').textContent='';updateMailto();$('reviewdialog').showModal();
+  $('reviewnotice').textContent='';pickedLenders=new Set((b.lenders||[]).map(l=>l.name).filter(n=>LCONTACTS[n]).slice(0,1));$('reviewemail').value='';renderLenderPick(b);$('reviewdialog').showModal();
 }
-['reviewemail','reviewsubject','reviewbody'].forEach(id=>$(id).addEventListener('input',updateMailto));
+['reviewsubject','reviewbody'].forEach(id=>$(id).addEventListener('input',updateMailto));$('reviewemail').addEventListener('input',()=>{const r=recipients();$('recipnote').textContent=r.length?'Sending to: '+r.join(', '):'';updateMailto()});
 $('closereview').onclick=()=>$('reviewdialog').close();
-$('reviewform').onsubmit=async e=>{e.preventDefault();const to=$('reviewemail').value.trim();const text=(to?'To: '+to+'\n':'')+'Subject: '+$('reviewsubject').value+'\n\n'+$('reviewbody').value;try{await navigator.clipboard.writeText(text);$('reviewnotice').textContent='Request copied. Paste it into your email.'}catch(err){$('reviewbody').focus();$('reviewbody').select();$('reviewnotice').textContent='Select the request text above and copy it.'}};
+$('reviewform').onsubmit=async e=>{e.preventDefault();const to=recipients().join(', ');const text=(to?'To: '+to+'\n':'')+'Subject: '+$('reviewsubject').value+'\n\n'+$('reviewbody').value;try{await navigator.clipboard.writeText(text);$('reviewnotice').textContent='Request copied. Paste it into your email.'}catch(err){$('reviewbody').focus();$('reviewbody').select();$('reviewnotice').textContent='Select the request text above and copy it.'}};
 document.querySelectorAll('dialog').forEach(d=>d.addEventListener('click',e=>{if(e.target===d){const r=d.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)d.close()}}));
 
 /* ---------- city building database (MapPLUTO) ---------- */
