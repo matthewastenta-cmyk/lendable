@@ -14,7 +14,7 @@ jobs:
           for c in $(sed 's/:"\(.*\)"/.\1/' chunks.txt); do curl -sSL "https://lgy.va.gov/lgyhub/static/js/$c.chunk.js" >> lazy.js; echo >> lazy.js; done
           grep -o '.\{200\}condo.\{200\}' lazy.js | head -40 > va_condo_snips.txt || true
           grep -o '"/lgyhub/api[^"]*"' lazy.js all.js | sort -u > va_api.txt || true
-          rm -f all.js lazy.js
+          grep -o '.\{250\}CONDOREPORT.\{250\}' all.js > va_cr.txt || true; grep -o '"[^"]*public[^"]*"' all.js | sort -u > va_public.txt || true; rm -f all.js lazy.js
           git init -q && git checkout -q -b data-probe && git add -A
           git -c user.name=bot -c user.email=bot@example.com commit -qm probe
           git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" data-probe
