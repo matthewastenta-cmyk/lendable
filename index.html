@@ -709,6 +709,49 @@ function showBuilding(b){
   renderBrief(b);
   awaiting='buyer';
 }
+
+/* ---------- Miami-Dade (state tax roll + Florida SIRS filings + HUD FHA), rebuilt weekly into data/miami.json ---------- */
+let MIA=null,miaIdx=null,miaP=null;setTimeout(()=>{try{loadMiami()}catch(e){}},4000);
+const MIA_HINT=/\bmiami\b|\bfl\b|florida|\b33[01]\d{2}\b|brickell|aventura|sunny isles|bal harbou?r|surfside|coral gables|key biscayne|doral|edgewater|wynwood|coconut grove|north bay village|bay harbor|hallandale|homestead|hialeah|kendall/i;
+const MSUF={STREET:'ST',AVENUE:'AVE',AV:'AVE',BOULEVARD:'BLVD',DRIVE:'DR',ROAD:'RD',COURT:'CT',PLACE:'PL',TERRACE:'TER',LANE:'LN',CIRCLE:'CIR',PARKWAY:'PKWY',HIGHWAY:'HWY',NORTH:'N',SOUTH:'S',EAST:'E',WEST:'W',NORTHEAST:'NE',NORTHWEST:'NW',SOUTHEAST:'SE',SOUTHWEST:'SW'};
+function mkey(a){return String(a||'').toUpperCase().replace(/[^A-Z0-9 ]/g,' ').replace(/\b(UNIT|APT|STE|SUITE|#)\b.*$/,'').split(/\s+/).filter(Boolean).map(w=>MSUF[w]||w).map(w=>w.replace(/^(\d+)(ST|ND|RD|TH)$/,'$1')).join(' ')}
+function loadMiami(){if(!miaP)miaP=(async()=>{if(!/^https?:$/.test(location.protocol))return null;try{const r=await fetch('data/miami.json');if(!r.ok)return null;MIA=await r.json();miaIdx=new Map();for(const b of MIA.rows){const k=mkey(b.a);const n=k.split(' ')[0];if(!miaIdx.has(n))miaIdx.set(n,[]);miaIdx.get(n).push([k,b])}return MIA}catch(e){return null}})();return miaP}
+function findMiami(t){if(!miaIdx)return null;const q=mkey(String(t).replace(/,.*$/,m=>' '+m.slice(1)));const words=q.split(' ');
+  for(let i=0;i<words.length;i++){if(!/^\d+[A-Z]?$/.test(words[i]))continue;const rest=words.slice(i).join(' ');const zip=(String(t).match(/\b(33\d{3})\b/)||[])[1];
+    const c=(miaIdx.get(words[i])||[]).filter(([k,b])=>rest===k||rest.startsWith(k+' ')).filter(([k,b])=>!zip||b.z===zip).sort((x,y)=>y[0].length-x[0].length||y[1].u-x[1].u);
+    if(c.length)return c[0][1]}
+  return null}
+const miaAddr=a=>String(a).replace(/\b(Ne|Nw|Se|Sw)\b/g,x=>x.toUpperCase()).replace(/\b(\d+) (St|Ave|Ter|Ct|Pl|Rd|Dr|Ln|Way)\b/g,(m,n,w)=>n+(/1[123]$/.test(n)?'th':n.endsWith('1')?'st':n.endsWith('2')?'nd':n.endsWith('3')?'rd':'th')+' '+w);
+const shortMoney=v=>v>=1e6?'$'+(v/1e6).toFixed(v>=1e7?0:1).replace(/\.0$/,'')+'M':v>=1e3?'$'+Math.round(v/1e3)+'K':'$'+v;
+function miaB(m){return {address:miaAddr(m.a),borough:m.c,type:m.t,market:'miami',mia:m,lenders:[],closings:0,cityOnly:true}}
+function ppu(m){const x=m.sirs||{};if(x.assessTotal&&m.u)return Math.round(x.assessTotal/m.u);return x.assessPerUnit||null}
+function sirsPill(m){const x=m.sirs;if(!x)return '<span class="pill grey">No reserve study (SIRS) on file</span>';
+  if(x.assess)return '<span class="pill red">⚑ Reserve study → special assessment'+(ppu(m)?' ~'+shortMoney(ppu(m))+'/unit':'')+'</span>';
+  return '<span class="pill">✓ Reserve study filed'+(x.done?' '+monYr(x.done):x.filed?' (2025+)':'')+'</span>'}
+function miaFhaPill(m){const f=m.fha;if(!f)return '';const ok=/^approved/i.test(f.status)&&f.exp&&f.exp>=new Date().toISOString().slice(0,10);return ok?'<a class="pill" href="'+HUD_LOOKUP+'" target="_blank" rel="noopener">✓ FHA-approved (HUD) thru '+esc(monYr(f.exp))+'</a>':''}
+const MIA_LINKS='<a class="source" href="https://onlineservices.miamidadeclerk.gov/officialrecords" target="_blank" rel="noopener">Clerk official records (mortgages, liens) ↗</a> <a class="source" href="https://www.miamidade.gov/Apps/RER/carbr/Home/Recert" target="_blank" rel="noopener">Recertification status ↗</a> <a class="source" href="https://www.miamidade.gov/Apps/PA/propertysearch/" target="_blank" rel="noopener">Property Appraiser ↗</a>';
+function sirsDetail(m){const x=m.sirs;if(!x)return '<p class="emptyhint" style="margin:0">No Structural Integrity Reserve Study is on file with the state for this address. Condos 3+ stories had to complete one by Dec 31, 2025 (unless they qualified for an extension). Ask the association for its SIRS and milestone inspection status.</p>';
+  if(x.filed)return '<div class="metric"><span>Reserve study (SIRS)</span><strong>Filed 2025 or later</strong></div><small>Matched by street number and ZIP to “'+esc(x.name)+'”. The state’s newer filings don’t include study details yet; ask the association for the report.</small>';
+  return '<div class="metric"><span>Reserve study (SIRS)</span><strong>Completed '+esc(fmtDateS(x.done))+'</strong></div>'+(x.by?'<div class="metric"><span>Prepared by</span><strong>'+esc(x.by)+'</strong></div>':'')+
+    '<div class="metric"><span>Led to a special assessment</span><strong'+(x.assess?' style="color:var(--bad)"':'')+'>'+(x.assess?'Yes'+(x.assessTotal?' · '+money(x.assessTotal)+' total':'')+(ppu(m)?' · ~'+money(ppu(m))+'/unit':''):'No')+'</strong></div>'+
+    (x.assess&&x.assessTotal&&x.assessPerUnit&&Math.abs(x.assessPerUnit-ppu(m))>ppu(m)*0.5?'<small style="display:block">Per-unit figure is the total divided by '+m.u+' units on the tax roll; the association reported '+esc(money(x.assessPerUnit))+'/unit. Filings are shown as submitted to the state.</small>':'')+(x.file?'<a class="source" href="'+esc(x.file)+'" target="_blank" rel="noopener">Reserve study as filed (PDF) ↗</a>':'')}
+function miaContext(m){const x=m.sirs;return 'Miami-Dade building from the state tax roll: '+m.u+' condo units, built '+(m.y||'unknown')+', '+m.c+' FL '+m.z+'. Recorded sales in latest tax-roll sales file: '+m.s+(m.sp?' (median '+money(m.sp)+', latest '+m.sl+')':'')+'. '+(x?(x.filed?'SIRS filed 2025+ (details not published).':'SIRS completed '+x.done+(x.assess?', resulted in a special assessment'+(x.assessTotal?' totaling '+money(x.assessTotal):'')+(ppu(m)?' (~'+money(ppu(m))+' per unit)':''):', no special assessment reported')+'.'):'No SIRS on file with DBPR.')+(m.fha?' HUD FHA: '+m.fha.status+' ('+m.fha.method+') expires '+m.fha.exp+'.':'')+' No lender data for Miami yet (Clerk mortgage records not integrated).'}
+function showMiami(m){const b=miaB(m);selected=b;setView('chat');deal={};
+  add('<p>Found <strong>'+esc(b.address)+'</strong> in Miami-Dade county records: '+m.u+' '+(m.t==='Co-op'?'co-op':'condo')+' units'+(m.y?', built '+m.y:'')+'.</p>'+
+    '<div class="result"><div class="resultheader"><div><h3>'+esc(b.address)+'</h3><p>'+esc(m.c)+', FL '+esc(m.z)+' · '+esc(m.t)+'</p></div><div class="pillstack">'+sirsPill(m)+miaFhaPill(m)+'</div></div>'+
+    '<div class="stats"><div><small>Units</small><strong class="num">'+m.u+'</strong></div><div><small>Year built</small><strong class="num">'+(m.y||'—')+'</strong></div><div><small>Recent sales</small><strong class="num">'+m.s+'</strong></div></div>'+
+    '<div class="resultbody">'+sirsDetail(m)+(m.s?'<div class="metric"><span>Median recorded sale</span><strong>'+money(m.sp)+'</strong></div><div class="metric"><span>Latest sale in county file</span><strong>'+esc(m.sl||'—')+'</strong></div>':'')+
+    (m.y&&new Date().getFullYear()-m.y>=25?'<div class="metric" style="display:block"><span>Built '+m.y+': milestone inspections and 40/50-year recertification apply. Check status before underwriting.</span></div>':'')+
+    '<div style="margin-top:8px">'+MIA_LINKS+'</div></div>'+
+    '<div class="resultfooter">Lenders for Miami buildings come next, from Clerk mortgage records.</div></div>'+
+    '<div class="choices">'+saveBtn(b)+choices(['Check another building']).replace(/^<div class="choices">|<\/div>$/g,'')+'</div>');
+  $('brief').innerHTML='<div class="buildingicon">▤</div><h2>'+esc(b.address)+'</h2><small>'+esc(m.c)+', FL · '+esc(m.t)+'</small>'+
+    '<div class="panelsection"><h3>Reserves &amp; structure</h3>'+sirsDetail(m)+'</div>'+
+    '<div class="panelsection"><h3>Project approval</h3>'+(m.fha?'<div class="metric" style="display:block;font-size:13.5px"><span>HUD FHA list: '+esc(m.fha.status.replace(/\|+/g,' · '))+(m.fha.exp?' · expires '+esc(fmtDateS(m.fha.exp)):'')+' ('+esc(m.fha.method)+')</span></div>':'<div class="metric" style="display:block;font-size:13.5px"><span>Not on HUD’s FHA-approved list.</span></div>')+
+      '<div class="statusbox"><strong>Not yet verified</strong>Fannie Mae requires a Full Review for most condos. Reserves under 10% of the budget, unfunded critical repairs, or a special assessment for them make a project ineligible (B4-2.1-03).</div></div>'+
+    '<div class="panelsection"><h3>Building facts</h3><div class="metric"><span>Units</span><strong class="num">'+m.u+'</strong></div><div class="metric"><span>Year built</span><strong class="num">'+(m.y||'—')+'</strong></div><div class="metric"><span>Recorded sales (county file)</span><strong class="num">'+m.s+'</strong></div></div>'+
+    '<div class="panelsection"><small>Sources: Florida Dept. of Revenue tax roll ('+esc(MIA.meta.source.match(/\((\w+)\)/)?.[1]||'')+'), Florida DBPR SIRS database, HUD FHA condo list.</small></div>'}
+
 /* ---------- HUD FHA-approved condo list (refreshed weekly by GitHub Actions into data/fha.json) ---------- */
 let FHA=null,fhaIdx=null;const fnorm=x=>norm(String(x||'').replace(/\bboulevard\b|\bblvd\.?\b/gi,'blvd').trim());
 const fhaP=(async()=>{if(!/^https?:$/.test(location.protocol))return null;try{const r=await fetch('data/fha.json');if(!r.ok)return null;FHA=await r.json();
@@ -781,14 +824,16 @@ function findBuilding(t){const n=norm(t);if(!n)return null;const cands=[...new S
   const c=cands[cands.length-1];return c&&c.length>=7?buildings.find(b=>b.key.startsWith(c))||null:null}
 function showBriefOnly(){if(selected)renderBrief(selected)}
 
-function send(t){
+function send(t,_noMia){
   t=t.trim();if(!t)return;
   if(t==='Ask a follow-up'){setView('chat');$('prompt').focus();$('prompt').placeholder='Ask your follow-up question…';return}
   if(t==='Open the DOB assistant'){setView('dob');return}
-  add(t,true);$('sidebar').classList.remove('open');setView('chat');
+  if(!_noMia)add(t,true);$('sidebar').classList.remove('open');setView('chat');
   if(/^(show )?(me )?(all|the full)? ?(buildings|building list|list)$/i.test(t)||t==='Show all buildings'){add('<p>Opening the full building list. You can filter by condo/co-op or lender and click any row to come back here with it.</p>');setTimeout(()=>setView('list'),350);return}
   if(/visa|foreign national|dscr|bank statement|self.employed/i.test(t)&&!/board package/i.test(t)){if(aiReady()){askAI(t);return}add('<p>Lendable will help narrow the financing path using the borrower’s profile and current lender guidelines.</p><p>For visa or foreign-national scenarios, the connected assistant will ask about residency, visa category, property use, and documentation. For DSCR or bank statement scenarios, it will ask about property cash flow or business deposits and the proposed loan.</p><p>This preview does not have lender program rules connected yet. No program eligibility or approval has been established.</p>'+choices(['Check a building']));return}
   if(/litigation|insurance|local law\s*11|fisp|fa[cç]ade|investment concentration|investor concentration/i.test(t)&&!/board package/i.test(t)){if(aiReady()){askAI(t);return}add('<p>A building issue does not automatically mean there is no financing path.</p><div class="pathbox"><strong>Potential financing path · lender review required</strong><br>This issue may warrant an exception request, remediation, or an alternative lending program. A lender review is needed to determine the available path.</div><p>Litigation type, insurance terms, façade report findings, and ownership concentration need individual review. Safety and critical-repair concerns may prevent agency eligibility until resolved.</p><p>This preview has not reviewed documents or established eligibility. Upload the building package to preview the intake, or request a loan officer review once a building is selected.</p><p><a href="https://selling-guide.fanniemae.com/sel/b4-2.1-03/ineligible-projects" target="_blank" rel="noopener">Fannie Mae project eligibility guidance ↗</a></p>');return}
+  if(!_noMia&&(MIA_HINT.test(t)||(/^\s*\d/.test(t)&&!findBuilding(t)))){if(!MIA&&/^https?:$/.test(location.protocol)){loadMiami().then(()=>{const mm=findMiami(t);if(mm)showMiami(mm);else if(MIA_HINT.test(t))add('<p>I couldn’t find that address among Miami-Dade condo buildings. Try the street address as it appears on the tax roll, e.g. “1800 Sunset Harbour Dr”.</p>');else send(t,true)});return}
+    const mm=findMiami(t);if(mm){showMiami(mm);return}if(MIA_HINT.test(t)&&MIA){add('<p>I couldn’t find that address among Miami-Dade condo buildings. Try the street address as it appears on the tax roll, e.g. “1800 Sunset Harbour Dr”.</p>');return}}
   const match=findBuilding(t);if(match){showBuilding(match);
     if(/sublet|rent (it |the unit |my unit )?out|renting|pets?\b|dogs?\b|flip tax|board|polic|allow|guarantor|pied/i.test(t))add('<p>Lendable doesn’t have '+esc(match.address)+'’s building rules yet (sublet, pets, flip tax, financing limits). Confirm them in the proprietary lease and house rules, or ask the managing agent or listing agent for the policy in writing.</p>'+choices(['Can co-op owners rent out their unit?','What do co-op boards look for financially?']));
     return}
@@ -1317,6 +1362,7 @@ const aiReady=()=>(!!sampleFn||serverAI)&&!aiOff;
 function contextBlock(q){
   const rel=[];const add1=b=>{if(b&&!rel.includes(b))rel.push(b)};add1(selected&&!selected.cityOnly?selected:null);add1(findBuilding(q||''));const ln=findLender(q||'');if(ln)buildings.filter(b=>b.lenders.some(l=>l.name===ln)).sort((a,b)=>b.closings-a.closings).slice(0,30).forEach(add1);
   const rows=rel.map(b=>b.address+' | '+b.type+' | '+b.closings+' financed closing(s) | latest '+b.latest+' | lenders: '+(b.lenders.map(l=>l.name).join(', ')||'none identified')+(b.unknown?' (+'+b.unknown+' lender unknown)':'')).join('\n');
+  if(selected&&selected.mia)return 'Building the user is looking at (MIAMI): '+selected.address+'. '+miaContext(selected.mia)+'\n\nNYC financing data does not cover Miami.';
   const sc=selected&&selected.city;const fr=selected&&fhaFor(selected);const sel=selected?'Building the user is looking at: '+selected.address+' ('+selected.type+')'+(sc?', city records: built '+(sc[7]||'unknown')+', '+(sc[5]||'?')+' floors, '+sc[6]+' residential units, elevator '+(sc[4]===1?'yes':sc[4]===0?'no (walk-up)':'unknown')+(sc[10]?', '+sc[10]:'')+', ZIP '+sc[2]:'')+(selected.cityOnly?'. No financing history in our dataset.':'')+'.'+(fr?' HUD FHA condo list: '+fr.status.replace(/\|+/g,' ')+' ('+fr.method+'), status date '+fr.statusDate+(fr.expires?', expires '+fr.expires:'')+'.':(FHA?' Not on HUD’s FHA-approved condo list.':'')):'No building selected.';
   const d=deal.price?'Deal so far: price '+money(deal.price)+(deal.down?', '+deal.down+'% down, loan '+money(deal.price*(1-deal.down/100)):'')+(deal.occupancy?', '+deal.occupancy:'')+(deal.credit?', credit ~'+deal.credit:'')+'.':'';
   return sel+' '+d+'\n\nBUILDING DATA (recent mortgage activity from Marketproof recorded sales, '+FIN.window+'; '+NB+' Manhattan, Brooklyn and Queens condo/co-op buildings in total; observed financed closings only, not approvals; no building rules collected yet). Relevant rows'+(ln?' (top buildings for '+ln+')':'')+':\n'+(rows||'none matched');
@@ -1373,7 +1419,7 @@ function refreshSaveButtons(){document.querySelectorAll('[data-save]').forEach(x
 function dobSummary(d){if(!d||!d.found)return null;return {active:d.active||0,unsafe:!!d.unsafe,vacate:(d.vacates||[]).length,facade:d.facade?d.facade.status:null,lit:d.lit==null?null:d.lit,at:Date.now()}}
 const dobBad=x=>!!x&&(x.active>0||x.lit>0||x.unsafe||x.vacate>0||/SWARMP/i.test(x.facade||''));
 function worse(o,n){if(!n)return false;if(!o)return dobBad(n);return n.active>o.active||(n.lit||0)>(o.lit||0)||(n.unsafe&&!o.unsafe)||n.vacate>o.vacate}
-function ensureSaved(b){const id=mineId(b);if(!MINE[id]){MINE[id]={address:b.address,borough:b.borough||'',type:b.type||'',status:'unreviewed',notes:'',saved:Date.now(),updated:Date.now(),dob:null,docs:[]};getDOB(b).then(d=>{if(MINE[id]){MINE[id].dob=dobSummary(d);mineSave();if(!$('mineview').classList.contains('hide'))renderMine()}}).catch(()=>{})}mineSave();return MINE[id]}
+function ensureSaved(b){const id=mineId(b);if(!MINE[id]){MINE[id]={address:b.address,borough:b.borough||'',type:b.type||'',market:b.market||'nyc',status:'unreviewed',notes:'',saved:Date.now(),updated:Date.now(),dob:null,docs:[]};if(b.market==='miami'){mineSave();return MINE[id]}getDOB(b).then(d=>{if(MINE[id]){MINE[id].dob=dobSummary(d);mineSave();if(!$('mineview').classList.contains('hide'))renderMine()}}).catch(()=>{})}mineSave();return MINE[id]}
 document.addEventListener('click',e=>{const x=e.target.closest('[data-save]');if(!x)return;const id=x.dataset.save;
   if(MINE[id]){setView('mine');return}
   const b=saveTargets.get(id);if(!b)return;ensureSaved(b);refreshSaveButtons();x.insertAdjacentHTML('afterend','<small class="savedmsg" style="display:block;color:var(--good);margin-top:4px">Saved. Add your verdict, notes and documents in My buildings.</small>');setTimeout(()=>document.querySelectorAll('.savedmsg').forEach(m=>m.remove()),4000)});
@@ -1440,7 +1486,7 @@ function renderMine(){
 }
 let mineChecking=false;
 async function refreshMine(force){
-  if(mineChecking)return;const ids=Object.keys(MINE).filter(id=>force||!MINE[id].dob||MINE[id].dob.lit===undefined||Date.now()-MINE[id].dob.at>864e5);if(!ids.length)return;
+  if(mineChecking)return;const ids=Object.keys(MINE).filter(id=>MINE[id].market!=='miami').filter(id=>force||!MINE[id].dob||MINE[id].dob.lit===undefined||Date.now()-MINE[id].dob.at>864e5);if(!ids.length)return;
   mineChecking=true;const btn=$('minerefresh');btn.disabled=true;btn.textContent='Checking '+ids.length+'…';
   const queue=ids.slice();
   async function worker(){while(queue.length){const id=queue.shift(),m=MINE[id];if(!m)continue;const b=findBuilding(m.address)||{address:m.address,borough:m.borough,type:m.type,lenders:[]};
@@ -1520,7 +1566,7 @@ function mergeDeal(deal,d){const set=(k,v)=>{if(v&&!deal[k])deal[k]=v};
   const lo=deal.contacts.find(c=>c.role==='lender'&&c.email);const ln=deal.lender&&findLender(deal.lender);if(lo&&ln&&!LCONTACTS[ln]){LCONTACTS[ln]=lo.email;try{localStorage.setItem(LC_KEY,JSON.stringify(LCONTACTS))}catch(e){}}
   deal.updated=Date.now();return deal}
 function newDeal(o){return Object.assign({id:'d'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),buildingId:null,address:'',unit:'',borough:'',type:'',status:'active',price:null,deposit:null,loan:null,contractDate:'',closingDate:'',commitDate:'',lender:'',buyers:'',sellers:'',contacts:[],docs:[],notes:'',created:Date.now(),updated:Date.now()},o||{})}
-function linkBuilding(deal,addr,city,ptype){if(!addr)return;const b=findBuilding(addr+' '+(city||''))||findBuilding(addr);const bo=b||{address:addr,borough:city||'',type:ptype||'',lenders:[]};ensureSaved(bo);deal.buildingId=mineId(bo);deal.address=bo.address;deal.borough=bo.borough||city||'';deal.type=bo.type||ptype||''}
+function linkBuilding(deal,addr,city,ptype){if(!addr)return;const mm=MIA&&(MIA_HINT.test(addr+' '+(city||''))||!findBuilding(addr))?findMiami(addr+' '+(city||'')):null;const b=mm?miaB(mm):(findBuilding(addr+' '+(city||''))||findBuilding(addr));const bo=b||{address:addr,borough:city||'',type:ptype||'',lenders:[]};ensureSaved(bo);deal.buildingId=mineId(bo);deal.address=bo.address;deal.borough=bo.borough||city||'';deal.type=bo.type||ptype||''}
 async function dealFromFile(file,buildingId,meta){
   const d=await extractDeal(file);
   if(!d||(!d.address&&!num(d.purchase_price)&&!contactsFrom(d).length&&!d.closing_date))throw {code:'nothing'};
