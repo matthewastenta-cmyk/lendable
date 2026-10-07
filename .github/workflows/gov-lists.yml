@@ -8,7 +8,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: python3 scripts/pull_fha.py
       - run: |
-          git add data/fha.json
-          git diff --cached --quiet || (git -c user.name="lendable-bot" -c user.email="noreply@anthropic.com" commit -m "Refresh FHA condo list" && git push)
+          set +e
+          python3 scripts/pull_fha.py 2> /tmp/fha_log.txt; code=$?
+          echo "exit $code" >> /tmp/fha_log.txt
+          if [ $code -eq 0 ]; then
+            git add data/fha.json
+            git diff --cached --quiet || (git -c user.name="lendable-bot" -c user.email="noreply@anthropic.com" commit -m "Refresh FHA condo list" && git push)
+          fi
+          mkdir /tmp/log && cd /tmp/log && cp /tmp/fha_log.txt . && git init -q && git checkout -q -b data-logs && git add -A && git -c user.name=bot -c user.email=bot@example.com commit -qm log && git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" data-logs
+          exit $code
