@@ -908,7 +908,7 @@ function getDOB(b){
   const k=dobId(b);if(dobMem.has(k))return dobMem.get(k);
   const hit=lsGet(k);if(hit){const p=Promise.resolve(hit);dobMem.set(k,p);return p}
   const p=(async()=>{
-    const city=await nycDOB(b);if(city){lsSet(k,city);return city}
+    const city=await nycDOB(b);if(city){if(city.found)lsSet(k,city);return city}
     const ac=await mp('autocomplete',{query:b.address+(b.borough?' '+b.borough:''),search_type:'buildings',hits_per_page:5});
     const hits=(ac&&ac.buildings)||[],want=norm(b.address),boro=(b.borough||'').toLowerCase();
     const pick=hits.find(h=>norm(h.display_full_street_address||'')===want&&(!boro||h.borough===boro))||hits.find(h=>norm(h.name||'')===want&&(!boro||h.borough===boro))||hits.find(h=>norm(h.display_full_street_address||'').startsWith(want.replace(/[a-z]+$/,''))&&(!boro||h.borough===boro));
@@ -927,6 +927,7 @@ function getDOB(b){
   dobMem.set(k,p);p.catch(()=>dobMem.delete(k));return p}
 async function nycDOB(b){
   if(!/^https?:$/.test(location.protocol))return null;
+  if(!b.city){try{await loadDB()}catch(e){}const c=cityByKey.get(ALIAS_ADDR[norm(b.address)]||norm(b.address));if(c)b.city=c}
   const bbl=b.city&&b.city[12]?String(b.city[12]):'';
   const qs=bbl?'bbl='+encodeURIComponent(bbl):'address='+encodeURIComponent(b.address)+'&borough='+encodeURIComponent(b.borough||'');
   let j;try{const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),15000);const r=await fetch('api/dob?'+qs,{signal:ctl.signal});clearTimeout(t);if(!r.ok||!/json/.test(r.headers.get('content-type')||''))return null;j=await r.json()}catch(e){return null}
