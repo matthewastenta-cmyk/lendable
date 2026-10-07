@@ -5,16 +5,8 @@ jobs:
   probe:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - run: |
           mkdir out && cd out
-          B="https://floridarevenue.com/property/dataportal"
-          P="/property/dataportal/Documents/PTO Data Portal/Tax Roll Data Files"
-          for sub in "" "/NAL" "/SDF" "/NAL/2026F" "/NAL/2026P" "/SDF/2026F" "/SDF/2026P"; do
-            u=$(python3 -c "import urllib.parse,sys;print(\"$B/_api/web/GetFolderByServerRelativeUrl('\"+urllib.parse.quote(sys.argv[1])+\"')?\$expand=Folders,Files\")" "$P$sub")
-            echo "== $sub" >> list.txt
-            curl -sS -H "Accept: application/json;odata=nometadata" "$u" | python3 -c "import json,sys
-try:
-  j=json.load(sys.stdin);print('folders:',[f['Name'] for f in j.get('Folders',[])]);print('files:',[(f['Name'],f.get('Length')) for f in j.get('Files',[])][:80])
-except Exception as e: print('err',e)" >> list.txt
-          done
+          python3 ../scripts/dor_list.py > list.txt 2>&1
           git init -q && git checkout -q -b data-logs && git add -A && git -c user.name=bot -c user.email=bot@example.com commit -qm probe && git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" data-logs
