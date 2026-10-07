@@ -1,12 +1,17 @@
-name: qlik probe
-on: workflow_dispatch
+name: pull SIRS
+on:
+  workflow_dispatch:
+  schedule: [{ cron: "37 9 * * 1" }]   # Mondays
 permissions: { contents: write }
 jobs:
-  probe:
+  pull:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - run: |
+          set +e
           npm i playwright@1.47.2 --no-save --silent && npx playwright install --with-deps chromium >/dev/null 2>&1
-          node scripts/qlik_probe.js > /tmp/qlik_log.txt 2>&1 || true
-          mkdir /tmp/log && cd /tmp/log && cp /tmp/qlik_log.txt . && git init -q && git checkout -q -b data-logs && git add -A && git -c user.name=bot -c user.email=bot@example.com commit -qm log && git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" data-logs
+          node scripts/pull_sirs.js 2> /tmp/sirs_log.txt; code=$?; echo "exit $code" >> /tmp/sirs_log.txt
+          if [ $code -eq 0 ]; then git add data/sirs.json; git diff --cached --quiet || (git -c user.name="lendable-bot" -c user.email="noreply@anthropic.com" commit -m "Refresh SIRS data" && git pull -q --rebase && git push); fi
+          mkdir /tmp/log && cd /tmp/log && cp /tmp/sirs_log.txt . && git init -q && git checkout -q -b data-logs && git add -A && git -c user.name=bot -c user.email=bot@example.com commit -qm log && git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" data-logs
+          exit $code
