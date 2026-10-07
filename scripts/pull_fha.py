@@ -1,6 +1,6 @@
 """Pull HUD's FHA-approved condominium list for the counties Lendable covers.
 Runs in GitHub Actions (HUD's site isn't reachable from Vercel builds reliably). Writes data/fha.json."""
-import html, json, re, sys, time, urllib.parse, urllib.request
+import html, json, os, re, sys, time, urllib.parse, urllib.request
 from datetime import date
 
 COUNTIES = [("NY", "NEW YORK"), ("NY", "KINGS"), ("NY", "QUEENS"), ("NY", "BRONX"), ("NY", "RICHMOND"),
@@ -31,7 +31,10 @@ rows = {}
 for state, county in COUNTIES:
     start, total = 1, None
     while True:
-        page = fetch(state, county, start)
+        try:
+            page = fetch(state, county, start)
+        except Exception as e:
+            print(state, county, "failed:", e, file=sys.stderr); break
         if total is None:
             m = re.search(r"\((\d+) records were selected", page)
             total = int(m.group(1)) if m else 0
@@ -60,5 +63,8 @@ for state, county in COUNTIES:
 
 out = {"source": "HUD FHA Approved Condominiums (entp.hud.gov/idapp/html/condlook.cfm)", "pulled": date.today().isoformat(),
        "rows": sorted(rows.values(), key=lambda r: (r["state"], r["county"], r["name"]))}
+os.makedirs("data", exist_ok=True)
+if len(rows) < 50:
+    sys.exit("too few rows; not overwriting")
 json.dump(out, open("data/fha.json", "w"), separators=(",", ":"))
 print(len(rows), "projects", file=sys.stderr)
