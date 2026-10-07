@@ -1,0 +1,12 @@
+name: qlik probe
+on: workflow_dispatch
+permissions: { contents: write }
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          npm i ws@8 --no-save --silent
+          node scripts/qlik_probe.js > /tmp/qlik_log.txt 2>&1 || true
+          mkdir /tmp/log && cd /tmp/log && cp /tmp/qlik_log.txt . && git init -q && git checkout -q -b data-logs && git add -A && git -c user.name=bot -c user.email=bot@example.com commit -qm log && git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" data-logs
