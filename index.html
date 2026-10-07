@@ -57,6 +57,38 @@ small{font-size:13px;color:var(--muted)}
 .savebtn{border:1px solid var(--line);padding:7px 13px;border-radius:8px;font-size:13px;background:var(--surface);color:var(--deep);font-weight:600}
 .savebtn.on{background:var(--soft);border-color:var(--accent)}
 .panel .savebtn{display:inline-block;margin-left:8px;padding:4px 10px;font-size:12px}
+.alertcards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:18px}
+.acard{text-align:left;border:1px solid var(--line);border-radius:13px;background:var(--surface);padding:14px 16px;display:flex;flex-direction:column;gap:6px;cursor:pointer;transition:border-color .15s,background .15s;min-width:0}
+.acard:hover{border-color:var(--accent)}
+.acard.on{border-color:var(--accent);background:var(--soft)}
+.acard .al{font-size:13px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:7px}
+.acard .al::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--good)}
+.acard.bad .al::before{background:var(--bad)}.acard.warn .al::before{background:var(--warn)}.acard.new .al::before{background:var(--accent)}
+.acard .av{font-size:26px;font-weight:650;line-height:1.1}
+.acard.bad .av{color:var(--bad)}.acard.warn .av{color:var(--warn)}.acard.new .av{color:var(--accent)}.acard.ok .av{color:var(--good)}
+.acard .av small{font-size:14px;font-weight:500;color:var(--muted)}
+.acard .as{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mtwrap{margin-top:14px;border:1px solid var(--line);border-radius:13px;background:var(--surface);overflow-x:auto}
+.mtable{width:100%;border-collapse:collapse;font-size:13.5px;min-width:860px}
+.mtable th{text-align:left;font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);font-weight:600;padding:11px 12px;border-bottom:1px solid var(--line);background:var(--surface-2);white-space:nowrap;cursor:pointer;user-select:none}
+.mtable th.nosort{cursor:default}
+.mtable td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+.mtable tr.mrow:hover td{background:var(--surface-4)}
+.mtable tr.mrow.open td{background:var(--soft)}
+.mtable td.addr{min-width:200px;position:sticky;left:0;background:var(--surface);z-index:1}
+.mtable tr.mrow:hover td.addr{background:var(--surface-4)}.mtable tr.mrow.open td.addr{background:var(--soft)}
+.mtable td.addr button{text-align:left;font-weight:600;color:var(--ink);font-size:14px;padding:0}
+.mtable td.addr small{display:block;font-size:12px}
+.mtable .cell{display:inline-flex;align-items:center;gap:5px;font-weight:600;white-space:nowrap}
+.mtable button.cell{color:var(--bad);text-decoration:underline;text-underline-offset:3px}
+.mtable button.cell.warn{color:var(--warn)}
+.mtable .ok{color:var(--good);font-weight:600;white-space:nowrap}.mtable .linkbtn{white-space:nowrap}.mtable .na{color:var(--faint)}
+.newdot{font-size:10px;font-weight:700;letter-spacing:.5px;color:var(--on-accent);background:var(--accent);border-radius:5px;padding:2px 5px;margin-left:6px;vertical-align:2px}
+.mtable tr.mdetail td{background:var(--surface-2);padding:4px 16px 16px}
+.mtable .mystatus{padding:5px 8px;font-size:12.5px}
+.mtable .chev{color:var(--muted);font-size:16px;transition:transform .15s;display:inline-block}
+.mtable tr.open .chev{transform:rotate(90deg)}
+@media(max-width:850px){.alertcards{grid-template-columns:1fr 1fr}.acard .av{font-size:22px}}
 .mycard{border:1px solid var(--line);border-radius:13px;background:var(--surface);padding:16px 18px;margin-bottom:14px}
 .mycard h3{font-size:16px;margin:0}
 .myhead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
@@ -514,13 +546,15 @@ tbody tr:hover .open,tbody tr:focus-within .open{opacity:1}
         <div class="listfoot"><span id="s-count"></span><button class="viewall" id="s-more">Show more</button></div>
         <p class="listfoot" style="margin-top:6px">Source: NYC Department of City Planning MapPLUTO 26v1 (city tax lot records). Condos, co-ops, and rentals with 6+ units. Neighborhoods are assigned by ZIP code and are approximate. Elevator comes from the city building class. Amenities such as doorman aren’t in city records yet.</p>
       </div></section>
-      <section class="pageview hide" id="mineview" aria-labelledby="minetitle"><div class="pageinner" style="max-width:820px">
+      <section class="pageview hide" id="mineview" aria-labelledby="minetitle"><div class="pageinner" style="max-width:1180px">
         <div class="eyebrow" style="font-size:12px;margin-bottom:6px">Your portfolio</div>
         <h2 id="minetitle">My buildings</h2>
         <p style="color:var(--muted);font-size:14px;margin-top:4px;max-width:640px">Buildings you've worked on, with your own verdict, notes and documents, so the next time one comes up you know right away if it's clean.</p>
+        <div class="alertcards" id="minealerts"></div>
         <div class="controls" style="margin-top:16px">
           <input class="search" id="mineq" type="search" placeholder="Search your buildings…" aria-label="Search my buildings">
           <div class="seg" id="mineseg" role="group" aria-label="Filter by status"><button class="active" data-ms="">All</button><button data-ms="clean">Clean</button><button data-ms="issues">Issues</button><button data-ms="watch">Watch</button></div>
+          <button class="choice" id="minerefresh" style="margin-left:auto">↻ Re-check DOB &amp; litigation</button>
         </div>
         <div id="minelist"></div>
         <p class="listfoot" style="margin-top:18px" id="minefoot">Saved on this device for now. Sign-in, syncing across devices and sharing with your team come with accounts.</p>
@@ -605,7 +639,7 @@ function setView(v){
   const chat=v==='chat';$('panel').classList.toggle('hide',!chat);$('paneltoggle').classList.toggle('hide',!chat);
   $('viewtitle').textContent=VIEWS[v][2];
   $('sidebar').classList.remove('open');$('panel').classList.remove('open');
-  if(v==='list')renderList();if(v==='mine')renderMine();if(v==='search'){renderSearch();loadDB()}
+  if(v==='list')renderList();if(v==='mine'){renderMine();refreshMine(false)}if(v==='search'){renderSearch();loadDB()}
 }
 const emptyBrief='<div class="buildingicon">▤</div><h2>Your building,<br>at a glance.</h2><p class="emptyhint">As we explore an address, its financing history and next steps will appear here.</p><div class="panelsection"><h3>What we’ll look at</h3><div class="metric"><span>Building & property type</span><span>◇</span></div><div class="metric"><span>Observed lenders</span><span>◇</span></div><div class="metric"><span>Approval verification</span><span>◇</span></div></div><div class="panelsection"><small>Recent mortgage activity covers '+NB+' condo and co-op buildings in Manhattan, Brooklyn and Queens ('+esc(FIN.window)+').</small></div>';
 function reset(){selected=null;awaiting=null;deal={};$('messages').innerHTML='';$('messages').classList.add('hide');$('welcome').classList.remove('hide');$('brief').innerHTML=emptyBrief;$('prompt').value='';setView('chat')}
@@ -1270,7 +1304,9 @@ const saveTargets=new Map();
 function mineSave(){try{localStorage.setItem(MINE_KEY,JSON.stringify(MINE))}catch(e){}const n=Object.keys(MINE).length;$('minecount').textContent=n}
 function saveBtn(b){const id=mineId(b);saveTargets.set(id,b);const on=!!MINE[id];return '<button class="savebtn'+(on?' on':'')+'" data-save="'+esc(id)+'">'+(on?'★ In My buildings':'☆ Save to My buildings')+'</button>'}
 function refreshSaveButtons(){document.querySelectorAll('[data-save]').forEach(x=>{const on=!!MINE[x.dataset.save];x.classList.toggle('on',on);x.textContent=on?'★ In My buildings':'☆ Save to My buildings'})}
-function dobSummary(d){if(!d||!d.found)return null;return {active:d.active||0,unsafe:!!d.unsafe,vacate:(d.vacates||[]).length,facade:d.facade?d.facade.status:null,at:Date.now()}}
+function dobSummary(d){if(!d||!d.found)return null;return {active:d.active||0,unsafe:!!d.unsafe,vacate:(d.vacates||[]).length,facade:d.facade?d.facade.status:null,lit:d.lit==null?null:d.lit,at:Date.now()}}
+const dobBad=x=>!!x&&(x.active>0||x.lit>0||x.unsafe||x.vacate>0||/SWARMP/i.test(x.facade||''));
+function worse(o,n){if(!n)return false;if(!o)return dobBad(n);return n.active>o.active||(n.lit||0)>(o.lit||0)||(n.unsafe&&!o.unsafe)||n.vacate>o.vacate}
 function ensureSaved(b){const id=mineId(b);if(!MINE[id]){MINE[id]={address:b.address,borough:b.borough||'',type:b.type||'',status:'unreviewed',notes:'',saved:Date.now(),updated:Date.now(),dob:null,docs:[]};getDOB(b).then(d=>{if(MINE[id]){MINE[id].dob=dobSummary(d);mineSave();if(!$('mineview').classList.contains('hide'))renderMine()}}).catch(()=>{})}mineSave();return MINE[id]}
 document.addEventListener('click',e=>{const x=e.target.closest('[data-save]');if(!x)return;const id=x.dataset.save;
   if(MINE[id]){setView('mine');return}
@@ -1284,26 +1320,68 @@ async function docsAdd(id,file,type){if(file.size>20*1024*1024)throw Error('too_
 async function docsDel(key){try{await idbDo('readwrite',st=>st.delete(key))}catch(e){}}
 async function docOpen(key,name){try{const blob=await idbDo('readonly',st=>st.get(key));if(!blob){alert('That file isn’t stored in this browser anymore.');return}const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;a.target='_blank';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000)}catch(e){alert('Couldn’t open that file in this view.')}}
 
-const mineState={q:'',s:''};
+const mineState={q:'',s:'',f:'',open:null};
 function dobLine(x){if(!x)return '<span class="pill grey">DOB not checked yet</span>';const p=[];if(x.vacate)p.push('<span class="pill red">⚑ Vacate order</span>');if(x.unsafe)p.push('<span class="pill red">⚑ Unsafe facade</span>');if(x.active)p.push('<span class="pill red">⚑ '+x.active+' open DOB</span>');if(!p.length)p.push('<span class="pill">✓ No open DOB violations</span>');return p.join('')+'<small style="font-size:11.5px">as of '+new Date(x.at).toLocaleDateString()+'</small>'}
-function renderMine(){
-  const all=Object.entries(MINE).sort((a,b)=>b[1].updated-a[1].updated);
-  const q=mineState.q.toLowerCase();
-  const rows=all.filter(([id,m])=>(!mineState.s||m.status===mineState.s)&&(!q||m.address.toLowerCase().includes(q)||(m.notes||'').toLowerCase().includes(q)));
-  if(!all.length){$('minelist').innerHTML='<div class="mycard"><h3>No saved buildings yet</h3><p class="emptyhint" style="margin:6px 0 0">Look up any building and tap <strong>☆ Save to My buildings</strong>. It lands here with its DOB flags, and you can mark it clean or problematic, add notes and keep the questionnaire, budget and other documents with it.</p></div>';return}
-  $('minelist').innerHTML=rows.length?rows.map(([id,m])=>{const st=STATUS[m.status]||STATUS.unreviewed;
-    return '<div class="mycard" data-mine="'+esc(id)+'"><div class="myhead"><div><h3>'+esc(m.address)+'</h3><small>'+esc([m.borough,m.type].filter(Boolean).join(' · '))+' · saved '+new Date(m.saved).toLocaleDateString()+'</small></div>'+
-      '<select class="mystatus" data-mstatus aria-label="My verdict">'+Object.entries(STATUS).map(([k,v])=>'<option value="'+k+'"'+(k===m.status?' selected':'')+'>'+v[0]+'</option>').join('')+'</select></div>'+
-      '<div class="dobpills">'+dobLine(m.dob)+'</div>'+
-      '<textarea class="mynotes" data-mnotes placeholder="Your notes: lender feedback, questionnaire answers, assessments, board quirks…">'+esc(m.notes||'')+'</textarea>'+
-      '<div class="mydocs">'+(m.docs||[]).map((d,i)=>'<div class="mydoc"><span style="color:var(--accent)">▤</span><span class="nm">'+esc(d.name)+' <small>· '+esc(d.type)+' · '+Math.ceil(d.size/1024)+' KB</small></span><button class="linkbtn" data-mopen="'+i+'">Open</button><button class="removefile" data-mdel="'+i+'" aria-label="Remove '+esc(d.name)+'">×</button></div>').join('')+'</div>'+
-      '<div class="myrow"><label class="addfile">⊕ Add documents<input type="file" multiple data-madd accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.jpg,.jpeg,.png,.webp"></label>'+
-      '<button class="choice" data-mlook>Open building</button><button class="choice" data-mshare>Share summary</button><button class="linkbtn" data-mremove style="color:var(--muted);margin-left:auto">Remove</button></div></div>'}).join(''):'<p class="emptyhint">No saved buildings match.</p>';
+const mineSort={k:'updated',d:-1};
+function mineFlags(m){const x=m.dob;return {lit:!!x&&x.lit>0,vio:!!x&&x.active>0,fac:!!x&&(x.unsafe||x.vacate>0||/SWARMP/i.test(x.facade||'')),new:!!m.alertNew}}
+function renderAlerts(all){
+  const n=k=>all.filter(([id,m])=>mineFlags(m)[k]);
+  const lit=n('lit'),vio=n('vio'),fac=n('fac'),nw=n('new'),checked=all.filter(([id,m])=>m.dob).length;
+  const names=a=>a.slice(0,3).map(([id,m])=>m.address).join(', ')+(a.length>3?' +'+(a.length-3):'');
+  const card=(k,cls,label,list,sub)=>'<button class="acard '+(list.length?cls:'ok')+(mineState.f===k?' on':'')+'" data-mf="'+k+'" aria-pressed="'+(mineState.f===k)+'"><span class="al">'+label+'</span><span class="av num">'+list.length+' <small>building'+(list.length===1?'':'s')+'</small></span><span class="as">'+esc(list.length?names(list):sub)+'</span></button>';
+  $('minealerts').innerHTML=all.length?
+    card('lit','bad','Open litigation',lit,'None open in your buildings')+
+    card('vio','bad','Open code violations',vio,'None open in your buildings')+
+    card('fac','warn','Facade or vacate issues',fac,'No unsafe facades or vacates')+
+    card('new','new','New since last check',nw,checked+' of '+all.length+' checked'):'';
 }
+function cellVio(m){const x=m.dob;if(!x)return '<span class="na">—</span>';return x.active?'<button class="cell" data-dobopen="'+esc(m.address)+'">⚑ '+x.active+' open</button>':'<span class="ok">✓ None</span>'}
+function cellLit(m){const x=m.dob;if(!x||x.lit==null)return '<span class="na">—</span>';return x.lit?'<button class="cell" data-dobopen="'+esc(m.address)+'">⚑ '+x.lit+' open</button>':'<span class="ok">✓ None</span>'}
+function cellFac(m){const x=m.dob;if(!x)return '<span class="na">—</span>';
+  if(x.vacate)return '<button class="cell" data-dobopen="'+esc(m.address)+'">⚑ Vacate order</button>';
+  if(x.unsafe)return '<button class="cell" data-dobopen="'+esc(m.address)+'">⚑ Unsafe</button>';
+  if(/SWARMP/i.test(x.facade||''))return '<button class="cell warn" data-dobopen="'+esc(m.address)+'">Repairs needed</button>';
+  return x.facade?'<span class="ok">✓ '+esc(x.facade.charAt(0)+x.facade.slice(1).toLowerCase())+'</span>':'<span class="na">No filing</span>'}
+function mineDetail(id,m){
+  return '<tr class="mdetail" data-mine="'+esc(id)+'"><td colspan="9">'+
+    '<textarea class="mynotes" data-mnotes placeholder="Your notes: lender feedback, questionnaire answers, assessments, board quirks…">'+esc(m.notes||'')+'</textarea>'+
+    '<div class="mydocs">'+(m.docs||[]).map((d,i)=>'<div class="mydoc"><span style="color:var(--accent)">▤</span><span class="nm">'+esc(d.name)+' <small>· '+esc(d.type)+' · '+Math.ceil(d.size/1024)+' KB</small></span><button class="linkbtn" data-mopen="'+i+'">Open</button><button class="removefile" data-mdel="'+i+'" aria-label="Remove '+esc(d.name)+'">×</button></div>').join('')+'</div>'+
+    '<div class="myrow"><label class="addfile">⊕ Add documents<input type="file" multiple data-madd accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.jpg,.jpeg,.png,.webp"></label>'+
+    '<button class="choice" data-dobopen="'+esc(m.address)+'">DOB &amp; litigation details</button><button class="choice" data-mlook>Open building</button><button class="choice" data-mshare>Share summary</button><button class="linkbtn" data-mremove style="color:var(--muted);margin-left:auto">Remove</button></div></td></tr>'}
+function renderMine(){
+  const all=Object.entries(MINE);
+  renderAlerts(all);
+  const q=mineState.q.toLowerCase();
+  const sortv=(m,k)=>{const x=m.dob||{};const b=findBuilding(m.address);return k==='address'?m.address.toLowerCase():k==='status'?m.status:k==='vio'?(x.active||0):k==='lit'?(x.lit||0):k==='fac'?((x.vacate?3:0)+(x.unsafe?2:0)+(/SWARMP/i.test(x.facade||'')?1:0)):k==='lenders'?(b?b.lenders.length:0):k==='docs'?(m.docs||[]).length:k==='checked'?(x.at||0):m.updated};
+  const rows=all.filter(([id,m])=>(!mineState.s||m.status===mineState.s)&&(!mineState.f||mineFlags(m)[mineState.f])&&(!q||m.address.toLowerCase().includes(q)||(m.notes||'').toLowerCase().includes(q)))
+    .sort((a,b)=>{const x=sortv(a[1],mineSort.k),y=sortv(b[1],mineSort.k);return (x<y?-1:x>y?1:0)*mineSort.d});
+  if(!all.length){$('minelist').innerHTML='<div class="mycard" style="margin-top:14px"><h3>No saved buildings yet</h3><p class="emptyhint" style="margin:6px 0 0">Look up any building and tap <strong>☆ Save to My buildings</strong>. It lands here with its DOB and litigation alerts, and you can mark it clean or problematic, add notes and keep the questionnaire, budget and other documents with it.</p></div>';return}
+  const th=(k,l)=>'<th data-msort="'+k+'" aria-sort="'+(mineSort.k===k?(mineSort.d>0?'ascending':'descending'):'none')+'">'+l+(mineSort.k===k?(mineSort.d>0?' ↑':' ↓'):'')+'</th>';
+  $('minelist').innerHTML=rows.length?'<div class="mtwrap"><table class="mtable"><thead><tr>'+th('address','Building')+th('status','My verdict')+th('vio','Code violations')+th('lit','Litigation')+th('fac','Facade / vacate')+th('lenders','Lenders')+th('docs','Docs')+th('checked','Checked')+'<th class="nosort"></th></tr></thead><tbody>'+
+    rows.map(([id,m])=>{const b=findBuilding(m.address);const open=mineState.open===id;const nl=b?b.lenders.length:0;
+      return '<tr class="mrow'+(open?' open':'')+'" data-mine="'+esc(id)+'"><td class="addr"><button data-mtoggle aria-expanded="'+open+'">'+esc(m.address)+(m.alertNew?'<span class="newdot">NEW</span>':'')+'</button><small>'+esc([m.borough,m.type].filter(Boolean).join(' · '))+'</small></td>'+
+        '<td><select class="mystatus" data-mstatus aria-label="My verdict for '+esc(m.address)+'">'+Object.entries(STATUS).map(([k,v])=>'<option value="'+k+'"'+(k===m.status?' selected':'')+'>'+v[0]+'</option>').join('')+'</select></td>'+
+        '<td>'+cellVio(m)+'</td><td>'+cellLit(m)+'</td><td>'+cellFac(m)+'</td>'+
+        '<td class="num">'+(nl?'<button class="linkbtn" data-mlook>'+nl+' lender'+(nl>1?'s':'')+'</button>':'<span class="na">—</span>')+'</td>'+
+        '<td class="num">'+((m.docs||[]).length||'<span class="na">—</span>')+'</td>'+
+        '<td><small>'+(m.dob?new Date(m.dob.at).toLocaleDateString():'—')+'</small></td>'+
+        '<td><button data-mtoggle aria-label="Notes and documents" style="padding:4px 6px"><span class="chev">›</span></button></td></tr>'+(open?mineDetail(id,m):'')}).join('')+
+    '</tbody></table></div>':'<p class="emptyhint" style="margin-top:14px">No saved buildings match.</p>';
+}
+let mineChecking=false;
+async function refreshMine(force){
+  if(mineChecking)return;const ids=Object.keys(MINE).filter(id=>force||!MINE[id].dob||MINE[id].dob.lit===undefined||Date.now()-MINE[id].dob.at>864e5);if(!ids.length)return;
+  mineChecking=true;const btn=$('minerefresh');btn.disabled=true;btn.textContent='Checking '+ids.length+'…';
+  const queue=ids.slice();
+  async function worker(){while(queue.length){const id=queue.shift(),m=MINE[id];if(!m)continue;const b=findBuilding(m.address)||{address:m.address,borough:m.borough,type:m.type,lenders:[]};
+    if(force){dobMem.delete(dobId(b));try{localStorage.removeItem('dob:'+dobId(b))}catch(e){}}
+    try{const d=await getDOB(b);const n=dobSummary(d);if(n&&MINE[id]){if(m.dob&&worse(m.dob,n))m.alertNew=true;m.dob=n;mineSave();if(!$('mineview').classList.contains('hide'))renderMine()}}catch(e){}}}
+  await Promise.all([worker(),worker(),worker()]);
+  mineChecking=false;btn.disabled=false;btn.innerHTML='↻ Re-check DOB &amp; litigation'}
 function mineSummary(m){const b=findBuilding(m.address);const st=(STATUS[m.status]||STATUS.unreviewed)[0];const x=m.dob;
   return ['Building: '+m.address+(m.borough?' ('+m.borough+(m.type?' · '+m.type:'')+')':''),'My verdict: '+st,
     ...(m.notes?['Notes: '+m.notes]:[]),
-    x?'DOB (as of '+new Date(x.at).toLocaleDateString()+'): '+(x.active?x.active+' open DOB/ECB violations':'no open DOB violations')+(x.unsafe?'; unsafe facade (FISP)':'')+(x.vacate?'; vacate order in effect':'')+(x.facade?'; facade status '+x.facade:''):'DOB: not checked',
+    x?'DOB (as of '+new Date(x.at).toLocaleDateString()+'): '+(x.active?x.active+' open DOB/ECB violations':'no open DOB violations')+(x.unsafe?'; unsafe facade (FISP)':'')+(x.vacate?'; vacate order in effect':'')+(x.facade?'; facade status '+x.facade:'')+(x.lit?'; '+x.lit+' open HPD litigation case'+(x.lit>1?'s':''):x.lit===0?'; no open HPD litigation':''):'DOB: not checked',
     ...(b&&b.lenders.length?['Lenders recently financing ('+FIN.window+'): '+b.lenders.map(l=>l.name).join(', ')]:[]),
     ...(m.docs&&m.docs.length?['Documents on file: '+m.docs.map(d=>d.name).join(', ')]:[]),
     '','Shared from Lendable. Past financing is not project approval; confirm with the lender.'].join('\n')}
@@ -1311,13 +1389,18 @@ $('minelist').addEventListener('change',async e=>{const card=e.target.closest('[
   if(e.target.matches('[data-mstatus]')){m.status=e.target.value;m.updated=Date.now();mineSave();return}
   if(e.target.matches('[data-madd]')){const files=[...e.target.files];let skipped=0;for(const f of files){try{await docsAdd(id,f)}catch(err){skipped++}}mineSave();renderMine();if(skipped)alert(skipped+' file(s) couldn’t be saved (over 20 MB or storage unavailable in this view).')}});
 $('minelist').addEventListener('focusout',e=>{if(!e.target.matches('[data-mnotes]'))return;const id=e.target.closest('[data-mine]').dataset.mine;if(MINE[id]&&MINE[id].notes!==e.target.value){MINE[id].notes=e.target.value;MINE[id].updated=Date.now();mineSave()}});
-$('minelist').addEventListener('click',async e=>{const card=e.target.closest('[data-mine]');if(!card)return;const id=card.dataset.mine,m=MINE[id];if(!m)return;
+$('minelist').addEventListener('click',async e=>{const th=e.target.closest('[data-msort]');if(th){const k=th.dataset.msort;mineSort.d=mineSort.k===k?-mineSort.d:(k==='address'?1:-1);mineSort.k=k;renderMine();return}
+  const card=e.target.closest('[data-mine]');if(!card)return;const id=card.dataset.mine,m=MINE[id];if(!m)return;
+  if(e.target.closest('[data-dobopen]')){if(m.alertNew){m.alertNew=false;mineSave()}return}
+  if(e.target.closest('[data-mtoggle]')){mineState.open=mineState.open===id?null:id;if(m.alertNew){m.alertNew=false;mineSave()}renderMine();return}
   const o=e.target.closest('[data-mopen]');if(o){const d=m.docs[+o.dataset.mopen];if(d)docOpen(d.key,d.name);return}
   const del=e.target.closest('[data-mdel]');if(del){const d=m.docs[+del.dataset.mdel];if(d&&confirm('Remove '+d.name+'?')){await docsDel(d.key);m.docs.splice(+del.dataset.mdel,1);m.updated=Date.now();mineSave();renderMine()}return}
   if(e.target.closest('[data-mlook]')){send(m.address);return}
   if(e.target.closest('[data-mshare]')){const text=mineSummary(m);try{if(navigator.share){await navigator.share({title:m.address+' · Lendable',text});return}}catch(err){if(err&&err.name==='AbortError')return}try{await navigator.clipboard.writeText(text);e.target.textContent='Copied ✓';setTimeout(()=>e.target.textContent='Share summary',2000)}catch(err){prompt('Copy this summary:',text)}return}
   if(e.target.closest('[data-mremove]')){if(!confirm('Remove '+m.address+' from My buildings? Your notes and documents for it will be deleted from this device.'))return;for(const d of m.docs||[])await docsDel(d.key);delete MINE[id];mineSave();refreshSaveButtons();renderMine()}});
 $('mineq').oninput=e=>{mineState.q=e.target.value;renderMine()};
+$('minealerts').onclick=e=>{const c=e.target.closest('[data-mf]');if(!c)return;mineState.f=mineState.f===c.dataset.mf?'':c.dataset.mf;renderMine()};
+$('minerefresh').onclick=()=>refreshMine(true);
 $('mineseg').onclick=e=>{const b=e.target.closest('[data-ms]');if(!b)return;mineState.s=b.dataset.ms;$('mineseg').querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));renderMine()};
 mineSave();
 
