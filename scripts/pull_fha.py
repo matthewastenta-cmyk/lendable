@@ -35,6 +35,8 @@ for state, county in COUNTIES:
             page = fetch(state, county, start)
         except Exception as e:
             print(state, county, "failed:", e, file=sys.stderr); break
+        if start == 1 and state == "FL" and county == "MIAMI-DADE":
+            open("/tmp/fl_page.html", "w").write(page)
         if total is None:
             m = re.search(r"\((\d+) records were selected", page)
             total = int(m.group(1)) if m else 0
@@ -56,7 +58,7 @@ for state, county in COUNTIES:
             if not old or rec["statusDate"] > old["statusDate"]:
                 rows[pid] = rec
         print(state, county, "start", start, "rows", got, "of", total, file=sys.stderr)
-        start += 500
+        start += 25
         if got == 0 or start > total:
             break
         time.sleep(1)

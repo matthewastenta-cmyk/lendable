@@ -16,5 +16,5 @@ jobs:
             git add data/fha.json
             git diff --cached --quiet || (git -c user.name="lendable-bot" -c user.email="noreply@anthropic.com" commit -m "Refresh FHA condo list" && git push)
           fi
-          mkdir /tmp/log && cd /tmp/log && cp /tmp/fha_log.txt . && git init -q && git checkout -q -b data-logs && git add -A && git -c user.name=bot -c user.email=bot@example.com commit -qm log && git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" data-logs
+          mkdir /tmp/log && cd /tmp/log && cp /tmp/fha_log.txt . && (cp /tmp/fl_page.html . || true) && git init -q && git checkout -q -b data-logs && git add -A && git -c user.name=bot -c user.email=bot@example.com commit -qm log && git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" data-logs
           exit $code
