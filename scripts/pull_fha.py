@@ -43,7 +43,7 @@ for state, county in COUNTIES:
         got = 0
         for tr in re.findall(r"<tr[^>]*>(.*?)</tr>", page, flags=re.S | re.I):
             c = cells(tr)
-            if len(c) < 13 or not re.match(r"P\d+", c[1]):
+            if len(c) < 13 or not re.match(r"[A-Z]\d{4,}", c[1]):
                 continue
             got += 1
             addr = c[2].split("|")
