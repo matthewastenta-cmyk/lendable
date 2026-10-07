@@ -18,7 +18,7 @@ function limited(ip) {
 
 module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
-  const key = process.env.ANTHROPIC_API_KEY;
+  const key = process.env.ANTHROPIC_API_KEY || process.env.anthropic_api_key;
   if (req.method === 'GET') return res.status(200).json({ configured: !!key, model: MODEL });
   if (req.method !== 'POST') return res.status(405).json({ error: 'method_not_allowed' });
   if (!key) return res.status(503).json({ error: 'not_configured' });
