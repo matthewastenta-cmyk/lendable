@@ -24,7 +24,7 @@ async function soql(ds, params) {
   const url = BASE + ds + '.json?' + new URLSearchParams(params).toString();
   const headers = { Accept: 'application/json' };
   if (process.env.NYC_APP_TOKEN) headers['X-App-Token'] = process.env.NYC_APP_TOKEN;
-  const r = await fetch(url, { headers });
+  const r = await fetch(url, { headers, signal: AbortSignal.timeout(9000) });
   if (!r.ok) throw new Error(ds + ' ' + r.status + ': ' + (await r.text()).slice(0, 200));
   return r.json();
 }
@@ -48,7 +48,7 @@ async function bblFromAddress(address, borough) {
 
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Cache-Control', 's-maxage=86400, stale-while-revalidate=3600'); // cache each building for a day at the edge
+  res.setHeader('Cache-Control', 's-maxage=86400, stale-while-revalidate=3600'); // cache each building for a day at the edge (errors below override this)
   try {
     let bbl = String(req.query.bbl || '').replace(/\D/g, '');
     if (bbl.length !== 10 && req.query.address) bbl = (await bblFromAddress(req.query.address, req.query.borough)) || '';
@@ -105,6 +105,11 @@ module.exports = async (req, res) => {
     const litigation = val(7, []).map(r => ({
       date: ymd(r.caseopendate), type: clean(r.casetype), status: clean(r.casestatus), judgement: clean(r.casejudgement), respondent: clean(r.respondent),
     }));
+    // If the core violation lookups all failed, say so instead of reporting a clean building.
+    if (settled[0].status === 'rejected' && settled[2].status === 'rejected') {
+      res.setHeader('Cache-Control', 'no-store');
+      return res.status(502).json({ found: false, error: 'NYC Open Data did not respond', errors });
+    }
     if (!bins.length) bins = [...new Set([...dobItems, ...ecbItems].map(x => x.bin).concat(facade && facade.bin).filter(Boolean))];
     const fs = facade ? facade.status.toUpperCase() : '';
 
@@ -124,6 +129,7 @@ module.exports = async (req, res) => {
       errors, checkedAt: new Date().toISOString(),
     });
   } catch (e) {
+    res.setHeader('Cache-Control', 'no-store');
     res.status(502).json({ found: false, error: String(e && e.message || e) });
   }
 };

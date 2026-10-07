@@ -980,7 +980,7 @@ async function nycDOB(b){
   if(!b.city){try{await loadDB()}catch(e){}const c=cityByKey.get(ALIAS_ADDR[norm(b.address)]||norm(b.address));if(c)b.city=c}
   const bbl=b.city&&b.city[12]?String(b.city[12]):'';
   const qs=bbl?'bbl='+encodeURIComponent(bbl):'address='+encodeURIComponent(b.address)+'&borough='+encodeURIComponent(b.borough||'');
-  let j;try{const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),15000);const r=await fetch('api/dob?'+qs,{signal:ctl.signal});clearTimeout(t);if(!r.ok||!/json/.test(r.headers.get('content-type')||''))return null;j=await r.json()}catch(e){return null}
+  let j=null;for(let i=0;i<2&&!j;i++){try{const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),20000);const r=await fetch('api/dob?'+qs,{signal:ctl.signal,cache:'no-store'});clearTimeout(t);if(r.ok&&/json/.test(r.headers.get('content-type')||''))j=await r.json()}catch(e){}}
   if(!j||j.error)return null;
   if(!j.found)return {found:false,src:'nyc',at:Date.now()};
   return {found:true,src:'nyc',bin:(j.bins||[])[0]||null,active:j.flags.openViolations||0,
@@ -1025,11 +1025,12 @@ async function briefDOB(b){
   if(selected!==b)return;
   try{const d=await getDOB(b);if(selected===b)setDobBrief(dobBriefHtml(d,b))}
   catch(e){if(selected===b)setDobBrief('<h3>DOB &amp; HPD flags</h3><p class="emptyhint" style="margin:0">'+esc(dobErr(e))+'</p>'+(e&&e.code&&!['server_not_connected','needs_reauth','not_in_manifest','not_granted','blocked_by_policy'].includes(e.code)?'<button class="linkbtn" data-dobretry>Try again</button>':''))}}
-let slotN=0;
+let slotN=0;const SLOTB={};
 function dobSlot(b){const id='dobs'+(++slotN);setTimeout(async()=>{const el=()=>document.getElementById(id);
-  try{const d=await getDOB(b);if(el())el().innerHTML=d.found?'<button class="pillbtn" data-dobopen="'+esc(b.address)+'" aria-label="See DOB details for '+esc(b.address)+'">'+dobPills(d)+'</button>':dobPills(d)}catch(e){if(el())el().innerHTML=['not_granted','capability_disabled','capability_removed'].includes(e&&e.code)?'':'<span class="pill grey">DOB check unavailable</span>'}},0);
+  try{const d=await getDOB(b);if(el())el().innerHTML=d.found?'<button class="pillbtn" data-dobopen="'+esc(b.address)+'" aria-label="See DOB details for '+esc(b.address)+'">'+dobPills(d)+'</button>':dobPills(d)}catch(e){if(el())el().innerHTML='<button class="pillbtn" data-dobslotretry="'+id+'"><span class="pill grey">DOB check didn’t load · Retry</span></button>';SLOTB[id]=b}},0);
   return '<span class="dobslot" id="'+id+'"><span class="pill grey">Checking DOB…</span></span>'}
 document.addEventListener('click',e=>{
+  const sr=e.target.closest('[data-dobslotretry]');if(sr){const id=sr.dataset.dobslotretry,b=SLOTB[id],host=document.getElementById(id);if(b&&host){dobMem.delete(dobId(b));host.outerHTML=dobSlot(b)}return}
   if(e.target.closest('[data-dobretry]')&&selected){setDobBrief(DOB_LOADING);briefDOB(selected);return}
   const o=e.target.closest('[data-dobopen]');if(o){$('dobq').value=o.dataset.dobopen;setView('dob');runDOB(o.dataset.dobopen);return}
   const m=e.target.closest('[data-dobmore]');if(m){dobMore(m);return}
