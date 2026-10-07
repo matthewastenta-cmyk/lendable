@@ -1458,7 +1458,7 @@ const ROLES={buyer_attorney:'Buyer’s attorney',seller_attorney:'Seller’s att
 const dealState={q:'',s:'',f:'',open:null,building:null,edit:null,sort:'closing',dir:1};
 function dealSave(){try{localStorage.setItem(DEAL_KEY,JSON.stringify(DEALS))}catch(e){}$('dealcount').textContent=Object.keys(DEALS).length}
 const dealsFor=bid=>Object.values(DEALS).filter(d=>d.buildingId===bid);
-const isContractName=n=>/contract|purchase|\bcos\b|rider|agreement|offer|commitment|\bpsa\b/i.test(n);
+const isContractName=n=>/contract|purchase|\bcos\b|rider|agreement|offer|commitment|\bpsa\b|deal ?sheet|term ?sheet/i.test(n);
 const fmtDate=d=>{if(!d)return '';const x=new Date(d+'T12:00');return isNaN(x)?d:x.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})};
 const daysTo=d=>{if(!d)return null;const x=new Date(d+'T12:00');return isNaN(x)?null:Math.round((x-Date.now())/864e5)};
 const isOpen=d=>!['closed','dead'].includes(d.status);
