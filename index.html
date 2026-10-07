@@ -1154,7 +1154,14 @@ function renderGuide(){const groups=[...new Set(GUIDE.map(x=>x.g))];$('guidegrid
 /* ---------- Lendable AI (real answers via the viewer's Claude) ---------- */
 let sampleFn=null,aiOff=false,aiCtl=null,aiTurns=[];
 (async()=>{try{if(window.claude?.use){sampleFn=await window.claude.use('sample');if(sampleFn)$('composernote').textContent='Lendable AI answers general questions · Financing history ≠ project approval'}}catch(e){}})();
-const aiReady=()=>!!sampleFn&&!aiOff;
+let serverAI=false;
+(async()=>{if(!/^https?:$/.test(location.protocol))return;await new Promise(r=>setTimeout(r,1500));if(sampleFn)return;try{const r=await fetch('api/ask');if(r.ok&&/json/.test(r.headers.get('content-type')||'')){const j=await r.json();if(j.configured){serverAI=true;$('composernote').textContent='Lendable AI answers general questions · Financing history ≠ project approval'}}}catch(e){}})();
+async function serverSample(turns,ctx,signal){
+  let r;try{r=await fetch('api/ask',{method:'POST',headers:{'content-type':'application/json'},signal,body:JSON.stringify({system:RULES+'\n\n'+FANNIE,context:ctx,messages:turns})})}catch(e){throw {code:e&&e.name==='AbortError'?'cancelled':'upstream_error'}}
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok)throw {code:j.error==='rate_limited'?'rate_limited':j.error==='not_configured'?'not_granted':'upstream_error'};
+  return {text:j.text||'',truncated:!!j.truncated}}
+const aiReady=()=>(!!sampleFn||serverAI)&&!aiOff;
 function contextBlock(q){
   const rel=[];const add1=b=>{if(b&&!rel.includes(b))rel.push(b)};add1(selected&&!selected.cityOnly?selected:null);add1(findBuilding(q||''));const ln=findLender(q||'');if(ln)buildings.filter(b=>b.lenders.some(l=>l.name===ln)).sort((a,b)=>b.closings-a.closings).slice(0,30).forEach(add1);
   const rows=rel.map(b=>b.address+' | '+b.type+' | '+b.closings+' financed closing(s) | latest '+b.latest+' | lenders: '+(b.lenders.map(l=>l.name).join(', ')||'none identified')+(b.unknown?' (+'+b.unknown+' lender unknown)':'')).join('\n');
@@ -1189,7 +1196,7 @@ async function askAI(q){
   const box=$('messages').lastElementChild,out=box.querySelector('.aitext'),stop=box.querySelector('[data-stop]');
   stop.onclick=()=>ctl.abort();
   try{
-    const r=await sampleFn([{role:'user',content:RULES+'\n\n'+FANNIE+'\n\n'+contextBlock(q)},...aiTurns],{cache:false,signal:ctl.signal,onText:({text})=>{out.innerHTML=md(text);$('messages').scrollTop=$('messages').scrollHeight}});
+    const r=!sampleFn?await serverSample(aiTurns,contextBlock(q),ctl.signal):await sampleFn([{role:'user',content:RULES+'\n\n'+FANNIE+'\n\n'+contextBlock(q)},...aiTurns],{cache:false,signal:ctl.signal,onText:({text})=>{out.innerHTML=md(text);$('messages').scrollTop=$('messages').scrollHeight}});
     out.innerHTML=md(r.text)+(r.truncated?'<p class="thinking">Answer cut short. Ask a narrower question for more.</p>':'');aiTurns.push({role:'assistant',content:r.text});
   }catch(e){
     aiTurns.pop();
