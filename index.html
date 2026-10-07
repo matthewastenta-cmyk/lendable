@@ -595,6 +595,7 @@ tbody tr:hover .open,tbody tr:focus-within .open{opacity:1}
           <div class="seg" id="dealseg" role="group" aria-label="Filter by stage"><button class="active" data-ds="">All</button><button data-ds="open">Open</button><button data-ds="closed">Closed</button></div>
           <label class="choice primarybtn" style="margin-left:auto;position:relative;overflow:hidden;cursor:pointer">＋ New deal from contract<input type="file" id="dealupload" accept=".pdf,.jpg,.jpeg,.png,.webp,.txt" style="position:absolute;inset:0;opacity:0;cursor:pointer"></label>
           <button class="choice" id="dealadd">Add manually</button>
+          <button class="choice" id="dealcal" title="Download every open deal's commitment and closing dates as one calendar file">📅 All dates to calendar</button>
         </div>
         <div id="dealfilter"></div>
         <div id="deallist"></div>
@@ -1521,6 +1522,27 @@ $('dealupload').onchange=async e=>{const f=e.target.files[0];e.target.value='';i
 $('dealadd').onclick=()=>{const d=newDeal();if(dealState.building&&MINE[dealState.building]){const m=MINE[dealState.building];Object.assign(d,{buildingId:dealState.building,address:m.address,borough:m.borough,type:m.type})}DEALS[d.id]=d;dealSave();dealState.open=d.id;dealState.f='';dealState.s='';renderDeals();setTimeout(()=>{const i=document.querySelector('[data-dfield="address"]');if(i&&!i.value)i.focus()},50)};
 function openDeal(id){if(!DEALS[id])return;dealState.open=id;dealState.f='';dealState.s='';dealState.q='';$('dealq').value='';dealState.building=null;setView('deals');setTimeout(()=>{const r=document.querySelector('tr.drow.open');if(r)r.scrollIntoView({block:'center',behavior:'smooth'})},60)}
 
+/* calendar: Outlook / Google links per date, and .ics files (iPhone, Outlook desktop) */
+const CAL_KINDS=[['commitDate','Commitment deadline',3],['closingDate','Closing',1],['contractDate','Contract signed',0]];
+const ymdC=d=>d.replace(/-/g,'');
+const nextDay=d=>{const x=new Date(d+'T12:00');x.setDate(x.getDate()+1);return x.toISOString().slice(0,10)};
+function calTitle(d,label){return label+': '+(d.address||'Deal')+(d.unit?' #'+d.unit:'')}
+function calBody(d){return dealSummary(d).replace(/\nShared from Lendable\.$/,'')+'\n\nAdded from Lendable.'}
+function calLoc(d){return [d.address,d.unit?'Unit '+d.unit:'',d.borough].filter(Boolean).join(', ')}
+function outlookLink(d,k,label){const v=d[k];return 'https://outlook.office.com/calendar/0/deeplink/compose?path=%2Fcalendar%2Faction%2Fcompose&rru=addevent&allday=true&startdt='+v+'&enddt='+nextDay(v)+'&subject='+encodeURIComponent(calTitle(d,label))+'&location='+encodeURIComponent(calLoc(d))+'&body='+encodeURIComponent(calBody(d))}
+function googleLink(d,k,label){const v=d[k];return 'https://calendar.google.com/calendar/render?action=TEMPLATE&dates='+ymdC(v)+'/'+ymdC(nextDay(v))+'&text='+encodeURIComponent(calTitle(d,label))+'&location='+encodeURIComponent(calLoc(d))+'&details='+encodeURIComponent(calBody(d))}
+const icsEsc=t=>String(t||'').replace(/[’‘]/g,"'").replace(/·/g,'-').replace(/[^\x00-\x7F]/g,'').replace(/\\/g,'\\\\').replace(/;/g,'\;').replace(/,/g,'\\,').replace(/\r?\n/g,'\\n');
+const icsFold=l=>{const out=[];while(l.length>73){out.push(l.slice(0,73));l=' '+l.slice(73)}out.push(l);return out.join('\r\n')};
+function icsEvents(d,only){const stamp=new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d+Z$/,'Z');
+  return CAL_KINDS.filter(([k])=>d[k]&&(!only||only===k)&&(only||k!=='contractDate')).map(([k,label,remind])=>['BEGIN:VEVENT','UID:'+d.id+'-'+k+'@lendable','DTSTAMP:'+stamp,'DTSTART;VALUE=DATE:'+ymdC(d[k]),'DTEND;VALUE=DATE:'+ymdC(nextDay(d[k])),'SUMMARY:'+icsEsc(calTitle(d,label)),'LOCATION:'+icsEsc(calLoc(d)),'DESCRIPTION:'+icsEsc(calBody(d)),
+    ...(remind?['BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+icsEsc(calTitle(d,label)),'TRIGGER:-P'+remind+'D','END:VALARM']:[]),'END:VEVENT'].map(icsFold).join('\r\n'))}
+function icsDownload(events,name){if(!events.length){toast('No commitment or closing dates to add yet.');return}
+  const txt=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Lendable//Deals//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH',...events,'END:VCALENDAR'].join('\r\n');
+  const url=URL.createObjectURL(new Blob([txt],{type:'text/calendar;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=name.replace(/[^\w #.-]/g,'')+'.ics';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000)}
+function calSection(d){const ks=CAL_KINDS.filter(([k])=>d[k]&&k!=='contractDate');
+  if(!ks.length)return '<div class="dsec">Calendar</div><p class="emptyhint" style="margin:0">Add a commitment or closing date to put it on your calendar.</p>';
+  return '<div class="dsec">Add to calendar</div><div class="ccards">'+ks.map(([k,label,remind])=>'<div class="ccard"><div class="cr">'+label+'</div><div class="cn">'+esc(fmtDate(d[k]))+'</div><div class="cl">All-day event'+(remind?' · reminder '+remind+' day'+(remind>1?'s':'')+' before (iPhone/.ics)':'')+'</div><div class="cacts"><a class="cact" href="'+esc(outlookLink(d,k,label))+'" target="_blank" rel="noopener">Outlook</a><a class="cact" href="'+esc(googleLink(d,k,label))+'" target="_blank" rel="noopener">Google</a><button class="cact" data-dics="'+k+'">iPhone / .ics</button></div></div>').join('')+'</div>'}
+$('dealcal').onclick=()=>icsDownload(Object.values(DEALS).filter(isOpen).flatMap(d=>icsEvents(d)),'Lendable deal dates');
 /* rendering */
 function bFlags(d){const m=d.buildingId&&MINE[d.buildingId];if(!m)return null;return m.dob?{bad:dobBad(m.dob),m}:{bad:null,m}}
 function dealAlerts(all){
@@ -1547,7 +1569,7 @@ function dealDetail(d){
     '<div class="dgrid">'+f('address','Address','text','wide')+f('unit','Unit')+'<label>Building type<input data-dfield="type" value="'+esc(d.type||'')+'"></label>'+
       f('price','Purchase price','number')+f('deposit','Deposit','number')+f('loan','Loan amount','number')+f('lender','Lender')+
       f('contractDate','Contract date','date')+f('commitDate','Commitment date','date')+f('closingDate','Closing date','date')+'<label>Borough / city<input data-dfield="borough" value="'+esc(d.borough||'')+'"></label>'+
-      f('buyers','Buyers','text','wide')+f('sellers','Sellers','text','wide')+'</div>'+
+      f('buyers','Buyers','text','wide')+f('sellers','Sellers','text','wide')+'</div>'+calSection(d)+
     '<div class="dsec">Deal contacts</div><div class="ccards">'+d.contacts.map((c,i)=>contactCard(d,c,i)).join('')+'<button class="ccard" data-cadd style="color:var(--accent);font-weight:600;text-align:center;border-style:dashed">＋ Add contact</button></div>'+
     '<div class="dsec">Documents</div><div class="mydocs" style="margin-top:0">'+(d.docs||[]).map((x,i)=>'<div class="mydoc"><span style="color:var(--accent)">▤</span><span class="nm">'+esc(x.name)+' <small>· '+esc(x.type)+' · '+Math.ceil(x.size/1024)+' KB</small></span><button class="linkbtn" data-dopen="'+i+'">Open</button><button class="removefile" data-ddel="'+i+'" aria-label="Remove '+esc(x.name)+'">×</button></div>').join('')+'</div>'+
     '<textarea class="mynotes" data-dnotes placeholder="Deal notes: board package status, appraisal, conditions…">'+esc(d.notes||'')+'</textarea>'+
@@ -1594,6 +1616,7 @@ dealsEl.addEventListener('click',async e=>{
   if(e.target.closest('[data-dtoggle]')){dealState.open=dealState.open===d.id?null:d.id;dealState.edit=null;renderDeals();return}
   if(e.target.closest('[data-dbuilding]')){if(d.buildingId&&MINE[d.buildingId]){mineState.open=d.buildingId;mineState.f='';mineState.s='';setView('mine');setTimeout(()=>{const r=document.querySelector('tr.mrow.open');if(r)r.scrollIntoView({block:'center',behavior:'smooth'})},80)}return}
   if(e.target.closest('[data-dlook]')){send(d.address);return}
+  const ic=e.target.closest('[data-dics]');if(ic){const lbl=(CAL_KINDS.find(x=>x[0]===ic.dataset.dics)||[])[1]||'Deal';icsDownload(icsEvents(d,ic.dataset.dics),calTitle(d,lbl));return}
   const ce=e.target.closest('[data-cedit]');if(ce){dealState.edit=d.id+':'+ce.dataset.cedit;renderDeals();return}
   const cd=e.target.closest('[data-cdone]');if(cd){dealState.edit=null;renderDeals();return}
   const cx=e.target.closest('[data-cdel]');if(cx){d.contacts.splice(+cx.dataset.cdel,1);dealState.edit=null;d.updated=Date.now();dealSave();renderDeals();return}
