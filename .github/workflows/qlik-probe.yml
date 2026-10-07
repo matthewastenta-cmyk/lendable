@@ -7,6 +7,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: |
-          npm i ws@8 --no-save --silent
+          npm i playwright@1.47.2 --no-save --silent && npx playwright install --with-deps chromium >/dev/null 2>&1
           node scripts/qlik_probe.js > /tmp/qlik_log.txt 2>&1 || true
           mkdir /tmp/log && cd /tmp/log && cp /tmp/qlik_log.txt . && git init -q && git checkout -q -b data-logs && git add -A && git -c user.name=bot -c user.email=bot@example.com commit -qm log && git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" data-logs
