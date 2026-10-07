@@ -1,4 +1,6 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<div class="toast hide" id="toast" role="status" aria-live="polite"></div>
+
 <title>Lendable</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2040%2040%22%3E%3Crect%20width%3D%2240%22%20height%3D%2240%22%20rx%3D%2211%22%20fill%3D%22%236848dc%22%2F%3E%3Cpath%20fill%3D%22white%22%20d%3D%22M7%207h11v18h5v-7h6v7h5v9H7z%22%2F%3E%3Cpath%20fill%3D%22%236848dc%22%20d%3D%22M10%2011h2v3h-2zm5%200h2v3h-2zm-5%207h2v3h-2zm5%200h2v3h-2zm11%203h2v3h-2zm-15%208h3v2h-3zm7%200h3v2h-3zm7%200h3v2h-3z%22%2F%3E%3C%2Fsvg%3E">
 <style>
@@ -89,6 +91,29 @@ small{font-size:13px;color:var(--muted)}
 .mtable .chev{color:var(--muted);font-size:16px;transition:transform .15s;display:inline-block}
 .mtable tr.open .chev{transform:rotate(90deg)}
 @media(max-width:850px){.alertcards{grid-template-columns:1fr 1fr}.acard .av{font-size:22px}}
+.choice.primarybtn{background:var(--accent);color:var(--on-accent);border-color:var(--accent);font-weight:600}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:60;background:var(--ink);color:var(--bg);padding:11px 16px;border-radius:11px;font-size:14px;box-shadow:0 8px 24px var(--shadow);display:flex;gap:12px;align-items:center;max-width:calc(100vw - 32px)}
+.toast button{color:var(--glow);font-weight:650;font-size:14px;white-space:nowrap}
+.toast.hide{display:none}
+.dgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 14px;margin-top:12px}
+.dgrid label{font-size:11.5px;color:var(--muted);font-weight:600;display:flex;flex-direction:column;gap:4px;margin:0}
+.dgrid input{padding:8px 10px;font-size:14px;border-radius:8px;width:100%}
+.dgrid .wide{grid-column:span 2}
+.dsec{font-size:12px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);font-weight:650;margin:18px 0 8px}
+.ccards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.ccard{border:1px solid var(--line);border-radius:11px;background:var(--surface);padding:11px 13px;min-width:0}
+.ccard .cr{font-size:11px;letter-spacing:.6px;text-transform:uppercase;color:var(--accent);font-weight:650}
+.ccard .cn{font-weight:650;font-size:14.5px;margin-top:3px;overflow-wrap:anywhere}
+.ccard .cf{font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.ccard .cl{font-size:12.5px;color:var(--muted);margin-top:4px;overflow-wrap:anywhere}
+.cacts{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.cact{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:7px;padding:6px 10px;font-size:13px;font-weight:600;color:var(--deep);background:var(--surface)}
+.cact:hover{border-color:var(--accent);background:var(--soft)}
+.cact.sm{padding:4px 8px;font-size:12px;font-weight:500;color:var(--muted)}
+.ccard .cedit{display:grid;gap:6px;margin-top:6px}.ccard .cedit input,.ccard .cedit select{padding:7px 9px;font-size:13.5px;border-radius:7px;width:100%}
+.dchip{display:inline-flex;gap:8px;align-items:center;background:var(--soft);color:var(--deep);border-radius:8px;padding:6px 10px;font-size:13px;margin-top:12px}
+.extracting{color:var(--muted);font-size:13px}
+@media(max-width:850px){.dgrid{grid-template-columns:1fr 1fr}}
 .mycard{border:1px solid var(--line);border-radius:13px;background:var(--surface);padding:16px 18px;margin-bottom:14px}
 .mycard h3{font-size:16px;margin:0}
 .myhead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
@@ -438,6 +463,7 @@ tbody tr:hover .open,tbody tr:focus-within .open{opacity:1}
       <button class="navbtn" id="nav-list"><span class="ic">▦</span>Financing activity<span class="tag num" id="navcount">…</span></button>
       <button class="navbtn" id="nav-dob"><span class="ic">⚑</span>DOB assistant</button>
       <button class="navbtn" id="nav-mine"><span class="ic">★</span>My buildings<span class="tag num" id="minecount">0</span></button>
+      <button class="navbtn" id="nav-deals"><span class="ic">◈</span>My deals<span class="tag num" id="dealcount">0</span></button>
       <button class="navbtn" id="nav-docs"><span class="ic">▤</span>Underwrite Project Documents</button>
     </div>
     <div class="sidebarbottom">
@@ -559,6 +585,21 @@ tbody tr:hover .open,tbody tr:focus-within .open{opacity:1}
         <div id="minelist"></div>
         <p class="listfoot" style="margin-top:18px" id="minefoot">Saved on this device for now. Sign-in, syncing across devices and sharing with your team come with accounts.</p>
       </div></section>
+      <section class="pageview hide" id="dealsview" aria-labelledby="dealstitle"><div class="pageinner" style="max-width:1180px">
+        <div class="eyebrow" style="font-size:12px;margin-bottom:6px">Your pipeline</div>
+        <h2 id="dealstitle">My deals</h2>
+        <p style="color:var(--muted);font-size:14px;margin-top:4px;max-width:680px">Upload a contract and Lendable pulls out the price, dates, lender and every attorney, broker and loan officer, with one tap to call or email. Each deal links to its building’s DOB and litigation flags.</p>
+        <div class="alertcards" id="dealalerts"></div>
+        <div class="controls" style="margin-top:16px">
+          <input class="search" id="dealq" type="search" placeholder="Search address, lender, attorney…" aria-label="Search my deals">
+          <div class="seg" id="dealseg" role="group" aria-label="Filter by stage"><button class="active" data-ds="">All</button><button data-ds="open">Open</button><button data-ds="closed">Closed</button></div>
+          <label class="choice primarybtn" style="margin-left:auto;position:relative;overflow:hidden;cursor:pointer">＋ New deal from contract<input type="file" id="dealupload" accept=".pdf,.jpg,.jpeg,.png,.webp,.txt" style="position:absolute;inset:0;opacity:0;cursor:pointer"></label>
+          <button class="choice" id="dealadd">Add manually</button>
+        </div>
+        <div id="dealfilter"></div>
+        <div id="deallist"></div>
+        <p class="listfoot" style="margin-top:18px">Deals and documents are saved on this device for now. Contracts are read by Lendable AI to fill in the deal; check the extracted figures and dates against the contract.</p>
+      </div></section>
       <section class="pageview hide" id="dobview" aria-labelledby="dobtitle"><div class="pageinner" style="max-width:820px">
         <div class="eyebrow" style="font-size:12px;margin-bottom:6px">NYC Buildings &amp; HPD records</div>
         <h2 id="dobtitle">DOB assistant</h2>
@@ -633,17 +674,17 @@ $('menu').onclick=()=>$('sidebar').classList.toggle('open');
 $('paneltoggle').onclick=()=>$('panel').classList.toggle('open');
 
 /* ---------- views ---------- */
-const VIEWS={chat:['chatview','nav-chat','Building assistant'],search:['searchview','nav-search','Building search'],list:['listview','nav-list','Financing activity'],dob:['dobview','nav-dob','DOB assistant'],mine:['mineview','nav-mine','My buildings']};
+const VIEWS={chat:['chatview','nav-chat','Building assistant'],search:['searchview','nav-search','Building search'],list:['listview','nav-list','Financing activity'],dob:['dobview','nav-dob','DOB assistant'],mine:['mineview','nav-mine','My buildings'],deals:['dealsview','nav-deals','My deals']};
 function setView(v){
   for(const [k,[sec,nav]] of Object.entries(VIEWS)){$(sec).classList.toggle('hide',k!==v);$(nav).classList.toggle('selected',k===v)}
   const chat=v==='chat';$('panel').classList.toggle('hide',!chat);$('paneltoggle').classList.toggle('hide',!chat);
   $('viewtitle').textContent=VIEWS[v][2];
   $('sidebar').classList.remove('open');$('panel').classList.remove('open');
-  if(v==='list')renderList();if(v==='mine'){renderMine();refreshMine(false)}if(v==='search'){renderSearch();loadDB()}
+  if(v==='list')renderList();if(v==='mine'){renderMine();refreshMine(false)}if(v==='deals')renderDeals();if(v==='search'){renderSearch();loadDB()}
 }
 const emptyBrief='<div class="buildingicon">▤</div><h2>Your building,<br>at a glance.</h2><p class="emptyhint">As we explore an address, its financing history and next steps will appear here.</p><div class="panelsection"><h3>What we’ll look at</h3><div class="metric"><span>Building & property type</span><span>◇</span></div><div class="metric"><span>Observed lenders</span><span>◇</span></div><div class="metric"><span>Approval verification</span><span>◇</span></div></div><div class="panelsection"><small>Recent mortgage activity covers '+NB+' condo and co-op buildings in Manhattan, Brooklyn and Queens ('+esc(FIN.window)+').</small></div>';
 function reset(){selected=null;awaiting=null;deal={};$('messages').innerHTML='';$('messages').classList.add('hide');$('welcome').classList.remove('hide');$('brief').innerHTML=emptyBrief;$('prompt').value='';setView('chat')}
-$('new').onclick=reset;$('nav-chat').onclick=()=>setView('chat');$('nav-dob').onclick=()=>setView('dob');$('nav-mine').onclick=()=>setView('mine');$('nav-search').onclick=()=>setView('search');$('nav-list').onclick=()=>setView('list');
+$('new').onclick=reset;$('nav-chat').onclick=()=>setView('chat');$('nav-dob').onclick=()=>setView('dob');$('nav-mine').onclick=()=>setView('mine');$('nav-deals').onclick=()=>setView('deals');$('nav-search').onclick=()=>setView('search');$('nav-list').onclick=()=>setView('list');
 
 /* ---------- chat rendering ---------- */
 function add(html,user=false){$('welcome').classList.add('hide');$('messages').classList.remove('hide');const m=document.createElement('div');m.className='msg'+(user?' user':'');m.innerHTML=user?'<div class="bubble">'+esc(html)+'</div>':'<div class="badge">✧</div><div class="response">'+html+'</div>';$('messages').append(m);$('messages').scrollTop=$('messages').scrollHeight}
@@ -1317,7 +1358,10 @@ let idbP=null;
 function idb(){if(!idbP)idbP=new Promise((res,rej)=>{try{const r=indexedDB.open('lendable-docs',1);r.onupgradeneeded=()=>r.result.createObjectStore('files');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}catch(e){rej(e)}});return idbP}
 async function idbDo(mode,fn){const db=await idb();return new Promise((res,rej)=>{const tx=db.transaction('files',mode);const st=tx.objectStore('files');const r=fn(st);tx.oncomplete=()=>res(r&&r.result);tx.onerror=()=>rej(tx.error)})}
 async function docsAdd(id,file,type){if(file.size>20*1024*1024)throw Error('too_big');const key=id+'::'+Date.now()+'::'+Math.random().toString(36).slice(2,7);await idbDo('readwrite',st=>st.put(file,key));const m=MINE[id];if(m){m.docs.push({key,name:file.name,size:file.size,type:type||guessType(file.name),added:Date.now()});m.updated=Date.now()}return key}
-async function docsDel(key){try{await idbDo('readwrite',st=>st.delete(key))}catch(e){}}
+function docRefs(key){let n=0;for(const m of Object.values(MINE))n+=(m.docs||[]).filter(d=>d.key===key).length;for(const d of Object.values(typeof DEALS==='undefined'?{}:DEALS))n+=(d.docs||[]).filter(x=>x.key===key).length;return n}
+async function docsDel(key){if(docRefs(key)>1)return;try{await idbDo('readwrite',st=>st.delete(key))}catch(e){}}
+async function docPut(file,type,prefix){if(file.size>20*1024*1024)throw Error('too_big');const key=(prefix||'deal')+'::'+Date.now()+'::'+Math.random().toString(36).slice(2,7);await idbDo('readwrite',st=>st.put(file,key));return {key,name:file.name,size:file.size,type:type||guessType(file.name),added:Date.now()}}
+async function docBlob(meta){const b=await idbDo('readonly',st=>st.get(meta.key));return b?new File([b],meta.name,{type:b.type||''}):null}
 async function docOpen(key,name){try{const blob=await idbDo('readonly',st=>st.get(key));if(!blob){alert('That file isn’t stored in this browser anymore.');return}const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=name;a.target='_blank';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000)}catch(e){alert('Couldn’t open that file in this view.')}}
 
 const mineState={q:'',s:'',f:'',open:null};
@@ -1343,9 +1387,9 @@ function cellFac(m){const x=m.dob;if(!x)return '<span class="na">—</span>';
   if(/SWARMP/i.test(x.facade||''))return '<button class="cell warn" data-dobopen="'+esc(m.address)+'">Repairs needed</button>';
   return x.facade?'<span class="ok">✓ '+esc(x.facade.charAt(0)+x.facade.slice(1).toLowerCase())+'</span>':'<span class="na">No filing</span>'}
 function mineDetail(id,m){
-  return '<tr class="mdetail" data-mine="'+esc(id)+'"><td colspan="9">'+
+  return '<tr class="mdetail" data-mine="'+esc(id)+'"><td colspan="10">'+(()=>{const ds=dealsFor(id);return ds.length?'<div class="dsec" style="margin-top:12px">Deals in this building</div>'+ds.map(d=>'<button class="cact" data-gotodeal="'+esc(d.id)+'">◈ '+esc((d.unit?'Unit '+d.unit+' · ':'')+(d.price?money(d.price):'Deal')+(d.closingDate?' · closing '+fmtDate(d.closingDate):''))+'</button>').join(' '):''})()+
     '<textarea class="mynotes" data-mnotes placeholder="Your notes: lender feedback, questionnaire answers, assessments, board quirks…">'+esc(m.notes||'')+'</textarea>'+
-    '<div class="mydocs">'+(m.docs||[]).map((d,i)=>'<div class="mydoc"><span style="color:var(--accent)">▤</span><span class="nm">'+esc(d.name)+' <small>· '+esc(d.type)+' · '+Math.ceil(d.size/1024)+' KB</small></span><button class="linkbtn" data-mopen="'+i+'">Open</button><button class="removefile" data-mdel="'+i+'" aria-label="Remove '+esc(d.name)+'">×</button></div>').join('')+'</div>'+
+    '<div class="mydocs">'+(m.docs||[]).map((d,i)=>'<div class="mydoc"><span style="color:var(--accent)">▤</span><span class="nm">'+esc(d.name)+' <small>· '+esc(d.type)+' · '+Math.ceil(d.size/1024)+' KB</small></span><button class="linkbtn" data-mopen="'+i+'">Open</button>'+(/pdf|jpe?g|png|webp|txt/i.test(d.name)?'<button class="linkbtn" data-mdeal="'+i+'" title="Read this contract into My deals">⇢ Make deal</button>':'')+'<button class="removefile" data-mdel="'+i+'" aria-label="Remove '+esc(d.name)+'">×</button></div>').join('')+'</div>'+
     '<div class="myrow"><label class="addfile">⊕ Add documents<input type="file" multiple data-madd accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.jpg,.jpeg,.png,.webp"></label>'+
     '<button class="choice" data-dobopen="'+esc(m.address)+'">DOB &amp; litigation details</button><button class="choice" data-mlook>Open building</button><button class="choice" data-mshare>Share summary</button><button class="linkbtn" data-mremove style="color:var(--muted);margin-left:auto">Remove</button></div></td></tr>'}
 function renderMine(){
@@ -1357,12 +1401,13 @@ function renderMine(){
     .sort((a,b)=>{const x=sortv(a[1],mineSort.k),y=sortv(b[1],mineSort.k);return (x<y?-1:x>y?1:0)*mineSort.d});
   if(!all.length){$('minelist').innerHTML='<div class="mycard" style="margin-top:14px"><h3>No saved buildings yet</h3><p class="emptyhint" style="margin:6px 0 0">Look up any building and tap <strong>☆ Save to My buildings</strong>. It lands here with its DOB and litigation alerts, and you can mark it clean or problematic, add notes and keep the questionnaire, budget and other documents with it.</p></div>';return}
   const th=(k,l)=>'<th data-msort="'+k+'" aria-sort="'+(mineSort.k===k?(mineSort.d>0?'ascending':'descending'):'none')+'">'+l+(mineSort.k===k?(mineSort.d>0?' ↑':' ↓'):'')+'</th>';
-  $('minelist').innerHTML=rows.length?'<div class="mtwrap"><table class="mtable"><thead><tr>'+th('address','Building')+th('status','My verdict')+th('vio','Code violations')+th('lit','Litigation')+th('fac','Facade / vacate')+th('lenders','Lenders')+th('docs','Docs')+th('checked','Checked')+'<th class="nosort"></th></tr></thead><tbody>'+
+  $('minelist').innerHTML=rows.length?'<div class="mtwrap"><table class="mtable"><thead><tr>'+th('address','Building')+th('status','My verdict')+th('vio','Code violations')+th('lit','Litigation')+th('fac','Facade / vacate')+th('lenders','Lenders')+th('deals','Deals')+th('docs','Docs')+th('checked','Checked')+'<th class="nosort"></th></tr></thead><tbody>'+
     rows.map(([id,m])=>{const b=findBuilding(m.address);const open=mineState.open===id;const nl=b?b.lenders.length:0;
       return '<tr class="mrow'+(open?' open':'')+'" data-mine="'+esc(id)+'"><td class="addr"><button data-mtoggle aria-expanded="'+open+'">'+esc(m.address)+(m.alertNew?'<span class="newdot">NEW</span>':'')+'</button><small>'+esc([m.borough,m.type].filter(Boolean).join(' · '))+'</small></td>'+
         '<td><select class="mystatus" data-mstatus aria-label="My verdict for '+esc(m.address)+'">'+Object.entries(STATUS).map(([k,v])=>'<option value="'+k+'"'+(k===m.status?' selected':'')+'>'+v[0]+'</option>').join('')+'</select></td>'+
         '<td>'+cellVio(m)+'</td><td>'+cellLit(m)+'</td><td>'+cellFac(m)+'</td>'+
         '<td class="num">'+(nl?'<button class="linkbtn" data-mlook>'+nl+' lender'+(nl>1?'s':'')+'</button>':'<span class="na">—</span>')+'</td>'+
+        '<td class="num">'+(()=>{const n=dealsFor(id).length;return n?'<button class="linkbtn" data-mdeals>'+n+' deal'+(n>1?'s':'')+'</button>':'<span class="na">—</span>'})()+'</td>'+
         '<td class="num">'+((m.docs||[]).length||'<span class="na">—</span>')+'</td>'+
         '<td><small>'+(m.dob?new Date(m.dob.at).toLocaleDateString():'—')+'</small></td>'+
         '<td><button data-mtoggle aria-label="Notes and documents" style="padding:4px 6px"><span class="chev">›</span></button></td></tr>'+(open?mineDetail(id,m):'')}).join('')+
@@ -1387,13 +1432,16 @@ function mineSummary(m){const b=findBuilding(m.address);const st=(STATUS[m.statu
     '','Shared from Lendable. Past financing is not project approval; confirm with the lender.'].join('\n')}
 $('minelist').addEventListener('change',async e=>{const card=e.target.closest('[data-mine]');if(!card)return;const id=card.dataset.mine,m=MINE[id];if(!m)return;
   if(e.target.matches('[data-mstatus]')){m.status=e.target.value;m.updated=Date.now();mineSave();return}
-  if(e.target.matches('[data-madd]')){const files=[...e.target.files];let skipped=0;for(const f of files){try{await docsAdd(id,f)}catch(err){skipped++}}mineSave();renderMine();if(skipped)alert(skipped+' file(s) couldn’t be saved (over 20 MB or storage unavailable in this view).')}});
+  if(e.target.matches('[data-madd]')){const files=[...e.target.files];let skipped=0;const contracts=[];for(const f of files){try{await docsAdd(id,f);if(isContractName(f.name))contracts.push([f,m.docs[m.docs.length-1]])}catch(err){skipped++}}mineSave();renderMine();if(skipped)alert(skipped+' file(s) couldn’t be saved (over 20 MB or storage unavailable in this view).');for(const [f,meta] of contracts)runDealExtract(f,id,meta)}});
 $('minelist').addEventListener('focusout',e=>{if(!e.target.matches('[data-mnotes]'))return;const id=e.target.closest('[data-mine]').dataset.mine;if(MINE[id]&&MINE[id].notes!==e.target.value){MINE[id].notes=e.target.value;MINE[id].updated=Date.now();mineSave()}});
 $('minelist').addEventListener('click',async e=>{const th=e.target.closest('[data-msort]');if(th){const k=th.dataset.msort;mineSort.d=mineSort.k===k?-mineSort.d:(k==='address'?1:-1);mineSort.k=k;renderMine();return}
   const card=e.target.closest('[data-mine]');if(!card)return;const id=card.dataset.mine,m=MINE[id];if(!m)return;
   if(e.target.closest('[data-dobopen]')){if(m.alertNew){m.alertNew=false;mineSave()}return}
   if(e.target.closest('[data-mtoggle]')){mineState.open=mineState.open===id?null:id;if(m.alertNew){m.alertNew=false;mineSave()}renderMine();return}
   const o=e.target.closest('[data-mopen]');if(o){const d=m.docs[+o.dataset.mopen];if(d)docOpen(d.key,d.name);return}
+  const md2=e.target.closest('[data-mdeal]');if(md2){const meta=m.docs[+md2.dataset.mdeal];if(!meta)return;const f=await docBlob(meta).catch(()=>null);if(!f){alert('That file isn’t stored in this browser anymore.');return}runDealExtract(f,id,meta);return}
+  if(e.target.closest('[data-mdeals]')){dealState.building=id;setView('deals');return}
+  const gd=e.target.closest('[data-gotodeal]');if(gd){openDeal(gd.dataset.gotodeal);return}
   const del=e.target.closest('[data-mdel]');if(del){const d=m.docs[+del.dataset.mdel];if(d&&confirm('Remove '+d.name+'?')){await docsDel(d.key);m.docs.splice(+del.dataset.mdel,1);m.updated=Date.now();mineSave();renderMine()}return}
   if(e.target.closest('[data-mlook]')){send(m.address);return}
   if(e.target.closest('[data-mshare]')){const text=mineSummary(m);try{if(navigator.share){await navigator.share({title:m.address+' · Lendable',text});return}}catch(err){if(err&&err.name==='AbortError')return}try{await navigator.clipboard.writeText(text);e.target.textContent='Copied ✓';setTimeout(()=>e.target.textContent='Share summary',2000)}catch(err){prompt('Copy this summary:',text)}return}
@@ -1401,6 +1449,171 @@ $('minelist').addEventListener('click',async e=>{const th=e.target.closest('[dat
 $('mineq').oninput=e=>{mineState.q=e.target.value;renderMine()};
 $('minealerts').onclick=e=>{const c=e.target.closest('[data-mf]');if(!c)return;mineState.f=mineState.f===c.dataset.mf?'':c.dataset.mf;renderMine()};
 $('minerefresh').onclick=()=>refreshMine(true);
+
+/* ---------- My deals ---------- */
+const DEAL_KEY='lendable:deals:v1';
+let DEALS={};try{DEALS=JSON.parse(localStorage.getItem(DEAL_KEY))||{}}catch(e){}
+const DSTAT={active:['In contract','amber'],uw:['In underwriting','amber'],ctc:['Clear to close','good'],closed:['Closed','grey'],dead:['Fell through','red']};
+const ROLES={buyer_attorney:'Buyer’s attorney',seller_attorney:'Seller’s attorney',buyer_broker:'Buyer’s broker',listing_broker:'Listing broker',lender:'Lender / loan officer',escrow_agent:'Escrow agent',title:'Title',managing_agent:'Managing agent',other:'Contact'};
+const dealState={q:'',s:'',f:'',open:null,building:null,edit:null,sort:'closing',dir:1};
+function dealSave(){try{localStorage.setItem(DEAL_KEY,JSON.stringify(DEALS))}catch(e){}$('dealcount').textContent=Object.keys(DEALS).length}
+const dealsFor=bid=>Object.values(DEALS).filter(d=>d.buildingId===bid);
+const isContractName=n=>/contract|purchase|\bcos\b|rider|agreement|offer|commitment|\bpsa\b/i.test(n);
+const fmtDate=d=>{if(!d)return '';const x=new Date(d+'T12:00');return isNaN(x)?d:x.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})};
+const daysTo=d=>{if(!d)return null;const x=new Date(d+'T12:00');return isNaN(x)?null:Math.round((x-Date.now())/864e5)};
+const isOpen=d=>!['closed','dead'].includes(d.status);
+function toast(html,ms){const t=$('toast');t.innerHTML=html;t.classList.remove('hide');clearTimeout(toast.t);if(ms!==0)toast.t=setTimeout(()=>t.classList.add('hide'),ms||7000)}
+$('toast').addEventListener('click',e=>{const g=e.target.closest('[data-gotodeal]');if(g){$('toast').classList.add('hide');openDeal(g.dataset.gotodeal)}});
+
+/* contract reading */
+const EXTRACT_PROMPT='You extract deal data from a real estate document (purchase contract, rider, commitment letter). Return ONLY one JSON object with keys: doc_type, address, unit, city, property_type, purchase_price, deposit, loan_amount, contract_date, closing_date, commitment_date (all dates YYYY-MM-DD), financing_contingent, lender, buyers (array), sellers (array), contacts (array of {role: buyer_attorney|seller_attorney|buyer_broker|listing_broker|lender|escrow_agent|title|managing_agent|other, name, firm, phone, email}), notes (one or two short lines a loan officer should notice). Use null when a value is not in the document; never guess. Amounts are plain numbers.';
+let pdfjsP=null;
+function pdfjs(){if(!pdfjsP)pdfjsP=new Promise((res,rej)=>{if(window.pdfjsLib)return res(window.pdfjsLib);const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';sc.onload=()=>{window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';res(window.pdfjsLib)};sc.onerror=()=>{pdfjsP=null;rej(Error('pdfjs'))};document.head.append(sc)});return pdfjsP}
+async function pdfText(file){const lib=await pdfjs();const doc=await lib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;let out='';for(let i=1;i<=Math.min(doc.numPages,80);i++){const p=await doc.getPage(i);const c=await p.getTextContent();out+='\n[Page '+i+']\n'+c.items.map(x=>x.str+(x.hasEOL?'\n':' ')).join('')}return out}
+const toB64=file=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]);r.onerror=rej;r.readAsDataURL(file)});
+function parseJSON(t){const m=String(t||'').match(/\{[\s\S]*\}/);if(!m)return null;try{return JSON.parse(m[0])}catch(e){return null}}
+async function extractDeal(file){
+  const isPdf=/pdf/i.test(file.type)||/\.pdf$/i.test(file.name);let text='';
+  if(isPdf){try{text=await pdfText(file)}catch(e){}}else if(/^text\//.test(file.type)||/\.txt$/i.test(file.name))text=await file.text();
+  const enough=text.replace(/\[Page \d+\]|\s/g,'').length>400;
+  if(sampleFn){if(!enough)throw {code:'scanned'};const r=await sampleFn([{role:'user',content:EXTRACT_PROMPT+'\n\nDocument text:\n'+text.slice(0,150000)}],{cache:false});const d=parseJSON(r.text);if(!d)throw {code:'unreadable'};return d}
+  if(!/^https?:$/.test(location.protocol))throw {code:'no_ai'};
+  let body;if(enough)body={text:text.slice(0,150000)};else{if(file.size>3.2*1024*1024)throw {code:'too_big'};const mt=isPdf?'application/pdf':(file.type||'');if(!/^(application\/pdf|image\/)/.test(mt))throw {code:'unsupported_type'};body={file:await toB64(file),mediaType:mt}}
+  let r;try{r=await fetch('api/extract',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)})}catch(e){throw {code:'upstream_error'}}
+  const j=await r.json().catch(()=>({}));if(!r.ok||!j.data)throw {code:j.error||'upstream_error'};return j.data}
+const num=v=>{const n=typeof v==='number'?v:parseFloat(String(v||'').replace(/[^0-9.]/g,''));return isFinite(n)&&n>0?n:null};
+const ymdOk=v=>/^\d{4}-\d{2}-\d{2}$/.test(String(v||''))?v:'';
+function contactsFrom(d){return (Array.isArray(d.contacts)?d.contacts:[]).filter(c=>c&&(c.name||c.firm)).map(c=>({role:ROLES[c.role]?c.role:'other',name:String(c.name||''),firm:String(c.firm||''),phone:String(c.phone||''),email:String(c.email||'')}))}
+function sameContact(a,b){const k=x=>(x.email||'').toLowerCase()||(x.name||'').toLowerCase().replace(/[^a-z]/g,'')+'|'+x.role;return k(a)&&k(a)===k(b)}
+function mergeDeal(deal,d){const set=(k,v)=>{if(v&&!deal[k])deal[k]=v};
+  set('unit',d.unit?String(d.unit):'');set('price',num(d.purchase_price));set('deposit',num(d.deposit));set('loan',num(d.loan_amount));
+  set('contractDate',ymdOk(d.contract_date));set('closingDate',ymdOk(d.closing_date));set('commitDate',ymdOk(d.commitment_date));
+  set('lender',d.lender?(findLender(d.lender)||String(d.lender)):'');set('buyers',(d.buyers||[]).join(', '));set('sellers',(d.sellers||[]).join(', '));
+  if(d.notes)deal.notes=deal.notes?(deal.notes.includes(d.notes)?deal.notes:deal.notes+'\n'+d.notes):String(d.notes);
+  for(const c of contactsFrom(d))if(!deal.contacts.some(x=>sameContact(x,c)))deal.contacts.push(c);
+  // remember the loan officer's email for review requests on this lender
+  const lo=deal.contacts.find(c=>c.role==='lender'&&c.email);const ln=deal.lender&&findLender(deal.lender);if(lo&&ln&&!LCONTACTS[ln]){LCONTACTS[ln]=lo.email;try{localStorage.setItem(LC_KEY,JSON.stringify(LCONTACTS))}catch(e){}}
+  deal.updated=Date.now();return deal}
+function newDeal(o){return Object.assign({id:'d'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),buildingId:null,address:'',unit:'',borough:'',type:'',status:'active',price:null,deposit:null,loan:null,contractDate:'',closingDate:'',commitDate:'',lender:'',buyers:'',sellers:'',contacts:[],docs:[],notes:'',created:Date.now(),updated:Date.now()},o||{})}
+function linkBuilding(deal,addr,city,ptype){if(!addr)return;const b=findBuilding(addr+' '+(city||''))||findBuilding(addr);const bo=b||{address:addr,borough:city||'',type:ptype||'',lenders:[]};ensureSaved(bo);deal.buildingId=mineId(bo);deal.address=bo.address;deal.borough=bo.borough||city||'';deal.type=bo.type||ptype||''}
+async function dealFromFile(file,buildingId,meta){
+  const d=await extractDeal(file);
+  if(!d||(!d.address&&!num(d.purchase_price)&&!contactsFrom(d).length&&!d.closing_date))throw {code:'nothing'};
+  const unit=d.unit?String(d.unit):'';
+  let bid=buildingId&&MINE[buildingId]?buildingId:null;
+  if(!bid&&d.address){const tmp=newDeal();linkBuilding(tmp,String(d.address),d.city,d.property_type);bid=tmp.buildingId}
+  let deal=Object.values(DEALS).find(x=>bid&&x.buildingId===bid&&isOpen(x)&&(!x.unit||!unit||x.unit.replace(/\W/g,'').toLowerCase()===unit.replace(/\W/g,'').toLowerCase()));
+  const merged=!!deal;
+  if(!deal){deal=newDeal();if(bid){const m=MINE[bid];deal.buildingId=bid;deal.address=m.address;deal.borough=m.borough;deal.type=m.type}else if(d.address){deal.address=String(d.address);deal.borough=d.city||''}}
+  mergeDeal(deal,d);
+  if(!meta){meta=bid&&MINE[bid]?(await docsAdd(bid,file,/commit/i.test(d.doc_type||'')?'Commitment letter':'Contract'),MINE[bid].docs[MINE[bid].docs.length-1]):await docPut(file,'Contract')}
+  if(!deal.docs.some(x=>x.key===meta.key))deal.docs.push(Object.assign({},meta,{type:/commit/i.test(d.doc_type||'')?'Commitment letter':/rider/i.test(d.doc_type||'')?'Rider':'Contract'}));
+  DEALS[deal.id]=deal;dealSave();mineSave();return {deal,merged}}
+const EXERR={scanned:'This looks like a scanned contract. Scanned files can be read on the live site, not in this preview.',too_big:'That scanned file is over 3 MB. Upload a text PDF, or a smaller scan.',no_ai:'Contract reading needs Lendable AI, which isn’t available in this view.',not_configured:'Contract reading needs the Anthropic key set up on Vercel.',rate_limited:'Lendable AI is busy. Try again in a minute.',nothing:'Couldn’t find deal details in that file. Is it the contract?',unsupported_type:'Upload a PDF or a photo of the contract.',unreadable:'Couldn’t read that file. Try again or add the deal manually.'};
+async function runDealExtract(file,buildingId,meta){
+  toast('<span class="extracting">◈</span> Reading '+esc(file.name)+' for deal details…',0);
+  try{const {deal,merged}=await dealFromFile(file,buildingId,meta);
+    const what=[deal.price?money(deal.price):'',deal.closingDate?'closing '+fmtDate(deal.closingDate):'',deal.contacts.length?deal.contacts.length+' contact'+(deal.contacts.length>1?'s':''):''].filter(Boolean).join(' · ');
+    toast((merged?'Updated deal':'New deal')+': '+esc(deal.address+(deal.unit?' #'+deal.unit:''))+(what?' · '+esc(what):'')+' <button data-gotodeal="'+esc(deal.id)+'">Open</button>',9000);
+    if(!$('mineview').classList.contains('hide'))renderMine();if(!$('dealsview').classList.contains('hide'))renderDeals();return deal}
+  catch(e){toast(esc(EXERR[e&&e.code]||'Couldn’t read that contract. Try again or add the deal manually.'),9000);return null}}
+$('dealupload').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;if(f.size>20*1024*1024){toast('Files above 20 MB can’t be saved.');return}const d=await runDealExtract(f,dealState.building,null);if(d){dealState.open=d.id;renderDeals()}};
+$('dealadd').onclick=()=>{const d=newDeal();if(dealState.building&&MINE[dealState.building]){const m=MINE[dealState.building];Object.assign(d,{buildingId:dealState.building,address:m.address,borough:m.borough,type:m.type})}DEALS[d.id]=d;dealSave();dealState.open=d.id;dealState.f='';dealState.s='';renderDeals();setTimeout(()=>{const i=document.querySelector('[data-dfield="address"]');if(i&&!i.value)i.focus()},50)};
+function openDeal(id){if(!DEALS[id])return;dealState.open=id;dealState.f='';dealState.s='';dealState.q='';$('dealq').value='';dealState.building=null;setView('deals');setTimeout(()=>{const r=document.querySelector('tr.drow.open');if(r)r.scrollIntoView({block:'center',behavior:'smooth'})},60)}
+
+/* rendering */
+function bFlags(d){const m=d.buildingId&&MINE[d.buildingId];if(!m)return null;return m.dob?{bad:dobBad(m.dob),m}:{bad:null,m}}
+function dealAlerts(all){
+  const open=all.filter(isOpen);
+  const soon=open.filter(d=>{const n=daysTo(d.closingDate);return n!=null&&n<=30});
+  const commit=open.filter(d=>{const n=daysTo(d.commitDate);return n!=null&&n<=14&&n>=-3&&!['ctc'].includes(d.status)});
+  const flag=open.filter(d=>{const f=bFlags(d);return f&&f.bad});
+  const miss=open.filter(d=>!d.closingDate||!d.lender||!d.contacts.length);
+  const names=a=>a.slice(0,3).map(d=>d.address+(d.unit?' #'+d.unit:'')).join(', ')+(a.length>3?' +'+(a.length-3):'');
+  const card=(k,cls,label,list,sub)=>'<button class="acard '+(list.length?cls:'ok')+(dealState.f===k?' on':'')+'" data-df="'+k+'" aria-pressed="'+(dealState.f===k)+'"><span class="al">'+label+'</span><span class="av num">'+list.length+' <small>deal'+(list.length===1?'':'s')+'</small></span><span class="as">'+esc(list.length?names(list):sub)+'</span></button>';
+  $('dealalerts').innerHTML=all.length?card('soon','warn','Closing within 30 days',soon,open.length+' open deal'+(open.length===1?'':'s'))+card('commit','bad','Commitment date soon',commit,'No commitment dates in the next 2 weeks')+card('flag','bad','Building has DOB or litigation flags',flag,'No flagged buildings')+card('miss','new','Missing details',miss,'Every deal has a date, lender and contacts'):'';
+  return {soon,commit,flag,miss}}
+function contactCard(d,c,i){
+  if(dealState.edit===d.id+':'+i)return '<div class="ccard"><div class="cedit"><select data-cf="role">'+Object.entries(ROLES).map(([k,v])=>'<option value="'+k+'"'+(k===c.role?' selected':'')+'>'+v+'</option>').join('')+'</select><input data-cf="name" placeholder="Name" value="'+esc(c.name)+'"><input data-cf="firm" placeholder="Firm" value="'+esc(c.firm)+'"><input data-cf="phone" type="tel" placeholder="Phone" value="'+esc(c.phone)+'"><input data-cf="email" type="email" placeholder="Email" value="'+esc(c.email)+'"></div><div class="cacts"><button class="cact" data-cdone="'+i+'">Done</button><button class="cact sm" data-cdel="'+i+'">Delete</button></div></div>';
+  const tel=String(c.phone||'').replace(/[^\d+]/g,'');const subj=encodeURIComponent((d.address||'Deal')+(d.unit?' #'+d.unit:''));const em=encodeURIComponent(c.email||'');
+  return '<div class="ccard"><div class="cr">'+esc(ROLES[c.role]||'Contact')+'</div><div class="cn">'+esc(c.name||c.firm)+'</div>'+(c.name&&c.firm?'<div class="cf">'+esc(c.firm)+'</div>':'')+
+    ((c.phone||c.email)?'<div class="cl">'+esc([c.phone,c.email].filter(Boolean).join(' · '))+'</div>':'<div class="cl">No phone or email in the document</div>')+
+    '<div class="cacts">'+(tel?'<a class="cact" href="tel:'+esc(tel)+'">✆ Call</a><a class="cact" href="sms:'+esc(tel)+'">✉︎ Text</a>':'')+(c.email?'<a class="cact" href="mailto:'+esc(c.email)+'?subject='+subj+'">@ Email</a><a class="cact sm" href="https://mail.google.com/mail/?view=cm&fs=1&to='+em+'&su='+subj+'" target="_blank" rel="noopener">Gmail</a><a class="cact sm" href="https://outlook.office.com/mail/deeplink/compose?to='+em+'&subject='+subj+'" target="_blank" rel="noopener">Outlook</a>':'')+'<button class="cact sm" data-cedit="'+i+'" aria-label="Edit contact">✎</button></div></div>'}
+function dealDetail(d){
+  const f=(k,label,type,cls)=>'<label class="'+(cls||'')+'">'+label+'<input data-dfield="'+k+'" type="'+(type||'text')+'" value="'+esc(type==='number'?(d[k]??''):d[k]||'')+'"'+(type==='number'?' inputmode="decimal" step="1000"':'')+'></label>';
+  const bf=bFlags(d);
+  return '<tr class="mdetail" data-deal="'+esc(d.id)+'"><td colspan="8">'+
+    (d.extractedNote?'':'')+
+    '<div class="dgrid">'+f('address','Address','text','wide')+f('unit','Unit')+'<label>Building type<input data-dfield="type" value="'+esc(d.type||'')+'"></label>'+
+      f('price','Purchase price','number')+f('deposit','Deposit','number')+f('loan','Loan amount','number')+f('lender','Lender')+
+      f('contractDate','Contract date','date')+f('commitDate','Commitment date','date')+f('closingDate','Closing date','date')+'<label>Borough / city<input data-dfield="borough" value="'+esc(d.borough||'')+'"></label>'+
+      f('buyers','Buyers','text','wide')+f('sellers','Sellers','text','wide')+'</div>'+
+    '<div class="dsec">Deal contacts</div><div class="ccards">'+d.contacts.map((c,i)=>contactCard(d,c,i)).join('')+'<button class="ccard" data-cadd style="color:var(--accent);font-weight:600;text-align:center;border-style:dashed">＋ Add contact</button></div>'+
+    '<div class="dsec">Documents</div><div class="mydocs" style="margin-top:0">'+(d.docs||[]).map((x,i)=>'<div class="mydoc"><span style="color:var(--accent)">▤</span><span class="nm">'+esc(x.name)+' <small>· '+esc(x.type)+' · '+Math.ceil(x.size/1024)+' KB</small></span><button class="linkbtn" data-dopen="'+i+'">Open</button><button class="removefile" data-ddel="'+i+'" aria-label="Remove '+esc(x.name)+'">×</button></div>').join('')+'</div>'+
+    '<textarea class="mynotes" data-dnotes placeholder="Deal notes: board package status, appraisal, conditions…">'+esc(d.notes||'')+'</textarea>'+
+    '<div class="myrow"><label class="addfile">⊕ Add document (rider, commitment letter…)<input type="file" data-dadd accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.jpg,.jpeg,.png,.webp"></label>'+
+    (bf?'<button class="choice" data-dbuilding>'+(bf.bad?'⚑ ':'')+'Building record</button>':'')+(d.address?'<button class="choice" data-dlook>Financing history</button>':'')+'<button class="choice" data-dshare>Share deal summary</button><button class="linkbtn" data-dremove style="color:var(--muted);margin-left:auto">Remove</button></div></td></tr>'}
+function renderDeals(){
+  const all=Object.values(DEALS);dealAlerts(all);
+  const fb=dealState.building&&MINE[dealState.building];
+  $('dealfilter').innerHTML=fb?'<span class="dchip">Deals at '+esc(fb.address)+' <button class="linkbtn" data-dclearb style="padding:0">Show all ×</button></span>':'';
+  const q=dealState.q.toLowerCase();const groups=dealState.f?dealAlerts(all)[dealState.f]:null;
+  const hay=d=>[d.address,d.unit,d.lender,d.buyers,d.sellers,d.notes,...d.contacts.flatMap(c=>[c.name,c.firm,c.email])].join(' ').toLowerCase();
+  const sv=d=>{const k=dealState.sort;return k==='address'?(d.address||'').toLowerCase():k==='price'?(d.price||0):k==='status'?Object.keys(DSTAT).indexOf(d.status):k==='lender'?(d.lender||'~').toLowerCase():(d.closingDate||'9999')};
+  const rows=all.filter(d=>(!fb||d.buildingId===dealState.building)&&(!groups||groups.includes(d))&&(!dealState.s||(dealState.s==='open'?isOpen(d):!isOpen(d)))&&(!q||hay(d).includes(q))).sort((a,b)=>{const x=sv(a),y=sv(b);return (x<y?-1:x>y?1:0)*dealState.dir});
+  if(!all.length){$('deallist').innerHTML='<div class="mycard" style="margin-top:14px"><h3>No deals yet</h3><p class="emptyhint" style="margin:6px 0 0">Tap <strong>＋ New deal from contract</strong> and upload the signed contract (PDF or photo). Lendable fills in the price, dates, lender and every attorney, broker and loan officer it finds. Contracts you add in <strong>My buildings</strong> show up here too.</p></div>';return}
+  const th=(k,l)=>'<th data-dsort="'+k+'">'+l+(dealState.sort===k?(dealState.dir>0?' ↑':' ↓'):'')+'</th>';
+  $('deallist').innerHTML=rows.length?'<div class="mtwrap"><table class="mtable"><thead><tr>'+th('address','Property')+th('status','Stage')+th('price','Price')+th('closing','Closing')+th('lender','Lender')+'<th class="nosort">Building</th><th class="nosort">Contacts</th><th class="nosort"></th></tr></thead><tbody>'+
+    rows.map(d=>{const open=dealState.open===d.id;const n=daysTo(d.closingDate);const bf=bFlags(d);
+      const due=n==null?'':!isOpen(d)?'':n<0?'<small style="color:var(--bad)">'+(-n)+' day'+(n===-1?'':'s')+' past</small>':n===0?'<small style="color:var(--warn)">today</small>':'<small'+(n<=30?' style="color:var(--warn)"':'')+'>in '+n+' day'+(n===1?'':'s')+'</small>';
+      const ph=d.contacts.filter(c=>c.phone).length,em=d.contacts.filter(c=>c.email).length;
+      return '<tr class="mrow drow'+(open?' open':'')+'" data-deal="'+esc(d.id)+'"><td class="addr"><button data-dtoggle aria-expanded="'+open+'">'+esc(d.address||'New deal')+(d.unit?' <span style="font-weight:500;color:var(--muted)">#'+esc(d.unit)+'</span>':'')+'</button><small>'+esc([d.borough,d.type].filter(Boolean).join(' · ')||'Add the address')+'</small></td>'+
+        '<td><select class="mystatus" data-dstatus aria-label="Stage">'+Object.entries(DSTAT).map(([k,v])=>'<option value="'+k+'"'+(k===d.status?' selected':'')+'>'+v[0]+'</option>').join('')+'</select></td>'+
+        '<td class="num">'+(d.price?money(d.price):'<span class="na">—</span>')+'</td>'+
+        '<td>'+(d.closingDate?'<span style="white-space:nowrap">'+esc(fmtDate(d.closingDate))+'</span><br>'+due:'<span class="na">—</span>')+'</td>'+
+        '<td>'+(d.lender?esc(d.lender):'<span class="na">—</span>')+'</td>'+
+        '<td>'+(!bf?'<span class="na">—</span>':bf.bad===null?'<span class="na">Not checked</span>':bf.bad?'<button class="cell" data-dbuilding>⚑ Flags</button>':'<span class="ok">✓ Clean</span>')+'</td>'+
+        '<td>'+(d.contacts.length?'<button class="linkbtn" data-dtoggle>'+d.contacts.length+' · '+ph+' ✆ '+em+' @</button>':'<span class="na">—</span>')+'</td>'+
+        '<td><button data-dtoggle aria-label="Deal details" style="padding:4px 6px"><span class="chev">›</span></button></td></tr>'+(open?dealDetail(d):'')}).join('')+
+    '</tbody></table></div>':'<p class="emptyhint" style="margin-top:14px">No deals match.</p>';
+}
+function dealSummary(d){const roles=d.contacts.map(c=>(ROLES[c.role]||'Contact')+': '+[c.name,c.firm,c.phone,c.email].filter(Boolean).join(' · '));const m=d.buildingId&&MINE[d.buildingId];
+  return ['Deal: '+(d.address||'')+(d.unit?' #'+d.unit:'')+(d.borough?' ('+d.borough+')':''),'Stage: '+(DSTAT[d.status]||DSTAT.active)[0],
+    ...(d.price?['Price: '+money(d.price)+(d.loan?' · Loan '+money(d.loan):'')]:[]),...(d.lender?['Lender: '+d.lender]:[]),
+    ...(d.contractDate?['Contract: '+fmtDate(d.contractDate)]:[]),...(d.commitDate?['Commitment date: '+fmtDate(d.commitDate)]:[]),...(d.closingDate?['Closing: '+fmtDate(d.closingDate)]:[]),
+    ...(roles.length?['',...roles]:[]),...(m&&m.dob?['','Building: '+(dobBad(m.dob)?'DOB/HPD flags on file':'no open DOB violations or HPD cases')+' (as of '+new Date(m.dob.at).toLocaleDateString()+')']:[]),
+    '','Shared from Lendable.'].join('\n')}
+$('dealq').oninput=e=>{dealState.q=e.target.value;renderDeals()};
+$('dealseg').onclick=e=>{const b=e.target.closest('[data-ds]');if(!b)return;dealState.s=b.dataset.ds;$('dealseg').querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));renderDeals()};
+$('dealalerts').onclick=e=>{const c=e.target.closest('[data-df]');if(!c)return;dealState.f=dealState.f===c.dataset.df?'':c.dataset.df;renderDeals()};
+$('dealfilter').onclick=e=>{if(e.target.closest('[data-dclearb]')){dealState.building=null;renderDeals()}};
+const dealsEl=$('deallist');
+dealsEl.addEventListener('click',async e=>{
+  const th=e.target.closest('[data-dsort]');if(th){const k=th.dataset.dsort;dealState.dir=dealState.sort===k?-dealState.dir:(k==='price'?-1:1);dealState.sort=k;renderDeals();return}
+  const row=e.target.closest('[data-deal]');if(!row)return;const d=DEALS[row.dataset.deal];if(!d)return;
+  if(e.target.closest('[data-dtoggle]')){dealState.open=dealState.open===d.id?null:d.id;dealState.edit=null;renderDeals();return}
+  if(e.target.closest('[data-dbuilding]')){if(d.buildingId&&MINE[d.buildingId]){mineState.open=d.buildingId;mineState.f='';mineState.s='';setView('mine');setTimeout(()=>{const r=document.querySelector('tr.mrow.open');if(r)r.scrollIntoView({block:'center',behavior:'smooth'})},80)}return}
+  if(e.target.closest('[data-dlook]')){send(d.address);return}
+  const ce=e.target.closest('[data-cedit]');if(ce){dealState.edit=d.id+':'+ce.dataset.cedit;renderDeals();return}
+  const cd=e.target.closest('[data-cdone]');if(cd){dealState.edit=null;renderDeals();return}
+  const cx=e.target.closest('[data-cdel]');if(cx){d.contacts.splice(+cx.dataset.cdel,1);dealState.edit=null;d.updated=Date.now();dealSave();renderDeals();return}
+  if(e.target.closest('[data-cadd]')){d.contacts.push({role:'other',name:'',firm:'',phone:'',email:''});dealState.edit=d.id+':'+(d.contacts.length-1);dealSave();renderDeals();setTimeout(()=>{const i=document.querySelector('[data-cf="name"]');if(i)i.focus()},30);return}
+  const o=e.target.closest('[data-dopen]');if(o){const x=d.docs[+o.dataset.dopen];if(x)docOpen(x.key,x.name);return}
+  const dl=e.target.closest('[data-ddel]');if(dl){const x=d.docs[+dl.dataset.ddel];if(x&&confirm('Remove '+x.name+' from this deal?')){await docsDel(x.key);d.docs.splice(+dl.dataset.ddel,1);dealSave();renderDeals()}return}
+  if(e.target.closest('[data-dshare]')){const text=dealSummary(d);try{if(navigator.share){await navigator.share({title:(d.address||'Deal')+' · Lendable',text});return}}catch(err){if(err&&err.name==='AbortError')return}try{await navigator.clipboard.writeText(text);e.target.textContent='Copied ✓';setTimeout(()=>e.target.textContent='Share deal summary',2000)}catch(err){prompt('Copy this summary:',text)}return}
+  if(e.target.closest('[data-dremove]')){if(!confirm('Remove this deal? Its contacts and notes will be deleted from this device. Documents also saved in My buildings stay there.'))return;for(const x of d.docs)await docsDel(x.key);delete DEALS[d.id];dealSave();renderDeals()}});
+dealsEl.addEventListener('change',async e=>{const row=e.target.closest('[data-deal]');if(!row)return;const d=DEALS[row.dataset.deal];if(!d)return;
+  if(e.target.matches('[data-dstatus]')){d.status=e.target.value;d.updated=Date.now();dealSave();dealAlerts(Object.values(DEALS));return}
+  if(e.target.matches('[data-dfield]')){const k=e.target.dataset.dfield;let v=e.target.value.trim();d[k]=['price','deposit','loan'].includes(k)?num(v):v;
+    if(k==='address'&&v){const old=d.buildingId;linkBuilding(d,v,d.borough,d.type);if(d.buildingId!==old){for(const x of d.docs){const m=MINE[d.buildingId];if(m&&!m.docs.some(y=>y.key===x.key))m.docs.push(Object.assign({},x))}mineSave()}}
+    if(k==='lender'&&v){const ln=findLender(v);if(ln)d.lender=ln}
+    d.updated=Date.now();dealSave();if(['address','closingDate','lender','price','commitDate'].includes(k))renderDeals();return}
+  if(e.target.matches('[data-cf]')){const i=+dealState.edit.split(':')[1];const c=d.contacts[i];if(c){c[e.target.dataset.cf]=e.target.value.trim();d.updated=Date.now();dealSave()}return}
+  if(e.target.matches('[data-dadd]')){const f=e.target.files[0];e.target.value='';if(!f)return;try{let meta;if(d.buildingId&&MINE[d.buildingId]){await docsAdd(d.buildingId,f);meta=MINE[d.buildingId].docs[MINE[d.buildingId].docs.length-1];mineSave()}else meta=await docPut(f);d.docs.push(Object.assign({},meta));dealSave();renderDeals();if(isContractName(f.name)){const x=await extractDeal(f).catch(err=>{toast(esc(EXERR[err&&err.code]||'Couldn’t read that document.'));return null});if(x){mergeDeal(d,x);dealSave();renderDeals();toast('Updated '+esc(d.address||'deal')+' from '+esc(f.name))}}}catch(err){alert('That file couldn’t be saved (over 20 MB or storage unavailable in this view).')}}});
+dealsEl.addEventListener('input',e=>{if(e.target.matches('[data-cf]')){const row=e.target.closest('[data-deal]');const d=row&&DEALS[row.dataset.deal];const i=dealState.edit&&+dealState.edit.split(':')[1];if(d&&d.contacts[i]){d.contacts[i][e.target.dataset.cf]=e.target.value.trim();dealSave()}}});
+dealsEl.addEventListener('focusout',e=>{if(!e.target.matches('[data-dnotes]'))return;const d=DEALS[e.target.closest('[data-deal]').dataset.deal];if(d&&d.notes!==e.target.value){d.notes=e.target.value;d.updated=Date.now();dealSave()}});
+dealSave();
+
 $('mineseg').onclick=e=>{const b=e.target.closest('[data-ms]');if(!b)return;mineState.s=b.dataset.ms;$('mineseg').querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));renderMine()};
 mineSave();
 
