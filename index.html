@@ -701,7 +701,7 @@ function showBuilding(b){
     (b.unknown?'<div class="resultlender"><span style="color:var(--muted)">Financing confirmed, lender not identified</span><small class="num">'+b.unknown+' closing'+(b.unknown>1?'s':'')+'</small></div>':'');
   const idText=b.lenders.length?b.lenders.length+' identified lender'+(b.lenders.length>1?'s':''):'no identified lender';
   add('<p>I found <strong>'+address+'</strong> in recent mortgage activity: '+b.closings+' financed closing'+(b.closings>1?'s':'')+', '+idText+'.</p>'+
-    '<div class="result"><div class="resultheader"><div><h3>'+address+'</h3><p>'+loc+'</p></div><div class="pillstack"><span class="pill">Financing history found</span>'+dobSlot(b)+'</div></div>'+
+    '<div class="result"><div class="resultheader"><div><h3>'+address+'</h3><p>'+loc+'</p></div><div class="pillstack"><span class="pill">Financing history found</span>'+fhaSlot(b)+dobSlot(b)+'</div></div>'+
     '<div class="resultbody"><small style="display:block;font-size:12px;letter-spacing:.4px">LENDERS RECENTLY FINANCING THIS BUILDING</small>'+rows+'</div>'+
     '<div class="stats"><div><small>Financed closings</small><strong class="num">'+b.closings+'</strong></div><div><small>Latest activity</small><strong class="num">'+esc(b.latest)+'</strong></div><div><small>Identified lenders</small><strong class="num">'+b.lenders.length+'</strong></div></div>'+
     '<div class="resultfooter">Current project approval needs verification.</div><button class="reviewbtn" data-review>Request a building review</button></div>'+
@@ -709,12 +709,36 @@ function showBuilding(b){
   renderBrief(b);
   awaiting='buyer';
 }
+/* ---------- HUD FHA-approved condo list (refreshed weekly by GitHub Actions into data/fha.json) ---------- */
+let FHA=null,fhaIdx=null;const fnorm=x=>norm(String(x||'').replace(/\bboulevard\b|\bblvd\.?\b/gi,'blvd').trim());
+const fhaP=(async()=>{if(!/^https?:$/.test(location.protocol))return null;try{const r=await fetch('data/fha.json');if(!r.ok)return null;FHA=await r.json();
+  fhaIdx=new Map();const add=(k,row)=>{if(!k)return;if(!fhaIdx.has(k))fhaIdx.set(k,[]);fhaIdx.get(k).push(row)};
+  for(const row of FHA.rows){String(row.street).split(/,|&|\band\b/i).forEach(x=>add('a:'+fnorm(x),row));add('n:'+norm(row.name.replace(/\b(a\s+)?condominium\b|\bcondo\b|^the\s+/gi,'')),row)}return FHA}catch(e){return null}})();
+fhaP.then(()=>{try{if(!$('mineview').classList.contains('hide'))renderMine()}catch(e){}});
+const BORO_COUNTY={manhattan:'NEW YORK',brooklyn:'KINGS',queens:'QUEENS',bronx:'BRONX','staten island':'RICHMOND'};
+function fhaFor(b){if(!fhaIdx||!b||!b.address)return null;const zip=b.city?String(b.city[2]||''):'';const county=BORO_COUNTY[String(b.borough||'').toLowerCase()];
+  const ok=r=>(zip&&r.zip?r.zip===zip:true)&&(!county||!r.county||r.county.startsWith(county))&&(!/^(NY)$/.test(r.state)||!!county||!zip||r.zip===zip);
+  const cands=[...(fhaIdx.get('a:'+fnorm(b.address))||[]),...(fhaIdx.get('n:'+norm(b.address))||[])].filter(ok);
+  if(!cands.length)return null;return cands.sort((x,y)=>String(y.statusDate).localeCompare(String(x.statusDate)))[0]}
+function fhaState(r){if(!r)return null;const today=new Date().toISOString().slice(0,10);
+  if(/^approved/i.test(r.status)&&r.expires&&r.expires>=today)return 'approved';if(/single-unit/i.test(r.status))return 'single';if(/^approved|expired/i.test(r.status))return 'expired';return 'other'}
+const monYr=d=>d?new Date(d+'T12:00').toLocaleDateString('en-US',{month:'short',year:'numeric'}):'';
+const HUD_LOOKUP='https://entp.hud.gov/idapp/html/condlook.cfm';
+function fhaPillHtml(b){const r=fhaFor(b);return fhaState(r)==='approved'?'<a class="pill" href="'+HUD_LOOKUP+'" target="_blank" rel="noopener" title="HUD project '+esc(r.id)+(r.method==='DELRAP'?' · approved by a lender under DELRAP':'')+'">✓ FHA-approved (HUD) thru '+esc(monYr(r.expires))+'</a>':''}
+let fhaSlotN=0;
+function fhaSlot(b){if(FHA||!/^https?:$/.test(location.protocol))return fhaPillHtml(b);const id='fhas'+(++fhaSlotN);fhaP.then(()=>{const el=document.getElementById(id);if(el)el.outerHTML=fhaPillHtml(b)||''});return '<span id="'+id+'" style="display:contents"></span>'}
+function fhaLine(b){const r=fhaFor(b),st=fhaState(r);if(!r)return FHA?'<div class="metric" style="display:block;font-size:13.5px"><span>FHA: not on HUD’s approved list. Common for NYC condos; it doesn’t mean the building is non-warrantable.</span></div>':'';
+  const t=st==='approved'?'<strong style="color:var(--good)">FHA-approved by HUD</strong> through '+esc(fmtDateS(r.expires))+(r.method==='DELRAP'?' (lender approval under DELRAP; Fannie won’t rely on DELRAP)':' (HUD review, HRAP)')+'. A good sign, not Fannie Mae approval: Fannie can rely on it only for established projects, and still checks litigation, critical repairs and insurance (B4-2.2-03).'
+    :st==='single'?'FHA: project not approved; HUD allows single-unit approvals only (status '+esc(fmtDateS(r.statusDate))+').'
+    :st==='expired'?'FHA approval expired '+esc(fmtDateS(r.expires||r.statusDate))+'.':'FHA: '+esc(r.status.replace(/\|+/g,' · '))+' ('+esc(fmtDateS(r.statusDate))+').';
+  return '<div class="metric" style="display:block;font-size:13.5px"><span>'+t+'</span> <a class="linkbtn" href="'+HUD_LOOKUP+'" target="_blank" rel="noopener">HUD list ↗</a></div>'}
+const fmtDateS=d=>d?new Date(d+'T12:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'';
 function fnmaHint(b){const u=b.city?b.city[6]:null,co=/co-?op/i.test(b.type||'');let t;
   if(co)t='Co-op: Fannie Mae requires a Full Review or PERS. No waiver. Primary or second home only.';
   else if(u&&u<=4)t='Condo with '+u+' units: Fannie Mae project review is waived.';
   else if(u&&u<=10)t='Condo with '+u+' units: review may be waived if it isn’t part of a master association.';
   else t='Condo'+(u?' with '+u+' units':'')+': Fannie Mae Full Review needed (Limited Review retired Aug 3, 2026).';
-  return '<div class="metric" style="display:block;font-size:13.5px"><span>'+esc(t)+'</span> <button class="linkbtn" data-choice="Which Fannie Mae project review does a building need?">Why?</button></div>'}
+  return '<div class="metric" style="display:block;font-size:13.5px"><span>'+esc(t)+'</span> <button class="linkbtn" data-choice="Which Fannie Mae project review does a building need?">Why?</button></div>'+fhaLine(b)}
 function renderBrief(b){setTimeout(()=>briefDOB(b),0);
   const address=esc(b.address),loc=esc(b.borough)+' · '+esc(b.type);
   $('brief').innerHTML='<div class="buildingicon">▤</div><h2>'+address+'</h2><p class="location">'+loc+'</p><span class="pill">History found</span>'+saveBtn(b)+'<div class="panelsection" id="dobbrief">'+DOB_LOADING+'</div>'+(b.city?'<div class="panelsection"><h3>Building facts</h3>'+cityFacts(b.city)+'</div>':'')+
@@ -1006,7 +1030,7 @@ function showCityBuilding(r){
   selected=b;awaiting='buyer';
   const loc=esc(hoodOf(r))+' · '+BOROS[r[1]]+' · '+TYPES[r[3]];
   add('<p>Here’s <strong>'+esc(r[0])+'</strong> from city records. There’s no financing history for it in our current dataset yet. That doesn’t mean it can’t be financed.</p>'+
-    '<div class="result"><div class="resultheader"><div><h3>'+esc(r[0])+'</h3><p>'+loc+'</p></div><div class="pillstack"><span class="pill grey">No financing records yet</span>'+dobSlot(b)+'</div></div>'+
+    '<div class="result"><div class="resultheader"><div><h3>'+esc(r[0])+'</h3><p>'+loc+'</p></div><div class="pillstack"><span class="pill grey">No financing records yet</span>'+fhaSlot(b)+dobSlot(b)+'</div></div>'+
     '<div class="stats"><div><small>Year built</small><strong class="num">'+(r[7]||'—')+'</strong></div><div><small>Floors</small><strong class="num">'+(r[5]||'—')+'</strong></div><div><small>Units</small><strong class="num">'+r[6]+'</strong></div></div>'+
     '<div class="resultfooter">Current project approval needs verification.</div><button class="reviewbtn" data-review>Request a building review</button></div>'+
     '<div class="choices">'+saveBtn(b)+choices(['Next steps','Check another building']).replace(/^<div class="choices">|<\/div>$/g,'')+'</div>');
@@ -1293,7 +1317,7 @@ const aiReady=()=>(!!sampleFn||serverAI)&&!aiOff;
 function contextBlock(q){
   const rel=[];const add1=b=>{if(b&&!rel.includes(b))rel.push(b)};add1(selected&&!selected.cityOnly?selected:null);add1(findBuilding(q||''));const ln=findLender(q||'');if(ln)buildings.filter(b=>b.lenders.some(l=>l.name===ln)).sort((a,b)=>b.closings-a.closings).slice(0,30).forEach(add1);
   const rows=rel.map(b=>b.address+' | '+b.type+' | '+b.closings+' financed closing(s) | latest '+b.latest+' | lenders: '+(b.lenders.map(l=>l.name).join(', ')||'none identified')+(b.unknown?' (+'+b.unknown+' lender unknown)':'')).join('\n');
-  const sc=selected&&selected.city;const sel=selected?'Building the user is looking at: '+selected.address+' ('+selected.type+')'+(sc?', city records: built '+(sc[7]||'unknown')+', '+(sc[5]||'?')+' floors, '+sc[6]+' residential units, elevator '+(sc[4]===1?'yes':sc[4]===0?'no (walk-up)':'unknown')+(sc[10]?', '+sc[10]:'')+', ZIP '+sc[2]:'')+(selected.cityOnly?'. No financing history in our dataset.':'')+'.':'No building selected.';
+  const sc=selected&&selected.city;const fr=selected&&fhaFor(selected);const sel=selected?'Building the user is looking at: '+selected.address+' ('+selected.type+')'+(sc?', city records: built '+(sc[7]||'unknown')+', '+(sc[5]||'?')+' floors, '+sc[6]+' residential units, elevator '+(sc[4]===1?'yes':sc[4]===0?'no (walk-up)':'unknown')+(sc[10]?', '+sc[10]:'')+', ZIP '+sc[2]:'')+(selected.cityOnly?'. No financing history in our dataset.':'')+'.'+(fr?' HUD FHA condo list: '+fr.status.replace(/\|+/g,' ')+' ('+fr.method+'), status date '+fr.statusDate+(fr.expires?', expires '+fr.expires:'')+'.':(FHA?' Not on HUD’s FHA-approved condo list.':'')):'No building selected.';
   const d=deal.price?'Deal so far: price '+money(deal.price)+(deal.down?', '+deal.down+'% down, loan '+money(deal.price*(1-deal.down/100)):'')+(deal.occupancy?', '+deal.occupancy:'')+(deal.credit?', credit ~'+deal.credit:'')+'.':'';
   return sel+' '+d+'\n\nBUILDING DATA (recent mortgage activity from Marketproof recorded sales, '+FIN.window+'; '+NB+' Manhattan, Brooklyn and Queens condo/co-op buildings in total; observed financed closings only, not approvals; no building rules collected yet). Relevant rows'+(ln?' (top buildings for '+ln+')':'')+':\n'+(rows||'none matched');
 }
@@ -1404,7 +1428,7 @@ function renderMine(){
   const th=(k,l)=>'<th data-msort="'+k+'" aria-sort="'+(mineSort.k===k?(mineSort.d>0?'ascending':'descending'):'none')+'">'+l+(mineSort.k===k?(mineSort.d>0?' ↑':' ↓'):'')+'</th>';
   $('minelist').innerHTML=rows.length?'<div class="mtwrap"><table class="mtable"><thead><tr>'+th('address','Building')+th('status','My verdict')+th('vio','Code violations')+th('lit','Litigation')+th('fac','Facade / vacate')+th('lenders','Lenders')+th('deals','Deals')+th('docs','Docs')+th('checked','Checked')+'<th class="nosort"></th></tr></thead><tbody>'+
     rows.map(([id,m])=>{const b=findBuilding(m.address);const open=mineState.open===id;const nl=b?b.lenders.length:0;
-      return '<tr class="mrow'+(open?' open':'')+'" data-mine="'+esc(id)+'"><td class="addr"><button data-mtoggle aria-expanded="'+open+'">'+esc(m.address)+(m.alertNew?'<span class="newdot">NEW</span>':'')+'</button><small>'+esc([m.borough,m.type].filter(Boolean).join(' · '))+'</small></td>'+
+      return '<tr class="mrow'+(open?' open':'')+'" data-mine="'+esc(id)+'"><td class="addr"><button data-mtoggle aria-expanded="'+open+'">'+esc(m.address)+(m.alertNew?'<span class="newdot">NEW</span>':'')+'</button><small>'+esc([m.borough,m.type].filter(Boolean).join(' · '))+(()=>{const r=fhaFor(findBuilding(m.address)||m);return fhaState(r)==='approved'?' · <span style="color:var(--good);font-weight:600">FHA ✓</span>':''})()+'</small></td>'+
         '<td><select class="mystatus" data-mstatus aria-label="My verdict for '+esc(m.address)+'">'+Object.entries(STATUS).map(([k,v])=>'<option value="'+k+'"'+(k===m.status?' selected':'')+'>'+v[0]+'</option>').join('')+'</select></td>'+
         '<td>'+cellVio(m)+'</td><td>'+cellLit(m)+'</td><td>'+cellFac(m)+'</td>'+
         '<td class="num">'+(nl?'<button class="linkbtn" data-mlook>'+nl+' lender'+(nl>1?'s':'')+'</button>':'<span class="na">—</span>')+'</td>'+
