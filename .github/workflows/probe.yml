@@ -7,17 +7,14 @@ jobs:
     steps:
       - run: |
           mkdir out && cd out
-          for q in "NY|NEW YORK" "NY|KINGS" "NY|QUEENS" "FL|MIAMI-DADE"; do
-            st="${q%%|*}"; co="${q##*|}"; f="hud_${st}_${co// /_}.html"
-            curl -sSL -A "Mozilla/5.0" -e https://entp.hud.gov/idapp/html/condlook.cfm https://entp.hud.gov/idapp/html/condo1.cfm \
-              --data-urlencode "fapproval_method=NEW" --data-urlencode "fsorted_by=condo_name" --data-urlencode "fstate=$st" --data-urlencode "fcounty=$co" \
-              --data-urlencode "fcondo_id=" --data-urlencode "fcondo_name=" --data-urlencode "fcity=" --data-urlencode "fzip=" --data-urlencode "fstatus_code=X" --data-urlencode "fsearch_type=P" \
-              --data-urlencode "fbegin_mo=" --data-urlencode "fbegin_dy=" --data-urlencode "fbegin_yr=" --data-urlencode "fend_mo=" --data-urlencode "fend_dy=" --data-urlencode "fend_yr=" \
-              --data-urlencode "came_from=oth" --data-urlencode "in_fhac=true" -o "$f" || true
-            ls -la "$f"
-          done
-          curl -sSL https://lgy.va.gov/lgyhub/static/js/main.d73f308e.chunk.js -o va_main.js || true
-          grep -o '"[^"]*\(condo\|api/\)[^"]*"' va_main.js | sort -u > va_urls.txt || true
+          curl -sSL https://lgy.va.gov/lgyhub/condo-report -o va.html
+          for f in $(grep -o 'static/js/[^"]*\.js' va.html | sort -u); do curl -sSL "https://lgy.va.gov/lgyhub/$f" >> all.js; echo >> all.js; done
+          grep -o 'static/js/"[^;]*' all.js | head -3 > chunkmap.txt || true
+          grep -o '[0-9]*:"[0-9a-f]\{8\}"' all.js | sort -u > chunks.txt || true
+          for c in $(sed 's/:"\(.*\)"/.\1/' chunks.txt); do curl -sSL "https://lgy.va.gov/lgyhub/static/js/$c.chunk.js" >> lazy.js; echo >> lazy.js; done
+          grep -o '.\{200\}condo.\{200\}' lazy.js | head -40 > va_condo_snips.txt || true
+          grep -o '"/lgyhub/api[^"]*"' lazy.js all.js | sort -u > va_api.txt || true
+          rm -f all.js lazy.js
           git init -q && git checkout -q -b data-probe && git add -A
           git -c user.name=bot -c user.email=bot@example.com commit -qm probe
           git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" data-probe

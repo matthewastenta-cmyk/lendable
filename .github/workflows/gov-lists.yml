@@ -1,0 +1,14 @@
+name: refresh government condo lists
+on:
+  workflow_dispatch:
+  schedule: [{ cron: "17 9 * * 1" }]   # Mondays
+permissions: { contents: write }
+jobs:
+  pull:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 scripts/pull_fha.py
+      - run: |
+          git add data/fha.json
+          git diff --cached --quiet || (git -c user.name="lendable-bot" -c user.email="noreply@anthropic.com" commit -m "Refresh FHA condo list" && git push)
