@@ -9,6 +9,7 @@ const DS = {
   ecb: '6bgk-3dad',      // DOB ECB violations
   fisp: 'xubg-57si',     // DOB NOW: Safety – Facades compliance filings (FISP / Local Law 11)
   vacate: 'tb8q-a3ar',   // HPD orders to repair/vacate
+  litigation: '59kj-x8nc', // HPD housing litigations (housing court cases HPD brings against owners)
   pluto: '64uk-42ks',    // MapPLUTO (address → BBL fallback)
   footprints: '5zhs-2jue', // Building footprints (BBL → BIN, incl. condo billing lots)
 };
@@ -65,6 +66,9 @@ module.exports = async (req, res) => {
     const ecbWhere = binIn || `boro=${q(boro)} AND block=${q(pad(block, 5))} AND (lot=${q(pad(lot, 4))} OR lot=${q(pad(lot, 5))})`;
     const fispWhere = binIn || `borough=${q(BORO_NAME[boro])} AND block=${q(block)} AND lot=${q(lot)}`;
     const vacWhere = (binIn ? '(' + binIn + ` OR bbl=${q(bbl)})` : `bbl=${q(bbl)}`) + ' AND actual_rescind_date IS NULL';
+    const litBase = binIn ? '(' + binIn + ` OR bbl=${q(bbl)})` : `bbl=${q(bbl)}`;
+    const LIT_OPEN = " AND upper(casestatus) not like 'CLOSED%' AND upper(casetype) not like 'CONH%'";
+    const fiveYrs = new Date(Date.now() - 5 * 365 * 864e5).toISOString().slice(0, 10);
     const DOB_OPEN = " AND upper(violation_category) like '%ACTIVE%'";
 
     const settled = await Promise.allSettled([
@@ -74,6 +78,8 @@ module.exports = async (req, res) => {
       soql(DS.ecb, { $where: '(' + ecbWhere + ") AND ecb_violation_status='ACTIVE'", $order: 'issue_date DESC', $limit: 5 }),
       soql(DS.fisp, { $where: fispWhere, $limit: 50 }),
       soql(DS.vacate, { $where: vacWhere, $order: 'vacate_effective_date DESC', $limit: 5 }),
+      count(DS.litigation, litBase + LIT_OPEN),
+      soql(DS.litigation, { $where: litBase + ` AND caseopendate >= '${fiveYrs}' AND upper(casetype) not like 'CONH%'`, $order: 'caseopendate DESC', $limit: 6 }),
     ]);
     const val = (i, d) => (settled[i].status === 'fulfilled' ? settled[i].value : d);
     const errors = settled.map((s, i) => (s.status === 'rejected' ? String(s.reason && s.reason.message || s.reason) : null)).filter(Boolean);
@@ -96,6 +102,9 @@ module.exports = async (req, res) => {
     const vacates = val(5, []).map(r => ({
       date: ymd(r.vacate_effective_date), type: clean(r.vacate_type), reason: clean(r.primary_vacate_reason), units: Number(r.number_of_vacated_units) || null,
     }));
+    const litigation = val(7, []).map(r => ({
+      date: ymd(r.caseopendate), type: clean(r.casetype), status: clean(r.casestatus), judgement: clean(r.casejudgement), respondent: clean(r.respondent),
+    }));
     if (!bins.length) bins = [...new Set([...dobItems, ...ecbItems].map(x => x.bin).concat(facade && facade.bin).filter(Boolean))];
     const fs = facade ? facade.status.toUpperCase() : '';
 
@@ -103,12 +112,13 @@ module.exports = async (req, res) => {
       found: true, source: 'NYC Open Data', bbl, bins,
       openDob: val(0, null), openEcb: val(2, null),
       items: [...ecbItems, ...dobItems].sort((a, b) => String(b.date).localeCompare(String(a.date))).slice(0, 8),
-      facade, vacates,
+      facade, vacates, litigation, openLitigation: val(6, null),
       flags: {
         unsafeFacade: fs === 'UNSAFE',
         facadeRepairs: fs === 'SWARMP',
         facadeNotFiled: /NO REPORT/.test(fs),
         vacateOrder: vacates.length > 0,
+        openLitigation: (val(6, 0) || 0) > 0,
         openViolations: (val(0, 0) || 0) + (val(2, 0) || 0),
       },
       errors, checkedAt: new Date().toISOString(),
