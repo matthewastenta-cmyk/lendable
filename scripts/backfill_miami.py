@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 
 KEY = os.environ["CLERK_AUTH_KEY"].strip(); PROXY = os.environ["CLERK_PROXY_URL"].strip()
 ZIPS = os.environ.get("ZIPS", "33131,33129,33130,33132,33137").split(",")
-BUILDINGS = int(os.environ.get("BUILDINGS", "50")); PER = int(os.environ.get("PER_BUILDING", "5")); BUDGET = int(os.environ.get("MAX_LOOKUPS", "250"))
+BUILDINGS = int(os.environ.get("BUILDINGS", "50")); PER = int(os.environ.get("PER_BUILDING", "5")); BUDGET = int(os.environ.get("MAX_LOOKUPS", "250")); TOTAL_CAP = int(os.environ.get("TOTAL_CAP", "250"))
 via = urllib.request.build_opener(urllib.request.ProxyHandler({"http": PROXY, "https": PROXY}))
 NOT_LENDER = re.compile(r"^MERS\b|MORTGAGE ELECTRONIC REGISTRATION|SECRETARY OF (HOUSING|VETERANS)|DEPARTMENT OF HOUSING", re.I)
 
@@ -41,7 +41,7 @@ def lookup(folio):
 
 done = 0; balance = None
 for b, s in queue:
-    if done >= BUDGET or (balance is not None and balance < 2):
+    if done >= BUDGET or state.get("lookups", 0) >= TOTAL_CAP or (balance is not None and balance < 2):
         print("stopping: budget/balance"); break
     folio = s["PARCEL_ID"].strip()
     try:
@@ -52,9 +52,11 @@ for b, s in queue:
     try: balance = int(top.get("UnitsBalance") or 0)
     except ValueError: pass
     if top.get("Status") != "Successful":
-        print("status", top.get("Status"), top.get("StatusDesc")); 
-        if "unit" in (top.get("StatusDesc") or "").lower(): break
+        done -= 1  # failed calls aren't charged
+        print("status", top.get("Status"), top.get("StatusDesc"))
+        if re.search(r"limit|unit|balance", top.get("StatusDesc") or "", re.I): print("stopping for today"); break
         continue
+    state["lookups"] = state.get("lookups", 0) + 1
     ym = s["SALE_YR"] + "-" + s["SALE_MO"].zfill(2)
     # the sale's deed: a deed recorded in (or just after) the sale month
     deeds = sorted({r["REC_DATE"][:10] for r in recs if r["DOC_TYPE"] in ("DEE", "WD", "SWD", "CTD") and r["REC_DATE"][:7] >= ym}, key=str)

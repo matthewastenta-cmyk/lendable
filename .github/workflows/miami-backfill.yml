@@ -1,5 +1,6 @@
 name: Miami backfill (budget-capped)
 on:
+  schedule: [{ cron: "41 12 * * *" }]   # continue daily until the 250-lookup cap is reached
   workflow_dispatch:
     inputs:
       zips: { description: "ZIP codes", default: "33131,33129,33130,33132,33137" }
@@ -15,10 +16,11 @@ jobs:
       - env:
           CLERK_AUTH_KEY: "${{ secrets.CLERK_AUTH_KEY }}"
           CLERK_PROXY_URL: "${{ secrets.CLERK_PROXY_URL }}"
-          ZIPS: "${{ inputs.zips }}"
-          BUILDINGS: "${{ inputs.buildings }}"
-          PER_BUILDING: "${{ inputs.per_building }}"
-          MAX_LOOKUPS: "${{ inputs.max_lookups }}"
+          ZIPS: "${{ inputs.zips || '33131,33129,33130,33132,33137' }}"
+          BUILDINGS: "${{ inputs.buildings || '50' }}"
+          PER_BUILDING: "${{ inputs.per_building || '5' }}"
+          MAX_LOOKUPS: "${{ inputs.max_lookups || '250' }}"
+          TOTAL_CAP: "250"
         run: |
           set +e
           python3 scripts/backfill_miami.py > /tmp/bf_log.txt 2>&1; code=$?
