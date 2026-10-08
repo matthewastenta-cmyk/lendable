@@ -67,9 +67,14 @@ def rows_from(blob, name):
                 yield {k.tag.split("}")[-1].upper(): (k.text or "").strip() for k in kids}
         return
     first = text.splitlines()[0] if text else ""
+    if not getattr(rows_from, "shown", False):
+        rows_from.shown = True
+        print("inner file:", name, "lines:", text.count("\n"))
+        for ln in text.splitlines()[:4]:
+            print("   |", re.sub(r"[A-Z][A-Z ,.&'-]{3,}(?=\|)", lambda m: m.group(0) if re.search(r"BANK|MORTGAGE|LENDING|LOAN|CREDIT|FUND|TRUST|FINANCIAL|LLC|INC|CONDO|ASSOC", m.group(0)) else m.group(0)[:2] + "*", ln)[:600])
     delim = "|" if first.count("|") > first.count(",") else ("\t" if "\t" in first else ",")
     for r in csv.DictReader(io.StringIO(text), delimiter=delim):
-        yield {(k or "").strip().upper(): (v or "").strip() for k, v in r.items()}
+        yield {(k or "").strip().upper(): (v if isinstance(v, str) else "|".join(v or [])).strip() for k, v in r.items()}
 
 added = 0
 for n, ext in new:
