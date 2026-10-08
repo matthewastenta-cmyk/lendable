@@ -454,8 +454,8 @@ tbody tr:hover .open,tbody tr:focus-within .open{opacity:1}
           <option value="buyer">Home buyer or seller</option>
           <option value="other">Other (title, managing agent…)</option>
         </select></div>
-      <button class="outline" id="google" type="button"><span class="g">G</span>Continue with Google</button>
-      <div class="divider">or use your work email</div>
+      <button class="outline hide" id="google" type="button"><span class="g">G</span>Continue with Google</button>
+      <div class="divider hide" id="googlediv">or use your work email</div>
       <form id="signupform">
         <div class="field" id="namefield"><label for="name">Full name</label><input id="name" autocomplete="name" placeholder="Your name"></div>
         <div class="field"><label for="email">Work email</label><input id="email" type="email" autocomplete="username" placeholder="you@yourcompany.com" required></div>
@@ -713,6 +713,7 @@ function authMsg(t,bad){const m=$('authmsg');m.textContent=t;m.style.color=bad?'
 function loadScript(src){return new Promise((res,rej)=>{const sc=document.createElement('script');sc.src=src;sc.onload=res;sc.onerror=()=>rej(Error('script'));document.head.appendChild(sc)})}
 function sbInit(){if(!sbReady)sbReady=(async()=>{if(!/^https?:$/.test(location.protocol))return null;try{const c=await (await fetch('/api/config',{cache:'no-store'})).json();if(!c.enabled){window.__authOff=c.reason||'not configured';return null}
   if(!window.supabase)await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js');
+  fetch(c.url+'/auth/v1/settings?apikey='+encodeURIComponent(c.key)).then(r=>r.json()).then(st=>{window.__googleOn=!!(st.external&&st.external.google);$('google').classList.toggle('hide',!window.__googleOn);$('googlediv').classList.toggle('hide',!window.__googleOn)}).catch(()=>{});
   SB=window.supabase.createClient(c.url,c.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'implicit',storageKey:'pa-auth'}});
   SB.auth.onAuthStateChange((ev,session)=>{SBUSER=session?session.user:null;authUi();if(ev==='PASSWORD_RECOVERY')setTimeout(showPwReset,0)});
   const {data}=await SB.auth.getSession();SBUSER=data.session?data.session.user:null;return SB}catch(e){console.warn('auth off',e);return null}})();return sbReady}
@@ -733,6 +734,7 @@ async function authStart(){const em=$('email').value.trim(),pw=$('pw').value;if(
   else r=await sb.auth.signUp({email:em,password:pw,options:{emailRedirectTo:location.origin+location.pathname,data:{name:$('name').value.trim(),role:$('role').value}}});
   $('authsend').disabled=false;const {data,error}=r;
   if(error){const m=error.message||'';authMsg(/invalid login/i.test(m)?'Email or password doesn’t match. Try again or tap “Forgot password?”.':/already registered|already exists/i.test(m)?'That email already has an account. Tap “Sign in” instead.':/confirm/i.test(m)?'Confirm your email first: tap the link we sent, then sign in.':/rate|seconds/i.test(m)?'Too many tries. Wait a minute and try again.':'Couldn’t continue: '+m,true);if(/already/i.test(m))authMode(true);return}
+  if(!data.session&&data.user&&Array.isArray(data.user.identities)&&data.user.identities.length===0){authMode(true);authMsg('That email already has an account. Enter your password to sign in, or tap “Forgot password?” to set one.',true);return}
   if(!data.session){otpEmail=em;$('otpto').textContent=em;$('signupform').classList.add('hide');$('otpform').classList.remove('hide');authMsg('One-time check: confirm your email, and you’re in for good on this device.');return}
   await authDone(data.user)}
 async function authDone(user){SBUSER=user;await cloudPull(true);enter();authUi();toast('Signed in. Your buildings and deals now sync across devices.');setTimeout(askWorkEmail,1200)}
@@ -747,7 +749,7 @@ $('maillink').onclick=async()=>{const em=$('email').value.trim();if(!em){authMsg
   const {error}=await sb.auth.signInWithOtp({email:em,options:{shouldCreateUser:true,emailRedirectTo:location.origin+location.pathname,data:{name:$('name').value.trim(),role:$('role').value}}});
   if(error){authMsg(/rate|seconds/i.test(error.message)?'Too many emails requested. Wait a minute and try again.':'Couldn’t send: '+error.message,true);return}
   otpEmail=em;$('otpto').textContent=em;$('signupform').classList.add('hide');$('otpform').classList.remove('hide');authMsg('Check your inbox and spam folder.')};
-$('google').onclick=async()=>{rememberProfile('');const sb=await needSB();if(!sb)return;authMsg('Opening Google…');
+$('google').onclick=async()=>{rememberProfile('');const sb=await needSB();if(!sb)return;if(!window.__googleOn){authMsg('Google sign-in is being set up. Use your work email for now.',true);return}authMsg('Opening Google…');
   const {error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname,queryParams:{prompt:'select_account'}}});
   if(error)authMsg(/not enabled|provider/i.test(error.message)?'Google sign-in is being set up. Use your work email for now.':'Couldn’t open Google: '+error.message,true)};
 $('pwresetform').onsubmit=async e=>{e.preventDefault();const pw=$('pw2').value;if(pw.length<8)return;const {error}=await SB.auth.updateUser({password:pw});
