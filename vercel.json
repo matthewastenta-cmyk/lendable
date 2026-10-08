@@ -1,5 +1,10 @@
 {
   "functions": {
-    "api/extract.js": { "maxDuration": 60 }
+    "api/extract.js": {
+      "maxDuration": 60
+    },
+    "api/assess.js": {
+      "maxDuration": 90
+    }
   }
 }
