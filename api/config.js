@@ -1,9 +1,14 @@
 // Public Supabase settings for the browser. Only the project URL and the publishable (or legacy anon) key are exposed;
 // the secret key never leaves the server.
+// Public values (safe to ship: the publishable key is meant to be in the web page). Env vars override them.
+const DEFAULT_URL = 'https://aifthwokptlzmkemkjak.supabase.co';
+const DEFAULT_KEY = 'sb_publishable_io5sZPXb__ibiTbmFBRB2Q_y2Nhpb0F';
 module.exports = (req, res) => {
   const clean = v => String(v || '').trim().replace(/^["']|["']$/g, '').trim();
   let url = clean(process.env.SUPABASE_URL);
-  const key = clean(process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY);
+  let key = clean(process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY);
+  if (!/supabase\.co/.test(url) && !/^[a-z0-9]{20}$/.test(url)) url = DEFAULT_URL;
+  if (!/^sb_publishable_|^eyJ/.test(key)) key = DEFAULT_KEY;
   res.setHeader('Cache-Control', 'no-store');
   if (/^[a-z0-9]{20}$/.test(url)) url = 'https://' + url + '.supabase.co';           // project ref only
   url = url.replace(/\/(rest|auth)\/v1.*$/, '').replace(/\/+$/, '');
