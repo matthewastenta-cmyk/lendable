@@ -7,7 +7,9 @@ from collections import Counter, defaultdict
 NOT_LENDER = re.compile(r"^MERS\b|MORTGAGE ELECTRONIC REGISTRATION|SECRETARY OF (HOUSING|VETERANS)|^HUD\b|DEPARTMENT OF HOUSING", re.I)  # nominees / government partial claims, not the lender
 BIZ = re.compile(r"BANK|MORTGAGE|MORTAGE|MTG|LLC|L L C|INC|CORP|TRUST|FUND|LENDING|LENDER|CREDIT|FINANCIAL|FINANCE|\bN ?A\b|FSB|CAPITAL|LOAN|ASSOC|\bCO\b|\bLP\b|LTD|GROUP|HOLDINGS|COUNTY|CITY OF|UNION|SAVINGS|FEDERAL|PARTNERS|INVEST|SERVIC|HOME", re.I)
 def lender_label(n):
-    return n if BIZ.search(n or "") else "Private lender (individual)"  # never show a private person's name
+    n = re.sub(r"\s*&\s*", " & ", re.sub(r"\s+", " ", (n or "").strip()))
+    n = re.sub(r"\bN A$", "NA", n)
+    return n if BIZ.search(n) else "Private lender (individual)"  # never show a private person's name
 def attach_lenders(path="data/miami.json"):
     """Merge data/miami_mortgages.json into the building list: lenders seen in the last 12 months per building."""
     import datetime, os
