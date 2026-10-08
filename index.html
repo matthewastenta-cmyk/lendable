@@ -486,7 +486,7 @@ tbody tr:hover .open,tbody tr:focus-within .open{opacity:1}
     </div>
     <div class="sidebarbottom">
       <div class="avatar" id="avatar">G</div>
-      <div style="min-width:0"><strong id="username" style="font-size:14px">Guest</strong><div style="font-size:12px;color:var(--muted)" id="userrole">Agent workspace</div></div>
+      <div style="min-width:0"><strong id="username" style="font-size:14px">Guest</strong><div style="font-size:12px;color:var(--muted)" id="userrole">Agent workspace</div><div id="syncstatus" style="font-size:11px;color:var(--muted)"></div></div>
     </div>
     <button class="footerback" id="back">View sign-up screen</button>
   </aside>
@@ -696,6 +696,7 @@ $('skip').onclick=enter;
 /* ---------- accounts & cloud sync (Supabase: email code sign-in, per-user rows protected by RLS) ---------- */
 let SB=null,SBUSER=null,sbReady=null;const SB_KINDS={profile:'lendable:profile:v1',mine:'lendable:mybuildings:v1',deals:'lendable:deals:v1',lendercontacts:'lendable:lendercontacts:v1'};
 const sbVals=()=>({profile:PROFILE,mine:MINE,deals:DEALS,lendercontacts:LCONTACTS});
+function syncStat(t,bad){const el=$('syncstatus');if(el){el.textContent=t;el.style.color=bad?'var(--bad)':''}}
 function authMsg(t,bad){const m=$('authmsg');m.textContent=t;m.style.color=bad?'var(--bad)':''}
 function loadScript(src){return new Promise((res,rej)=>{const sc=document.createElement('script');sc.src=src;sc.onload=res;sc.onerror=()=>rej(Error('script'));document.head.appendChild(sc)})}
 function sbInit(){if(!sbReady)sbReady=(async()=>{if(!/^https?:$/.test(location.protocol))return null;try{const c=await (await fetch('/api/config')).json();if(!c.enabled)return null;
@@ -703,7 +704,7 @@ function sbInit(){if(!sbReady)sbReady=(async()=>{if(!/^https?:$/.test(location.p
   SB=window.supabase.createClient(c.url,c.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'implicit',storageKey:'pa-auth'}});
   SB.auth.onAuthStateChange((ev,session)=>{SBUSER=session?session.user:null;authUi()});
   const {data}=await SB.auth.getSession();SBUSER=data.session?data.session.user:null;return SB}catch(e){console.warn('auth off',e);return null}})();return sbReady}
-function authUi(){$('back').textContent=SBUSER?'Sign out':'View sign-up screen';$('back').title=SBUSER?('Signed in as '+(SBUSER.email||'')):''}
+function authUi(){if(!SBUSER)syncStat('');else if(!$('syncstatus').textContent)syncStat('Signed in as '+(SBUSER.email||''));$('back').textContent=SBUSER?'Sign out':'View sign-up screen';$('back').title=SBUSER?('Signed in as '+(SBUSER.email||'')):''}
 let otpEmail='';
 async function authStart(){const em=$('email').value.trim();if(!em)return;PROFILE=Object.assign({},PROFILE,{name:$('name').value.trim()||PROFILE.name||'',email:em,role:$('role').value||PROFILE.role||'agent'});try{localStorage.setItem('lendable:profile:v1',JSON.stringify(PROFILE))}catch(e){}authMsg('Sending your code…');$('authsend').disabled=true;
   const sb=await sbInit();
@@ -725,11 +726,11 @@ function mergeMap(a,b){const o=Object.assign({},a||{});for(const [k,v] of Object
 let cloudTimer=null,cloudDirty=new Set(),pulling=false;
 function cloudQueue(kind){if(!SBUSER||pulling)return;cloudDirty.add(kind);clearTimeout(cloudTimer);cloudTimer=setTimeout(()=>cloudFlush().catch(()=>{}),1200)}
 async function cloudFlush(){if(!SB||!SBUSER||!cloudDirty.size)return;const kinds=[...cloudDirty];cloudDirty.clear();const v=sbVals();const now=new Date().toISOString();
-  const {error}=await SB.from('user_state').upsert(kinds.map(k=>({user_id:SBUSER.id,kind:k,data:v[k]||{},updated_at:now})));
-  if(error){kinds.forEach(k=>cloudDirty.add(k));console.warn('sync',error.message)}else{try{localStorage.setItem('pa-lastpush',now)}catch(e){}}}
+  syncStat('Saving…');let error;try{({error}=await SB.from('user_state').upsert(kinds.map(k=>({user_id:SBUSER.id,kind:k,data:v[k]||{},updated_at:now}))))}catch(e){error=e}
+  if(error){kinds.forEach(k=>cloudDirty.add(k));console.warn('sync',error.message);syncStat('Not synced: '+String(error.message||error).slice(0,80),true)}else{try{localStorage.setItem('pa-lastpush',now)}catch(e){}syncStat('✓ Synced '+new Date().toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}))}}
 async function cloudPull(first){if(!SB||!SBUSER)return;pulling=true;let merge=false;try{
-  const {data,error}=await SB.from('user_state').select('kind,data,updated_at');if(error){console.warn('pull',error.message);return}
-  const got={};(data||[]).forEach(r=>got[r.kind]=r.data);merge=first||localStorage.getItem('pa-synced')!==SBUSER.id;
+  const {data,error}=await SB.from('user_state').select('kind,data,updated_at');if(error){console.warn('pull',error.message);syncStat('Not synced: '+error.message.slice(0,80),true);return}
+  const got={};(data||[]).forEach(r=>got[r.kind]=r.data);merge=first||!(data&&data.length)||localStorage.getItem('pa-synced')!==SBUSER.id;
   if(got.profile&&Object.keys(got.profile).length)PROFILE=merge?Object.assign({},got.profile,PROFILE.name?{name:PROFILE.name}:{},PROFILE.role?{role:PROFILE.role}:{}):got.profile;
   PROFILE.email=SBUSER.email||PROFILE.email;const md=SBUSER.user_metadata||{};if(!PROFILE.name&&md.name)PROFILE.name=md.name;if(!PROFILE.role&&md.role)PROFILE.role=md.role;
   if(got.mine)MINE=merge?mergeMap(got.mine,MINE):got.mine;
