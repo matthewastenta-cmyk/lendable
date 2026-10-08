@@ -81,7 +81,7 @@ def main():
     # ---- SR-1A sales, last 12 months ----
     today = dt.date.today(); since = today - dt.timedelta(days=365)
     files = ['Sales%d.zip' % (today.year - 1), 'YTDSR1A%d.zip' % today.year]
-    sales = collections.defaultdict(list); latest_rec = ''
+    sales = collections.defaultdict(list); latest_rec = ''; dbg = []; dbg_done = False
     dist = {v[1]: k for k, v in MUNS.items()}
     for fn in files:
         try:
@@ -91,6 +91,7 @@ def main():
         for name in z.namelist():
             for line in z.read(name).decode('latin-1').splitlines():
                 if line[0:2] != '09' or line[2:4] not in dist: continue
+                if len(dbg) < 6 and line[2:4] == '05': dbg.append(line[290:])
                 q = line[619:624].strip()
                 if not q.upper().startswith('C') or line[626:628].strip() != '2': continue
                 rec = line[344:350]
@@ -104,6 +105,7 @@ def main():
                 key = (dist[line[2:4]], blk(line[350:355], line[355:359]), (line[359:364].strip().lstrip('0') or '0'))
                 sales[key].append({'p': price, 'd': rd.isoformat(), 'u': usable, 'q': q})
                 latest_rec = max(latest_rec, rd.isoformat())
+    for x in dbg: log('RAW', repr(x))
     log('SR-1A condo sales in window', sum(len(v) for v in sales.values()), 'latest recorded', latest_rec)
 
     # ---- HUD FHA (NJ) ----
