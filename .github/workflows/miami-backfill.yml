@@ -1,0 +1,29 @@
+name: Miami backfill (budget-capped)
+on:
+  workflow_dispatch:
+    inputs:
+      zips: { description: "ZIP codes", default: "33131,33129,33130,33132,33137" }
+      buildings: { description: "Number of buildings", default: "50" }
+      per_building: { description: "Recent sales per building", default: "5" }
+      max_lookups: { description: "Max lookups ($0.20 each)", default: "250" }
+permissions: { contents: write }
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - env:
+          CLERK_AUTH_KEY: "${{ secrets.CLERK_AUTH_KEY }}"
+          CLERK_PROXY_URL: "${{ secrets.CLERK_PROXY_URL }}"
+          ZIPS: "${{ inputs.zips }}"
+          BUILDINGS: "${{ inputs.buildings }}"
+          PER_BUILDING: "${{ inputs.per_building }}"
+          MAX_LOOKUPS: "${{ inputs.max_lookups }}"
+        run: |
+          set +e
+          python3 scripts/backfill_miami.py > /tmp/bf_log.txt 2>&1; code=$?
+          python3 scripts/build_miami.py --lenders-only >> /tmp/bf_log.txt 2>&1
+          git add data/miami_backfill.json data/miami.json
+          git diff --cached --quiet || (git -c user.name="lendable-bot" -c user.email="noreply@anthropic.com" commit -qm "Miami backfill" && git pull -q --rebase && git push -q)
+          echo "exit $code" >> /tmp/bf_log.txt
+          mkdir /tmp/log && cd /tmp/log && cp /tmp/bf_log.txt . && git init -q && git checkout -q -b data-logs && git add -A && git -c user.name=bot -c user.email=bot@example.com commit -qm log && git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" data-logs

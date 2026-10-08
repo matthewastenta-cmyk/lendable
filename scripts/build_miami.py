@@ -21,7 +21,18 @@ def attach_lenders(path="data/miami.json"):
         if m["date"] >= cutoff and m["lender"] and not NOT_LENDER.search(m["lender"]):
             b = by.get(m["folio"][:-4])
             if b is not None: hits[id(b)].append(m)
+    bf = json.load(open("data/miami_backfill.json"))["sales"] if os.path.exists("data/miami_backfill.json") else {}
+    fin = defaultdict(lambda: [0, 0])
+    for folio, x in bf.items():
+        b = by.get(folio[:-4])
+        if b is None: continue
+        fin[id(b)][0 if x["financed"] else 1] += 1
+        for name in x["lenders"]:
+            hits[id(b)].append({"lender": name, "date": x["rec"], "book": "bf", "page": folio + name})
     for b in d["rows"]:
+        f = fin.get(id(b))
+        if f: b["fc"] = f  # [financed, cash] among recent sales checked
+        else: b.pop("fc", None)
         ms = hits.get(id(b), [])
         if ms:
             c = Counter(m["lender"] for m in ms)
