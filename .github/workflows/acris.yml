@@ -16,7 +16,7 @@ jobs:
           MODE="${{ github.event.inputs.mode || 'build' }}"
           if [ "$MODE" = probe ]; then python3 scripts/acris_probe.py > /tmp/acris_log.txt 2>&1; code=$?
           else python3 scripts/acris_nyc.py > /tmp/acris_log.txt 2>&1; code=$?
-            if [ $code -eq 0 ]; then git add data/nyc_lenders.json data/nyc_bronx.json 2>/dev/null; git diff --cached --quiet || (git -c user.name="lendable-bot" -c user.email="noreply@anthropic.com" commit -m "Weekly ACRIS lender refresh" && git pull -q --rebase && git push); fi
+            if [ $code -eq 0 ]; then git add data/nyc_lenders.json buildings-db.json; git diff --cached --quiet || (git -c user.name="lendable-bot" -c user.email="noreply@anthropic.com" commit -m "Weekly ACRIS lender refresh" && git pull -q --rebase && git push); fi
           fi
           echo "exit $code" >> /tmp/acris_log.txt
           mkdir /tmp/log && cd /tmp/log && cp /tmp/acris_log.txt . && cp /tmp/acris_report.txt . 2>/dev/null; git init -q && git checkout -q -b data-logs && git add -A && git -c user.name=bot -c user.email=bot@example.com commit -qm log && git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" data-logs
