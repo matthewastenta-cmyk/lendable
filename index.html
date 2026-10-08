@@ -460,7 +460,7 @@ tbody tr:hover .open,tbody tr:focus-within .open{opacity:1}
         <button class="primary full" type="submit" id="authsend">Email me a sign-in code</button>
       </form>
       <form id="otpform" class="hide">
-        <p style="margin:0 0 10px;font-size:14px">We sent a code to <strong id="otpto"></strong>. Enter it below. It expires in an hour.</p>
+        <p style="margin:0 0 10px;font-size:14px">We emailed <strong id="otpto"></strong>. Tap the sign-in link in that email, or if it shows a code, enter it below.</p>
         <div class="field"><label for="otp">Sign-in code</label><input id="otp" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6,10}" maxlength="10" placeholder="123456" required></div>
         <button class="primary full" type="submit" id="otpgo">Sign in</button>
         <button class="skip" type="button" id="otpback" style="margin-top:12px">Use a different email</button>
@@ -700,18 +700,18 @@ function authMsg(t,bad){const m=$('authmsg');m.textContent=t;m.style.color=bad?'
 function loadScript(src){return new Promise((res,rej)=>{const sc=document.createElement('script');sc.src=src;sc.onload=res;sc.onerror=()=>rej(Error('script'));document.head.appendChild(sc)})}
 function sbInit(){if(!sbReady)sbReady=(async()=>{if(!/^https?:$/.test(location.protocol))return null;try{const c=await (await fetch('/api/config')).json();if(!c.enabled)return null;
   if(!window.supabase)await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js');
-  SB=window.supabase.createClient(c.url,c.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'pa-auth'}});
+  SB=window.supabase.createClient(c.url,c.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'implicit',storageKey:'pa-auth'}});
   SB.auth.onAuthStateChange((ev,session)=>{SBUSER=session?session.user:null;authUi()});
   const {data}=await SB.auth.getSession();SBUSER=data.session?data.session.user:null;return SB}catch(e){console.warn('auth off',e);return null}})();return sbReady}
 function authUi(){$('back').textContent=SBUSER?'Sign out':'View sign-up screen';$('back').title=SBUSER?('Signed in as '+(SBUSER.email||'')):''}
 let otpEmail='';
-async function authStart(){const em=$('email').value.trim();if(!em)return;authMsg('Sending your code…');$('authsend').disabled=true;
+async function authStart(){const em=$('email').value.trim();if(!em)return;PROFILE=Object.assign({},PROFILE,{name:$('name').value.trim()||PROFILE.name||'',email:em,role:$('role').value||PROFILE.role||'agent'});try{localStorage.setItem('lendable:profile:v1',JSON.stringify(PROFILE))}catch(e){}authMsg('Sending your code…');$('authsend').disabled=true;
   const sb=await sbInit();
   if(!sb){$('authsend').disabled=false;authMsg('Accounts aren’t available here yet, so you’re in guest mode. Your work saves on this device only.');enter();return}
-  const {error}=await sb.auth.signInWithOtp({email:em,options:{shouldCreateUser:true,data:{name:$('name').value.trim(),role:$('role').value}}});
+  const {error}=await sb.auth.signInWithOtp({email:em,options:{shouldCreateUser:true,emailRedirectTo:location.origin+location.pathname,data:{name:$('name').value.trim(),role:$('role').value}}});
   $('authsend').disabled=false;
   if(error){authMsg(/rate|limit|seconds/i.test(error.message)?'Too many codes requested. Wait a minute and try again.':'Couldn’t send the code: '+error.message,true);return}
-  otpEmail=em;$('otpto').textContent=em;$('signupform').classList.add('hide');$('otpform').classList.remove('hide');authMsg('Check your inbox (and spam). The email comes from Supabase for now.');setTimeout(()=>$('otp').focus(),50)}
+  otpEmail=em;$('otpto').textContent=em;$('signupform').classList.add('hide');$('otpform').classList.remove('hide');authMsg('Check your inbox and spam folder. The email comes from Supabase for now.');setTimeout(()=>$('otp').focus(),50)}
 $('otpback').onclick=()=>{$('otpform').classList.add('hide');$('signupform').classList.remove('hide');authMsg('No password needed. Your saved buildings and deals sync to your account.')};
 $('otpform').onsubmit=async e=>{e.preventDefault();const code=$('otp').value.replace(/\D/g,'');if(code.length<6)return;$('otpgo').disabled=true;authMsg('Signing you in…');
   const {data,error}=await SB.auth.verifyOtp({email:otpEmail,token:code,type:'email'});$('otpgo').disabled=false;
@@ -731,7 +731,7 @@ async function cloudPull(first){if(!SB||!SBUSER)return;pulling=true;let merge=fa
   const {data,error}=await SB.from('user_state').select('kind,data,updated_at');if(error){console.warn('pull',error.message);return}
   const got={};(data||[]).forEach(r=>got[r.kind]=r.data);merge=first||localStorage.getItem('pa-synced')!==SBUSER.id;
   if(got.profile&&Object.keys(got.profile).length)PROFILE=merge?Object.assign({},got.profile,PROFILE.name?{name:PROFILE.name}:{},PROFILE.role?{role:PROFILE.role}:{}):got.profile;
-  PROFILE.email=SBUSER.email||PROFILE.email;
+  PROFILE.email=SBUSER.email||PROFILE.email;const md=SBUSER.user_metadata||{};if(!PROFILE.name&&md.name)PROFILE.name=md.name;if(!PROFILE.role&&md.role)PROFILE.role=md.role;
   if(got.mine)MINE=merge?mergeMap(got.mine,MINE):got.mine;
   if(got.deals)DEALS=merge?mergeMap(got.deals,DEALS):got.deals;
   if(got.lendercontacts)LCONTACTS=merge?Object.assign({},got.lendercontacts,LCONTACTS):got.lendercontacts;
@@ -744,7 +744,7 @@ async function cloudPull(first){if(!SB||!SBUSER)return;pulling=true;let merge=fa
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')cloudFlush().catch(()=>{});else if(SBUSER)cloudPull(false).catch(()=>{})});
 window.addEventListener('pagehide',()=>{cloudFlush().catch(()=>{})});
 /* returning users skip the sign-up screen */
-sbInit().then(async sb=>{authUi();if(sb&&SBUSER){await cloudPull(false);enter()}});
+sbInit().then(async sb=>{authUi();if(sb&&SBUSER){const fresh=/access_token|type=magiclink|type=signup/.test(location.hash);if(fresh)try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}await cloudPull(fresh&&localStorage.getItem('pa-synced')!==SBUSER.id);enter();if(fresh)toast('Signed in. Your buildings and deals now sync across devices.')}});
 
 
 $('back').onclick=()=>{if(SBUSER){authSignOut();return}$('workspace').classList.add('hide');$('signup').classList.remove('hide')};
