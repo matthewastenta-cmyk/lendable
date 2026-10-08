@@ -1,30 +1,26 @@
-import json, re, urllib.request, urllib.parse
+import json, re, urllib.request, urllib.parse, io, zipfile, collections
 UA={'User-Agent':'Mozilla/5.0 pocketapproval'}
 def get(u, data=None):
-    return urllib.request.urlopen(urllib.request.Request(u, data=data, headers=UA), timeout=120).read()
-FS='https://services2.arcgis.com/XVOqAjTOJ5P6ngMu/ArcGIS/rest/services/Parcels_MODIV_NJ_WM/FeatureServer/0/query?'
-def q(**p):
-    p.setdefault('f','json'); return json.loads(get(FS+urllib.parse.urlencode(p)))
-for mun in ['HOBOKEN CITY','JERSEY CITY']:
-    for w in ["MUN_NAME='%s'","MUN_NAME='%s' AND PCLQCODE LIKE 'C%%'","MUN_NAME='%s' AND PROP_CLASS='2'"]:
-        try: print(mun, w, q(where=w%mun, returnCountOnly='true'))
-        except Exception as e: print('ERR', e)
+    return urllib.request.urlopen(urllib.request.Request(u, data=data, headers=UA), timeout=300).read()
+for svc in ['Parcels_Composite_NJ_WM','Parcels_MODIV_NJ_WM']:
+    base='https://services2.arcgis.com/XVOqAjTOJ5P6ngMu/arcgis/rest/services/%s/FeatureServer/0/query'%svc
+    for w in ["1=1","MUN_NAME='HOBOKEN CITY'","COUNTY='HUDSON'"]:
+        try:
+            r=json.loads(get(base+'?'+urllib.parse.urlencode({'where':w,'returnCountOnly':'true','f':'json'})))
+            print(svc,w,r)
+        except Exception as e: print(svc,w,'ERR',e)
     try:
-        r=q(where="MUN_NAME='%s' AND PCLQCODE LIKE 'C%%'"%mun, outFields='PCLBLOCK,PCLLOT,PCLQCODE,PROP_CLASS,PROP_LOC,BLDG_DESC,BLDG_CLASS,YR_CONSTR,SALE_PRICE,DEED_DATE,DWELL,ZIP5', resultRecordCount=5)
-        for f in r.get('features',[]): print(f['attributes'])
-    except Exception as e: print('ERR', e)
-    try:
-        r=q(where="MUN_NAME='%s'"%mun, outFields='PROP_CLASS,count(*)', groupByFieldsForStatistics='PROP_CLASS', outStatistics=json.dumps([{"statisticType":"count","onStatisticField":"OBJECTID","outStatisticFieldName":"n"}]))
-        print('classes', [ (f['attributes']['PROP_CLASS'], f['attributes']['n']) for f in r.get('features',[])])
-    except Exception as e: print('ERR', e)
-# big rentals/condo master lots
-try:
-    r=q(where="MUN_NAME='HOBOKEN CITY' AND DWELL>20", outFields='PCLBLOCK,PCLLOT,PCLQCODE,PROP_CLASS,PROP_LOC,BLDG_DESC,YR_CONSTR,DWELL', resultRecordCount=8)
-    for f in r.get('features',[]): print('big', f['attributes'])
-except Exception as e: print('ERR', e)
-# SR1A downloads
-for u in ['https://www.nj.gov/treasury/taxation/lpt/statdata.shtml','https://www.state.nj.us/treasury/taxation/lpt/statdata.shtml','https://www.nj.gov/treasury/taxation/lpt/salesdata.shtml']:
-    try:
-        h=get(u).decode('latin-1'); links=sorted(set(re.findall(r'href="([^"]*(?:SR1A|sr1a|Sales|sales)[^"]*)"',h)))
-        print(u, len(h), links[:40])
-    except Exception as e: print(u,'ERR',e)
+        r=json.loads(get(base+'?'+urllib.parse.urlencode({'where':"MUN_NAME='HOBOKEN CITY'",'outFields':'MUN_NAME,PCL_MUN,PCLBLOCK,PCLLOT,PCLQCODE,PROP_CLASS,PROP_LOC,BLDG_DESC,YR_CONSTR,DWELL,SALE_PRICE,DEED_DATE,ZIP5','resultRecordCount':'6','f':'json'})))
+        print(svc,'sample',[f['attributes'] for f in r.get('features',[])][:6], r.get('error'))
+    except Exception as e: print(svc,'ERR',e)
+# SR1A 2026 YTD: Hudson = county 09
+z=zipfile.ZipFile(io.BytesIO(get('https://www.nj.gov/treasury/taxation/lpt/statdata/YTDSR1A2026.zip')))
+print('zip files', z.namelist())
+data=z.read(z.namelist()[0]).decode('latin-1').splitlines()
+print('lines', len(data), 'len0', len(data[0]))
+hud=[l for l in data if l[0:2]=='09']
+print('hudson', len(hud), collections.Counter(l[2:4] for l in hud))
+c=[l for l in hud if l[648:649]=='Y']
+print('hudson condo', len(c), collections.Counter(l[2:4] for l in c))
+for l in c[:12]:
+    print(l[2:4], '|blk', l[350:359].strip(), '|lot', l[359:368].strip(), '|q', l[619:624].strip(), '|cls', l[626:628], '|loc', l[297:322].strip(), '|price', l[37:46].strip(), '|deed', l[338:344], '|rec', l[344:350], '|U/N', l[33:37])
