@@ -4,6 +4,7 @@ Runs in GitHub Actions. Writes data/miami.json. Owner names are never kept."""
 import csv, io, json, re, sys, urllib.parse, urllib.request, zipfile
 from collections import Counter, defaultdict
 
+NOT_LENDER = re.compile(r"^MERS\b|MORTGAGE ELECTRONIC REGISTRATION|SECRETARY OF (HOUSING|VETERANS)|^HUD\b|DEPARTMENT OF HOUSING", re.I)  # nominees / government partial claims, not the lender
 def attach_lenders(path="data/miami.json"):
     """Merge data/miami_mortgages.json into the building list: lenders seen in the last 12 months per building."""
     import datetime, os
@@ -17,7 +18,7 @@ def attach_lenders(path="data/miami.json"):
             if p: by[p.zfill(9)] = b
     hits = defaultdict(list)
     for m in morts:
-        if m["date"] >= cutoff and m["lender"]:
+        if m["date"] >= cutoff and m["lender"] and not NOT_LENDER.search(m["lender"]):
             b = by.get(m["folio"][:-4])
             if b is not None: hits[id(b)].append(m)
     for b in d["rows"]:
