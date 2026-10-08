@@ -10,17 +10,28 @@ PROXY = os.environ["CLERK_PROXY_URL"].strip()
 FOLDER = os.environ.get("CLERK_FOLDER", "").strip()
 API = "https://www2.miamidadeclerk.gov/Developers/api/FTPapi"
 opener = urllib.request.build_opener(urllib.request.ProxyHandler({"http": PROXY, "https": PROXY}))
-if not FOLDER:
-    print("CLERK_FOLDER not set yet; nothing to do."); sys.exit(0)
-
 def get(params, accept="application/xml"):
     q = urllib.parse.urlencode({**params, "AuthKey": KEY})
-    return opener.open(urllib.request.Request(API + "?" + q, headers={"Accept": accept, "User-Agent": "Mozilla/5.0"}), timeout=300).read()
+    try:
+        return opener.open(urllib.request.Request(API + "?" + q, headers={"Accept": accept, "User-Agent": "Mozilla/5.0"}), timeout=300).read()
+    except urllib.error.HTTPError as e:
+        return ("HTTP %s " % e.code).encode() + e.read()
+
+if not FOLDER:
+    # Folder name not configured: try the likely names and report what the Clerk says.
+    for cand in ["Records", "RECORDS", "OfficialRecords", "Official Records", "OR", "Recording"]:
+        r = get({"folderListName": cand}).decode("utf-8", "replace").replace(KEY, "***")
+        print("try", repr(cand), "->", re.sub(r"\s+", " ", r)[:300])
+        if re.search(r"\.(zip|txt|csv|dat|xml)", r, re.I):
+            FOLDER = cand; print("USING", cand); break
+    if not FOLDER:
+        sys.exit(0)
 
 state_path = "data/miami_mortgages.json"
 state = json.load(open(state_path)) if os.path.exists(state_path) else {"files": [], "mortgages": []}
 
 listing = get({"folderListName": FOLDER}).decode("utf-8", "replace")
+print("listing head:", re.sub(r"\s+", " ", listing.replace(KEY, "***"))[:500])
 names = re.findall(r"[\w.\-]+\.(?:zip|txt|csv|dat|xml)", listing, re.I)
 names = sorted(set(names))
 print("files in folder:", len(names), names[:5])
