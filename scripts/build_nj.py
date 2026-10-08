@@ -37,8 +37,10 @@ EXP = {'ST': 'Street', 'AVE': 'Avenue', 'AV': 'Avenue', 'PL': 'Place', 'DR': 'Dr
        'CT': 'Court', 'LN': 'Lane', 'PLZ': 'Plaza', 'HWY': 'Highway', 'PKWY': 'Parkway', 'SQ': 'Square'}
 def pretty(a):
     out = []
-    for i, w in enumerate(re.sub(r'\.', ' ', str(a)).upper().split()):
-        if i > 0 and w in EXP: out.append(EXP[w])
+    ws = re.sub(r'\.', ' ', str(a)).upper().split()
+    for i, w in enumerate(ws):
+        if w == 'ST' and i < len(ws) - 1 and i > 0: out.append('St.')   # Saint, e.g. St. Pauls Ave
+        elif i > 0 and w in EXP: out.append(EXP[w])
         elif re.fullmatch(r'\d+(ST|ND|RD|TH)', w): out.append(w.lower())
         elif re.fullmatch(r'[\d\-]+[A-Z]?', w): out.append(w)
         else: out.append(w.capitalize())
