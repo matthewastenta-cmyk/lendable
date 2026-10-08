@@ -327,6 +327,11 @@ def main():
            'cols': ['address', 'borough', 'type', 'financedClosings', 'latest', 'lenders[[i,count]]', 'lenderUnknown', 'salesChecked', 'taxLienSale[count,latest]|0', 'bbl', 'aliases'],
            'lenders': names, 'rows': rows}
     json.dump(out, open('data/nyc_lenders.json', 'w'), separators=(',', ':'))
+    # refresh the copy embedded in index.html (the app reads it at startup)
+    h = open('index.html', encoding='utf-8').read()
+    blob = json.dumps(out, separators=(',', ':')).replace('</', '<\\/')
+    h2 = re.sub(r'(<script id="buildings-data" type="application/json">)(.*?)(</script>)', lambda m_: m_.group(1) + blob + m_.group(3), h, count=1, flags=re.S)
+    if h2 != h and len(rows) > 3000: open('index.html', 'w', encoding='utf-8').write(h2)
     log('wrote data/nyc_lenders.json', len(rows), 'buildings,', sum(r[3] for r in rows), 'financed closings,', len(names), 'lender names', '| calls', calls, '| %.0fs' % (time.time() - t0))
 
     # ---- verification vs previous data ----
