@@ -22,6 +22,9 @@ Classify every finding into exactly one tier:
 - "needs_docs": the item matters for financing but can't be assessed from what was provided; say exactly which document or answer is needed.
 - "meets": the documents indicate the standard appears to be satisfied (state the figure).
 
+Board minutes: read them the way a purchaser's attorney does, as an early warning system. Flag anything discussed that could affect value or financing, with the meeting date: planned or proposed special assessments or common-charge increases; major capital projects (facade/Local Law 11, roof, elevators, boilers, plumbing risers, garage, balconies) and how they'll be funded; water intrusion, mold, structural or safety issues; insurance renewals, coverage reductions or premium spikes; litigation, claims or threatened suits; underlying mortgage refinancing or maturity (co-ops); sponsor or developer disputes or sponsor-held units; changes to flip tax, sublet, pet or financing rules; budget shortfalls or reserve draws; and anything else a buyer should ask about. In minutes, never name residents, owners or board members, even when the minutes do.
+For minutes items, public_statement should say what was discussed without figures, e.g. 'Board minutes discuss a planned special assessment', 'Board minutes discuss facade repairs not yet funded', 'Board minutes discuss an insurance non-renewal'.
+
 Cover these categories when the documents allow: reserves, operating results, delinquencies, special assessments, critical repairs / structural, litigation, insurance (master, flood, fidelity), single-entity ownership, commercial space, owner occupancy / rentals, hotel-like operation, and (co-ops) underlying mortgage and recognition-agreement issues.
 
 Privacy rules — never break these:
@@ -34,7 +37,7 @@ Return ONLY one JSON object, no prose, no code fences:
   "building_name": "association / corporation name if stated, else null",
   "doc_period": "the period or date the documents describe, e.g. 'FY2025 budget; audited statements for 2024'",
   "findings": [
-    {"category": "reserves|operating|delinquency|special_assessment|critical_repairs|litigation|insurance|single_entity|commercial|occupancy|hotel|coop_financing|other",
+    {"category": "reserves|operating|delinquency|special_assessment|critical_repairs|litigation|insurance|single_entity|commercial|occupancy|hotel|coop_financing|capital_project|house_rules|minutes_other|other",
      "tier": "guideline_issue|concern|needs_docs|meets",
      "title": "short headline, e.g. 'Reserve contributions below 10% of budget'",
      "detail": "one or two sentences with the specific figures and why it matters for financing",
