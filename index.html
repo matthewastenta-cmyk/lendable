@@ -454,7 +454,7 @@ tbody tr:hover .open,tbody tr:focus-within .open{opacity:1}
         <div class="field"><label for="role">I am a…</label><select id="role" required>
           <option value="" disabled selected>Choose one</option>
           <option value="agent">Real estate agent or broker</option>
-          <option value="lo">Loan officer or lender</option>
+          <option value="lo">Mortgage broker or lender</option>
           <option value="attorney">Attorney</option>
           <option value="buyer">Home buyer or seller</option>
           <option value="other">Other (title, managing agent…)</option>
@@ -680,7 +680,7 @@ let selected=null,awaiting=null,documentQueue=[],deal={};
 const listState={q:'',type:'All',lender:'',boro:'',sort:'closings',dir:-1,limit:150};
 
 /* ---------- theme & entry ---------- */
-const ROLES_U={agent:['Agent workspace','LET\'S MOVE YOUR DEAL FORWARD','a real estate agent or broker. Be practical about what to ask the listing agent, board and lender.'],lo:['Lender workspace','VET THE PROJECT BEFORE YOU LOCK','a mortgage loan officer. Be precise about Fannie Mae/Freddie Mac project rules, review types and documentation.'],attorney:['Attorney workspace','DILIGENCE BEFORE THE CONTRACT','a real estate attorney. Emphasize litigation, assessments, liens, recorded documents and contract terms; note what to verify in the offering plan, questionnaire and title.'],buyer:['Buyer workspace','KNOW THE BUILDING BEFORE YOU BUY','a home buyer or seller, not a professional. Use plain language, explain any jargon briefly, and suggest what to ask their agent, lender or attorney. Do not give legal or financial advice.'],other:['Pro workspace','VET THE BUILDING','a real estate professional (title, managing agent or similar).']};
+const ROLES_U={agent:['Agent workspace','LET\'S MOVE YOUR DEAL FORWARD','a real estate agent or broker. Be practical about what to ask the listing agent, board and lender.'],lo:['Lender workspace','VET THE PROJECT BEFORE YOU LOCK','a mortgage broker or lender. Be precise about Fannie Mae/Freddie Mac project rules, review types and documentation.'],attorney:['Attorney workspace','DILIGENCE BEFORE THE CONTRACT','a real estate attorney. Emphasize litigation, assessments, liens, recorded documents and contract terms; note what to verify in the offering plan, questionnaire and title.'],buyer:['Buyer workspace','KNOW THE BUILDING BEFORE YOU BUY','a home buyer or seller, not a professional. Use plain language, explain any jargon briefly, and suggest what to ask their agent, lender or attorney. Do not give legal or financial advice.'],other:['Pro workspace','VET THE BUILDING','a real estate professional (title, managing agent or similar).']};
 let PROFILE={};try{PROFILE=JSON.parse(localStorage.getItem('lendable:profile:v1'))||{}}catch(e){}
 function applyProfile(){const r=ROLES_U[PROFILE.role]||ROLES_U.agent;$('userrole').textContent=r[0];$('welcomeeyebrow').textContent=r[1];const n=(PROFILE.name||'').trim();if(n){$('username').textContent=n;$('avatar').textContent=n.split(/\s+/).map(x=>x[0]).slice(0,2).join('').toUpperCase()}}
 (()=>{if(PROFILE.name)$('name').value=PROFILE.name;if(PROFILE.email)$('email').value=PROFILE.email;if(PROFILE.role)$('role').value=PROFILE.role;})();
