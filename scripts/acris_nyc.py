@@ -236,10 +236,13 @@ def main():
 
     # ---- aggregate per building ----
     agg = {}
-    unmapped = 0
+    unmapped = 0; um = collections.Counter(); um_s = []
     for s in sales:
         p = building_for(s['bi'], s['blk'], s['lot'], s['num'], s['st'])
-        if not p: unmapped += 1; continue
+        if not p:
+            unmapped += 1; um[s['bi']] += 1
+            if len(um_s) < 15: um_s.append('%s %s/%s %s %s' % (BOROS[s['bi']], s['blk'], s['lot'], s.get('num'), s.get('st')))
+            continue
         k = (p['_b'], int(p['block']), int(p['lot']))
         a = agg.setdefault(k, dict(p=p, sales=0, fin=0, unknown=0, latest='', lenders=collections.Counter(), coop=s['coop']))
         a['sales'] += 1
@@ -255,7 +258,7 @@ def main():
         if not p: continue
         k = (p['_b'], int(p['block']), int(p['lot'])); tls[k] += 1
         tls_last[k] = max(tls_last.get(k, ''), day(mm[L['document_id']]['recorded_datetime']))
-    log('sales not mapped to a PLUTO building', unmapped)
+    log('sales not mapped to a PLUTO building', unmapped, dict(um)); log('  e.g.', um_s)
 
     # ---- addresses: reuse buildings-db.json naming, add Bronx rows ----
     db = json.load(open('buildings-db.json'))
@@ -267,7 +270,7 @@ def main():
     for p in pl:
         if p['borough'] != 'BX' or p.get('bldgclass') not in ('R1', 'R2', 'R3', 'R4', 'R6', 'R9', 'RD', 'RM', 'RR', 'RX', 'RZ', 'D4', 'C6', 'D0', 'C8'): continue
         units = int(float(p.get('unitsres') or 0))
-        if units < 3: continue
+        if units < 3 or not p.get('address'): continue
         cls = p['bldgclass']; fl = int(float(p.get('numfloors') or 0)) or None
         elev = 1 if cls[0] == 'D' or cls == 'R4' else 0 if cls[0] == 'C' or cls == 'R2' else (1 if (fl or 0) >= 6 else None)
         h = p.get('histdist')
@@ -295,14 +298,14 @@ def main():
     for k, a in agg.items():
         p = a['p']; bbl = int(float(p['bbl']))
         if a['fin'] == 0 and not tls.get(k): continue
-        addr = addr_by_bbl.get(bbl) or pretty(p['address'])
+        addr = addr_by_bbl.get(bbl) or pretty(p.get('address', ''))
         typ = 1 if p['bldgclass'][0] in 'CD' else 0
         rows.append([addr, p['_b'], typ, a['fin'], a['latest'] or '—', [[li(n), c] for n, c in a['lenders'].most_common()], a['unknown'], a['sales'],
                      [tls[k], tls_last[k]] if tls.get(k) else 0, bbl])
     for k in tls:
         if k not in agg:
             p = bybbl.get(k)
-            if p: rows.append([addr_by_bbl.get(int(float(p['bbl']))) or pretty(p['address']), p['_b'], 1 if p['bldgclass'][0] in 'CD' else 0, 0, '—', [], 0, 0, [tls[k], tls_last[k]], int(float(p['bbl']))])
+            if p: rows.append([addr_by_bbl.get(int(float(p['bbl']))) or pretty(p.get('address', '')), p['_b'], 1 if p['bldgclass'][0] in 'CD' else 0, 0, '—', [], 0, 0, [tls[k], tls_last[k]], int(float(p['bbl']))])
     rows.sort(key=lambda r: (r[1], r[0]))
     mon = lambda x: x.strftime('%b %-d, %Y')
     out = {'source': 'NYC ACRIS via NYC Open Data', 'asOf': latest, 'window': mon(start) + ' – ' + mon(end), 'boroughs': BOROS,
