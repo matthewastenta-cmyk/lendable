@@ -7,7 +7,7 @@ import xml.etree.ElementTree as ET
 
 KEY = os.environ["CLERK_AUTH_KEY"].strip()
 PROXY = os.environ["CLERK_PROXY_URL"].strip()
-FOLDER = os.environ.get("CLERK_FOLDER", "").strip() or "Records" or "Records"
+FOLDER_ENV = os.environ.get("CLERK_FOLDER", "").strip()
 API = "https://www2.miamidadeclerk.gov/Developers/api/FTPapi"
 opener = urllib.request.build_opener(urllib.request.ProxyHandler({"http": PROXY, "https": PROXY}))
 def get(params, accept="application/xml"):
@@ -17,31 +17,38 @@ def get(params, accept="application/xml"):
     except urllib.error.HTTPError as e:
         return ("HTTP %s " % e.code).encode() + e.read()
 
-if not FOLDER:
-    # Folder name not configured: try the likely names and report what the Clerk says.
-    for cand in ["Records", "RECORDS", "OfficialRecords", "Official Records", "OR", "Recording"]:
-        r = get({"folderListName": cand}).decode("utf-8", "replace").replace(KEY, "***")
-        print("try", repr(cand), "->", re.sub(r"\s+", " ", r)[:300])
-        if re.search(r"\.(zip|txt|csv|dat|xml)", r, re.I):
-            FOLDER = cand; print("USING", cand); break
-    if not FOLDER:
-        sys.exit(0)
+def list_folder(name):
+    xml = get({"folderListName": name}).decode("utf-8", "replace")
+    try:
+        root = ET.fromstring(xml.encode("utf-8"))
+    except ET.ParseError:
+        return None, xml
+    status = next((e.text for e in root.iter() if e.tag.split("}")[-1] == "Status"), "")
+    if status != "Success":
+        return None, xml
+    files = []
+    for f in root.iter():
+        if f.tag.split("}")[-1] == "FileinFolder":
+            d = {c.tag.split("}")[-1]: (c.text or "").strip() for c in f}
+            if d.get("Name"):
+                files.append((d["Name"], d.get("Extension", "")))
+    return sorted(set(files)), xml
+
+FOLDER, names = None, None
+for cand in [FOLDER_ENV, "Records"]:
+    if not cand: continue
+    names, raw = list_folder(cand)
+    print("folder", repr(cand) if cand == "Records" else "(from setting)", "->", "ok" if names is not None else re.sub(r"\s+", " ", raw.replace(KEY, "***"))[:250])
+    if names is not None:
+        FOLDER = cand; break
+if FOLDER is None:
+    sys.exit("no accessible folder")
 
 state_path = "data/miami_mortgages.json"
 state = json.load(open(state_path)) if os.path.exists(state_path) else {"files": [], "mortgages": []}
-
-listing = get({"folderListName": FOLDER}).decode("utf-8", "replace")
-print("listing head:", re.sub(r"\s+", " ", listing.replace(KEY, "***"))[:500])
-root = ET.fromstring(listing.encode("utf-8"))
-names = []
-for f in root.iter():
-    if f.tag.split("}")[-1] == "FileinFolder":
-        d = {c.tag.split("}")[-1]: (c.text or "").strip() for c in f}
-        names.append(d.get("Name", "") + ("." + d["Extension"].lower() if d.get("Extension") else ""))
-names = sorted(set(n for n in names if n))
 MAXNEW = int(os.environ.get("MAXNEW", "40"))
-print("files in folder:", len(names), names[:5])
-new = [n for n in names if n[0] not in state["files"]][:MAXNEW][:MAXNEW]
+print("files in folder:", len(names), names[:3])
+new = [n for n in names if n[0] not in state["files"]][:MAXNEW]
 print("new files:", len(new))
 
 MORT = re.compile(r"^(MOR|MTG|MORT|MORTGAGE)$", re.I)
@@ -66,16 +73,11 @@ def rows_from(blob, name):
 
 added = 0
 for n, ext in new:
-    blob = get({"fileName": n + ("." + ext if ext else ""), "folderName": FOLDER}, accept="application/octet-stream")
+    blob = get({"fileName": n + ("." + ext.lower() if ext else ""), "folderName": FOLDER}, accept="application/octet-stream")
     if blob[:2] != b"PK":
-        blob2 = get({"fileName": n, "folderName": FOLDER}, accept="application/octet-stream")
-        if blob2[:2] == b"PK": blob = blob2
-    if blob[:2] != b"PK":
-        print(n, "not a zip; head:", re.sub(r"\s+", " ", blob[:400].decode("utf-8", "replace").replace(KEY, "***"))); continue
-    print(n, "bytes:", len(blob))
-    if blob[:2] != b"PK" and blob.lstrip()[:1] == b"<" and b"Failed" in blob[:400]:
-        print(n, "download failed:", re.sub(r"\s+", " ", blob[:300].decode("utf-8", "replace").replace(KEY, "***"))); continue
-    print(n, "bytes:", len(blob))
+        b2 = get({"fileName": n, "folderName": FOLDER}, accept="application/octet-stream")
+        if b2[:2] == b"PK" or len(b2) > len(blob): blob = b2
+    print(n, "bytes:", len(blob), "head:", re.sub(r"\s+", " ", blob[:160].decode("latin-1").replace(KEY, "***")) if blob[:2] != b"PK" else "zip")
     cols = None; kept = 0
     for r in rows_from(blob, n):
         cols = cols or list(r.keys())
