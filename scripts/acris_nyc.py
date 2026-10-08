@@ -23,7 +23,7 @@ BOROS = ['Manhattan', 'Brooklyn', 'Queens', 'Bronx']          # app borough inde
 ACRIS_BORO = {'1': 0, '3': 1, '4': 2, '2': 3}                    # ACRIS borough code -> app index
 PLUTO_BORO = {'MN': 0, 'BK': 1, 'QN': 2, 'BX': 3}
 MIN_PRICE = 50000
-SUBSIDY = re.compile(r'HOUSING PRESERVATION|HOUSING DEVELOPMENT CORP|ENERGY EFFICIENCY|NYCEEC|HOUSING TRUST FUND|CITY OF NEW YORK|NEW YORK CITY HOUSING|\\bHDC\\b|\\bHPD\\b|DEPARTMENT OF HOUSING')
+SUBSIDY = re.compile(r'HDFC|HOUSING DEVELOPMENT FUND|\bOWNERS\b|TENANTS CORP|APARTMENTS? CORP|APARTMENT OWNERS|^\s*\d[\d\- ]*.*\b(CORP|INC|LLC|OWNERS|HOUSING|REALTY|ASSOCIATES)\b|LENDER \d|HOUSING PRESERVATION|HOUSING DEVELOPMENT CORP|ENERGY EFFICIENCY|NYCEEC|HOUSING TRUST FUND|CITY OF NEW YORK|NEW YORK CITY HOUSING|\bHDC\b|\bHPD\b|DEPARTMENT OF HOUSING')
 calls = 0
 
 def log(*a):
@@ -99,7 +99,7 @@ ALIAS = {'JPMORGAN CHASE': 'JPMorgan Chase', 'CHASE': 'JPMorgan Chase', 'CITIBAN
          'MORGAN STANLEY PRIVATE': 'Morgan Stanley Private Bank', 'MORGAN STANLEY': 'Morgan Stanley Private Bank', 'HSBC': 'HSBC Bank USA',
          'TD': 'TD Bank', 'CITIZENS': 'Citizens Bank', 'BANK AMERICA': 'Bank of America', 'AMERICA': 'Bank of America', 'NATIONAL COOPERATIVE': 'National Cooperative Bank',
          'NCB': 'National Cooperative Bank', 'US': 'U.S. Bank', 'U S': 'U.S. Bank', 'FIRST REPUBLIC': 'First Republic Bank', 'PNC': 'PNC Bank',
-         'GOLDMAN SACHS': 'Goldman Sachs Bank USA', 'GR AFFINITY': 'Guaranteed Rate Affinity', 'JP MORGAN CHASE': 'JPMorgan Chase', 'J P MORGAN CHASE': 'JPMorgan Chase', 'CROSS COUNTRY MORTGAGE': 'CrossCountry Mortgage', 'LOANDEPOT COM': 'loanDepot', 'STATE NEW YORK MORTGAGE AGENCY': 'SONYMA (State of New York Mortgage Agency)', 'CMG MORTGAGE': 'CMG Home Loans', 'BARRINGTON TRUST': 'Wintrust Mortgage (Barrington Bank & Trust)', 'FIRST CITIZENS': 'First Citizens Bank', 'BMO': 'BMO Bank', 'BMO HARRIS': 'BMO Bank', 'UBS': 'UBS Bank USA', 'M T': 'M&T Bank', 'MANUFACTURERS TRADERS TRUST': 'M&T Bank'}
+         'GOLDMAN SACHS': 'Goldman Sachs Bank USA', 'GR AFFINITY': 'Guaranteed Rate Affinity', 'JP MORGAN CHASE': 'JPMorgan Chase', 'J P MORGAN CHASE': 'JPMorgan Chase', 'CROSS COUNTRY MORTGAGE': 'CrossCountry Mortgage', 'LOANDEPOT COM': 'loanDepot', 'STATE NEW YORK MORTGAGE AGENCY': 'SONYMA (State of New York Mortgage Agency)', 'CMG MORTGAGE': 'CMG Home Loans', 'BARRINGTON TRUST': 'Wintrust Mortgage (Barrington Bank & Trust)', 'FIRST CITIZENS': 'First Citizens Bank', 'BMO': 'BMO Bank', 'BMO HARRIS': 'BMO Bank', 'NEW YORK UNIVERSITY FEDERAL CREDIT UNION': 'NYU Federal Credit Union', 'UBS': 'UBS Bank USA', 'M T': 'M&T Bank', 'MANUFACTURERS TRADERS TRUST': 'M&T Bank'}
 def core(n):
     s = str(n).upper()
     s = re.sub(r'\b(DBA|D/B/A|AKA|F/K/A|FKA|I/L/T/L/N|I/L/T/N|ISAOA|ATIMA|ITS SUCCESSORS)\b.*$', '', s)
@@ -113,12 +113,14 @@ def build_namer(canon):
     keys = sorted(table, key=len, reverse=True)
     def name(raw):
         r = str(raw).upper()
-        if 'MORTGAGE ELECTRONIC REGISTRATION' in r or re.fullmatch(r'\s*MERS\b.*', r): return None
+        if 'ELECTRONIC REGISTRATION' in r or re.fullmatch(r'\s*MERS\b.*', r): return None
         if ('SECRETARY OF HOUSING' in r or 'HOUSING AND URBAN' in r): return None
         c = core(r)
         if c in table: return table[c]
         for k in keys:
             if k and (c.startswith(k + ' ') or c == k): return table[k]
+        for k in keys:
+            if len(c) >= 5 and k.startswith(c + ' '): return table[k]
         best = difflib.get_close_matches(c, keys, n=1, cutoff=0.88) if len(c) >= 6 else []
         if best: return table[best[0]]
         if not BIZ.search(r) and (',' in r or (2 <= len(r.split()) <= 4 and not re.search(r'\d', r))): return 'Private lender (individual)'
@@ -242,14 +244,19 @@ def main():
 
     # ---- aggregate per building ----
     agg = {}
+    synth = {}
     unmapped = 0; um = collections.Counter(); um_s = []
     for s in sales:
         p = building_for(s['bi'], s['blk'], s['lot'], s['num'], s['st'])
+        if not p and s.get('num') and s.get('st'):
+            ak = akey(s['num'], s['st'])
+            p = synth.setdefault((s['bi'], ak), {'_b': s['bi'], 'block': s['blk'], 'lot': 'A:' + ak, 'bbl': '0', 'address': ak,
+                                                 'bldgclass': 'D4' if s['coop'] else 'RM', '_synth': True})
         if not p:
             unmapped += 1; um[s['bi']] += 1
             if len(um_s) < 15: um_s.append('%s %s/%s %s %s' % (BOROS[s['bi']], s['blk'], s['lot'], s.get('num'), s.get('st')))
             continue
-        k = (p['_b'], int(p['block']), int(p['lot']))
+        k = (p['_b'], int(p['block']), p['lot'] if p.get('_synth') else int(p['lot']))
         a = agg.setdefault(k, dict(p=p, sales=0, fin=0, unknown=0, latest='', lenders=collections.Counter(), coop=s['coop']))
         a['sales'] += 1
         if s.get('num') and s.get('st'): a.setdefault('al', collections.Counter())[akey(s['num'], s['st'])] += 1
@@ -265,7 +272,7 @@ def main():
         if not p: continue
         k = (p['_b'], int(p['block']), int(p['lot'])); tls[k] += 1
         tls_last[k] = max(tls_last.get(k, ''), day(mm[L['document_id']]['recorded_datetime']))
-    log('sales not mapped to a PLUTO building', unmapped, dict(um)); log('  e.g.', um_s)
+    log('sales mapped by ACRIS address only (no PLUTO lot)', sum(1 for _ in synth), 'buildings | unmapped', unmapped, dict(um)); log('  e.g.', um_s)
 
     # ---- addresses: reuse buildings-db.json naming, add Bronx rows ----
     db = json.load(open('buildings-db.json'))
