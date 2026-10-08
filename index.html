@@ -162,13 +162,7 @@ small{font-size:13px;color:var(--muted)}
 .divider:before,.divider:after{content:"";height:1px;background:var(--line);flex:1}
 label{display:block;font-size:14px;font-weight:500;margin-bottom:7px}
 .field{margin-bottom:18px}
-.rolepick{border:0;padding:0;margin:0 0 20px;display:flex;flex-wrap:wrap;gap:8px}
-.rolepick legend{font-size:13px;font-weight:600;margin-bottom:8px;padding:0}
-.rolechip{display:inline-flex;align-items:center;cursor:pointer;margin:0}
-.rolechip input{position:absolute;opacity:0;width:1px;height:1px}
-.rolechip span{border:1px solid var(--line-2);border-radius:999px;padding:9px 14px;font-size:13.5px;background:var(--surface);color:var(--ink);transition:background .15s,border-color .15s}
-.rolechip input:checked+span{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:600}
-.rolechip input:focus-visible+span{outline:3px solid var(--accent);outline-offset:2px}
+#role{width:100%;padding:12px 14px;font-size:15px;border:1px solid var(--line-2);border-radius:10px;background:var(--surface);color:var(--ink)}
 input,select{width:100%;padding:12px 14px;border:1px solid var(--line-2);border-radius:9px;background:var(--surface);outline:none}
 input:focus,textarea:focus,select:focus{border-color:var(--accent)}
 .demofoot{font-size:13px;color:var(--muted);text-align:center;margin-top:18px}
@@ -457,13 +451,14 @@ tbody tr:hover .open,tbody tr:focus-within .open{opacity:1}
       <form id="signupform">
         <div class="field"><label for="name">Full name</label><input id="name" autocomplete="name" placeholder="Your name" required></div>
         <div class="field"><label for="email">Email</label><input id="email" type="email" autocomplete="email" placeholder="you@example.com" required></div>
-        <fieldset class="field rolepick"><legend>I am a…</legend>
-          <label class="rolechip"><input type="radio" name="role" value="agent" required><span>Real estate agent or broker</span></label>
-          <label class="rolechip"><input type="radio" name="role" value="lo"><span>Loan officer or lender</span></label>
-          <label class="rolechip"><input type="radio" name="role" value="attorney"><span>Attorney</span></label>
-          <label class="rolechip"><input type="radio" name="role" value="buyer"><span>Home buyer or seller</span></label>
-          <label class="rolechip"><input type="radio" name="role" value="other"><span>Other (title, managing agent…)</span></label>
-        </fieldset>
+        <div class="field"><label for="role">I am a…</label><select id="role" required>
+          <option value="" disabled selected>Choose one</option>
+          <option value="agent">Real estate agent or broker</option>
+          <option value="lo">Loan officer or lender</option>
+          <option value="attorney">Attorney</option>
+          <option value="buyer">Home buyer or seller</option>
+          <option value="other">Other (title, managing agent…)</option>
+        </select></div>
         <button class="primary full" type="submit">Preview my workspace</button>
       </form>
       <p class="demofoot">Design preview · No account is created.</p>
@@ -688,8 +683,8 @@ const listState={q:'',type:'All',lender:'',boro:'',sort:'closings',dir:-1,limit:
 const ROLES_U={agent:['Agent workspace','LET\'S MOVE YOUR DEAL FORWARD','a real estate agent or broker. Be practical about what to ask the listing agent, board and lender.'],lo:['Lender workspace','VET THE PROJECT BEFORE YOU LOCK','a mortgage loan officer. Be precise about Fannie Mae/Freddie Mac project rules, review types and documentation.'],attorney:['Attorney workspace','DILIGENCE BEFORE THE CONTRACT','a real estate attorney. Emphasize litigation, assessments, liens, recorded documents and contract terms; note what to verify in the offering plan, questionnaire and title.'],buyer:['Buyer workspace','KNOW THE BUILDING BEFORE YOU BUY','a home buyer or seller, not a professional. Use plain language, explain any jargon briefly, and suggest what to ask their agent, lender or attorney. Do not give legal or financial advice.'],other:['Pro workspace','VET THE BUILDING','a real estate professional (title, managing agent or similar).']};
 let PROFILE={};try{PROFILE=JSON.parse(localStorage.getItem('lendable:profile:v1'))||{}}catch(e){}
 function applyProfile(){const r=ROLES_U[PROFILE.role]||ROLES_U.agent;$('userrole').textContent=r[0];$('welcomeeyebrow').textContent=r[1];const n=(PROFILE.name||'').trim();if(n){$('username').textContent=n;$('avatar').textContent=n.split(/\s+/).map(x=>x[0]).slice(0,2).join('').toUpperCase()}}
-(()=>{if(PROFILE.name)$('name').value=PROFILE.name;if(PROFILE.email)$('email').value=PROFILE.email;if(PROFILE.role){const r=document.querySelector('input[name="role"][value="'+PROFILE.role+'"]');if(r)r.checked=true}})();
-function enter(){setTimeout(()=>{try{loadDB()}catch(e){}},600);const n=$('name').value.trim(),em=$('email').value.trim(),rr=document.querySelector('input[name="role"]:checked');if(n||rr){PROFILE={name:n||PROFILE.name||'',email:em||PROFILE.email||'',role:rr?rr.value:(PROFILE.role||'agent')};try{localStorage.setItem('lendable:profile:v1',JSON.stringify(PROFILE))}catch(e){}}applyProfile();$('signup').classList.add('hide');$('workspace').classList.remove('hide')}
+(()=>{if(PROFILE.name)$('name').value=PROFILE.name;if(PROFILE.email)$('email').value=PROFILE.email;if(PROFILE.role)$('role').value=PROFILE.role;})();
+function enter(){setTimeout(()=>{try{loadDB()}catch(e){}},600);const n=$('name').value.trim(),em=$('email').value.trim(),rr=$('role').value?{value:$('role').value}:null;if(n||rr){PROFILE={name:n||PROFILE.name||'',email:em||PROFILE.email||'',role:rr?rr.value:(PROFILE.role||'agent')};try{localStorage.setItem('lendable:profile:v1',JSON.stringify(PROFILE))}catch(e){}}applyProfile();$('signup').classList.add('hide');$('workspace').classList.remove('hide')}
 $('signupform').onsubmit=e=>{e.preventDefault();enter()};
 $('skip').onclick=enter;
 $('google').onclick=()=>{enter();assistant('This is the sign-up design preview. Google sign-in will be connected when account creation is added. You can explore the building assistant below.')};
