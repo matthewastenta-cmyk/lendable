@@ -4,6 +4,38 @@ Runs in GitHub Actions. Writes data/miami.json. Owner names are never kept."""
 import csv, io, json, re, sys, urllib.parse, urllib.request, zipfile
 from collections import Counter, defaultdict
 
+def attach_lenders(path="data/miami.json"):
+    """Merge data/miami_mortgages.json into the building list: lenders seen in the last 12 months per building."""
+    import datetime, os
+    if not os.path.exists("data/miami_mortgages.json"):
+        return
+    d = json.load(open(path)); morts = json.load(open("data/miami_mortgages.json"))["mortgages"]
+    cutoff = (datetime.date.today() - datetime.timedelta(days=365)).isoformat()
+    by = {}
+    for b in d["rows"]:
+        for p in b.get("fp") or [b.get("f")]:
+            if p: by[p.zfill(9)] = b
+    hits = defaultdict(list)
+    for m in morts:
+        if m["date"] >= cutoff and m["lender"]:
+            b = by.get(m["folio"][:-4])
+            if b is not None: hits[id(b)].append(m)
+    for b in d["rows"]:
+        ms = hits.get(id(b), [])
+        if ms:
+            c = Counter(m["lender"] for m in ms)
+            b["l"] = [[name, n, max(m["date"] for m in ms if m["lender"] == name)] for name, n in c.most_common()]
+            b["lm"] = len({(m["book"], m["page"]) for m in ms})
+        else:
+            b.pop("l", None); b.pop("lm", None)
+    d["meta"]["withLenders"] = sum(1 for b in d["rows"] if b.get("l"))
+    d["meta"]["mortgagesSince"] = min((m["date"] for m in morts), default=None)
+    json.dump(d, open(path, "w"), separators=(",", ":"))
+    print("lenders attached:", d["meta"]["withLenders"], "buildings", file=sys.stderr)
+
+if "--lenders-only" in sys.argv:
+    attach_lenders(); raise SystemExit(0)
+
 BASE = "https://floridarevenue.com/property/dataportal/Documents/PTO%20Data%20Portal/Tax%20Roll%20Data%20Files/"
 def latest(kind):
     api = ("https://floridarevenue.com/property/dataportal/_api/web/GetFolderByServerRelativeUrl('"
@@ -95,6 +127,7 @@ for (key, zipc), us in units.items():
     b = {"a": first.title(), "c": Counter(u["city"] for u in us).most_common(1)[0][0], "z": zipc, "u": len(us),
          "y": int(yrs.most_common(1)[0][0]) if yrs else None, "t": Counter(u["type"] for u in us).most_common(1)[0][0],
          "f": us[0]["folio"][:-4] if len(us[0]["folio"]) >= 13 else us[0]["folio"],
+         "fp": sorted({u["folio"][:-4] for u in us if len(u["folio"]) >= 13}),
          "s": len(rec_sales), "sq": sum(1 for s in rec_sales if s["q"] in ("01", "1")),
          "sp": int(sorted(s["p"] for s in rec_sales)[len(rec_sales) // 2]) if rec_sales else None,
          "sl": max((f"{s['y']}-{s['m']:02d}" for s in rec_sales), default=None)}
@@ -120,3 +153,4 @@ meta = {"source": "Florida DOR tax roll (" + nal_roll + ") for Miami-Dade, DBPR 
         "withSirs": sum(1 for b in out if "sirs" in b), "withFha": sum(1 for b in out if "fha" in b)}
 json.dump({"meta": meta, "rows": out}, open("data/miami.json", "w"), separators=(",", ":"))
 print(meta, file=sys.stderr)
+attach_lenders()
