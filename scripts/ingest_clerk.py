@@ -7,7 +7,7 @@ import xml.etree.ElementTree as ET
 
 KEY = os.environ["CLERK_AUTH_KEY"].strip()
 PROXY = os.environ["CLERK_PROXY_URL"].strip()
-FOLDER = os.environ.get("CLERK_FOLDER", "").strip() or "Records"
+FOLDER = os.environ.get("CLERK_FOLDER", "").strip() or "Records" or "Records"
 API = "https://www2.miamidadeclerk.gov/Developers/api/FTPapi"
 opener = urllib.request.build_opener(urllib.request.ProxyHandler({"http": PROXY, "https": PROXY}))
 def get(params, accept="application/xml"):
@@ -41,7 +41,7 @@ for f in root.iter():
 names = sorted(set(n for n in names if n))
 MAXNEW = int(os.environ.get("MAXNEW", "40"))
 print("files in folder:", len(names), names[:5])
-new = [n for n in names if n not in state["files"]][:MAXNEW]
+new = [n for n in names if n[0] not in state["files"]][:MAXNEW][:MAXNEW]
 print("new files:", len(new))
 
 MORT = re.compile(r"^(MOR|MTG|MORT|MORTGAGE)$", re.I)
@@ -65,8 +65,14 @@ def rows_from(blob, name):
         yield {(k or "").strip().upper(): (v or "").strip() for k, v in r.items()}
 
 added = 0
-for n in new:
-    blob = get({"fileName": n, "folderName": FOLDER}, accept="application/octet-stream")
+for n, ext in new:
+    blob = get({"fileName": n + ("." + ext if ext else ""), "folderName": FOLDER}, accept="application/octet-stream")
+    if blob[:2] != b"PK":
+        blob2 = get({"fileName": n, "folderName": FOLDER}, accept="application/octet-stream")
+        if blob2[:2] == b"PK": blob = blob2
+    if blob[:2] != b"PK":
+        print(n, "not a zip; head:", re.sub(r"\s+", " ", blob[:400].decode("utf-8", "replace").replace(KEY, "***"))); continue
+    print(n, "bytes:", len(blob))
     if blob[:2] != b"PK" and blob.lstrip()[:1] == b"<" and b"Failed" in blob[:400]:
         print(n, "download failed:", re.sub(r"\s+", " ", blob[:300].decode("utf-8", "replace").replace(KEY, "***"))); continue
     print(n, "bytes:", len(blob))
