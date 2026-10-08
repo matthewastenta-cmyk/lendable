@@ -12,14 +12,21 @@ print("sdf columns:", list(rows[0].keys())[:30])
 cands = [r for r in rows if (r.get("DOR_UC") or "").strip() in ("004", "04") and (r.get("QUAL_CD") or "").strip() in ("01", "1")
          and int(r.get("SALE_YR") or 0) >= 2026 and int(float(r.get("SALE_PRC") or 0)) > 400000]
 print("candidate recent condo sales:", len(cands))
-cands.sort(key=lambda r: -int(float(r["SALE_PRC"])))
+cands = [r for r in cands if 600000 < int(float(r["SALE_PRC"])) < 3000000]; cands.sort(key=lambda r: -int(float(r["SALE_PRC"])))
 seen = 0
 for r in cands[:N]:
     folio = r["PARCEL_ID"].strip()
     q = urllib.parse.urlencode({"parameter1": folio, "parameter2": "FN", "authKey": key})
     body = via.open(urllib.request.Request("https://www2.miamidadeclerk.gov/Developers/api/OfficialRecords?" + q, headers={"Accept": "application/json", "User-Agent": "Mozilla/5.0"}), timeout=60).read().decode("utf-8", "replace")
     j = json.loads(body)
+    if not seen:
+        def shape(v, d=0):
+            if isinstance(v, dict): return {k: shape(x, d+1) for k, x in list(v.items())[:40]} if d < 3 else "{...}"
+            if isinstance(v, list): return [len(v), shape(v[0], d+1) if v else None]
+            return type(v).__name__
+        print("RAW SHAPE:", json.dumps(shape(j))[:3000])
     recs = j.get("OfficialRecordList") or []
+    if isinstance(recs, dict): recs = next((v for v in recs.values() if isinstance(v, list)), [recs])
     print("\nfolio", folio[:9] + "....", "sale", r["SALE_YR"], r["SALE_MO"], r["SALE_PRC"], "| status", j.get("Status"), j.get("StatusDesc"), "| balance", j.get("UnitsBalance"), "| records", len(recs))
     if recs and not seen:
         print("fields:", sorted(recs[0].keys())); seen = 1

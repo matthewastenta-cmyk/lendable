@@ -6,7 +6,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - env: { CLERK_AUTH_KEY: "${{ secrets.CLERK_AUTH_KEY }}", CLERK_PROXY_URL: "${{ secrets.CLERK_PROXY_URL }}", N: "5" }
+      - env: { CLERK_AUTH_KEY: "${{ secrets.CLERK_AUTH_KEY }}", CLERK_PROXY_URL: "${{ secrets.CLERK_PROXY_URL }}", N: "1" }
         run: |
           python3 scripts/clerk_test.py > /tmp/clerk_log.txt 2>&1 || true
           sed -i "s#${{ secrets.CLERK_AUTH_KEY }}#***#g" /tmp/clerk_log.txt
