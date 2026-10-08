@@ -37,7 +37,7 @@ EXP = {'ST': 'Street', 'AVE': 'Avenue', 'AV': 'Avenue', 'PL': 'Place', 'DR': 'Dr
        'CT': 'Court', 'LN': 'Lane', 'PLZ': 'Plaza', 'HWY': 'Highway', 'PKWY': 'Parkway', 'SQ': 'Square'}
 def pretty(a):
     out = []
-    for i, w in enumerate(str(a).upper().split()):
+    for i, w in enumerate(re.sub(r'\.', ' ', str(a)).upper().split()):
         if i > 0 and w in EXP: out.append(EXP[w])
         elif re.fullmatch(r'\d+(ST|ND|RD|TH)', w): out.append(w.lower())
         elif re.fullmatch(r'[\d\-]+[A-Z]?', w): out.append(w)
@@ -60,6 +60,10 @@ def blk(b, suf=''):
     s = (suf or '').strip().strip('.').lstrip('0')
     return b + ('.' + s if s else '')
 
+def pblk(x):
+    x = (x or '').strip(); b, _, suf = x.partition('.')
+    return blk(b, suf)
+
 def main():
     # ---- condo units from the parcel composite ----
     units = collections.defaultdict(list)
@@ -73,14 +77,15 @@ def main():
             feats = r.get('features', [])
             for f in feats:
                 a = f['attributes']
-                units[(mun, blk(a['PCLBLOCK']), (a['PCLLOT'] or '').strip().lstrip('0') or '0')].append(a)
+                units[(mun, pblk(a['PCLBLOCK']), pblk(a['PCLLOT']))].append(a)
             off += len(feats)
             if not feats or not r.get('exceededTransferLimit') and len(feats) < 2000: break
         log(MUNS[mun][0], 'condo units so far', sum(len(v) for k, v in units.items() if k[0] == mun))
 
     # ---- SR-1A sales, last 12 months ----
     today = dt.date.today(); since = today - dt.timedelta(days=365)
-    files = ['Sales%d.zip' % (today.year - 1), 'YTDSR1A%d.zip' % today.year]
+    files = ['Sales%d.zip' % (today.year - 1), 'Sales%d.zip' % today.year, 'YTDSR1A%d.zip' % today.year]
+    seen = set()
     sales = collections.defaultdict(list); latest_rec = ''; dbg = []; dbg_done = False
     dist = {v[1]: k for k, v in MUNS.items()}
     for fn in files:
@@ -91,21 +96,22 @@ def main():
         for name in z.namelist():
             for line in z.read(name).decode('latin-1').splitlines():
                 if line[0:2] != '09' or line[2:4] not in dist: continue
-                if len(dbg) < 6 and line[2:4] == '05': dbg.append(line[290:])
                 q = line[619:624].strip()
                 if not q.upper().startswith('C') or line[626:628].strip() != '2': continue
                 rec = line[344:350]
-                try: rd = dt.date(2000 + int(rec[4:6]), int(rec[0:2]), int(rec[2:4]))
+                try: rd = dt.date(2000 + int(rec[0:2]), int(rec[2:4]), int(rec[4:6]))   # YYMMDD
                 except ValueError: continue
                 if rd < since: continue
                 try: price = int(line[37:46] or 0)
                 except ValueError: continue
                 usable = line[33:34] == 'U'
                 if price < 50000: continue
-                key = (dist[line[2:4]], blk(line[350:355], line[355:359]), (line[359:364].strip().lstrip('0') or '0'))
+                key = (dist[line[2:4]], blk(line[350:355], line[355:359]), blk(line[359:364], line[364:368]))
+                sig = (key, q, rd, price)
+                if sig in seen: continue
+                seen.add(sig)
                 sales[key].append({'p': price, 'd': rd.isoformat(), 'u': usable, 'q': q})
                 latest_rec = max(latest_rec, rd.isoformat())
-    for x in dbg: log('RAW', repr(x))
     log('SR-1A condo sales in window', sum(len(v) for v in sales.values()), 'latest recorded', latest_rec)
 
     # ---- HUD FHA (NJ) ----
@@ -125,7 +131,7 @@ def main():
         loc = locs.most_common(1)[0][0] if locs else ''
         addrs = addresses(loc) or ([loc] if loc else [])
         if not addrs: continue
-        zips = collections.Counter(u.get('ZIP5') for u in us if u.get('ZIP5'))
+        zips = collections.Counter(u.get('ZIP5') for u in us if (u.get('ZIP5') or '').startswith('07'))
         z = zips.most_common(1)[0][0] if zips else ''
         yrs = collections.Counter(u.get('YR_CONSTR') for u in us if u.get('YR_CONSTR'))
         ss = sales.get(key, [])
