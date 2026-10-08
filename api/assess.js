@@ -39,6 +39,7 @@ Return ONLY one JSON object, no prose, no code fences:
      "title": "short headline, e.g. 'Reserve contributions below 10% of budget'",
      "detail": "one or two sentences with the specific figures and why it matters for financing",
      "guide_ref": "Fannie Mae section if relevant, e.g. 'B4-2.1-03', else null",
+     "public_statement": "a short yes/no statement against the guideline, safe to show other users: no dollar figures, percentages from the document, names, unit numbers or quotes. Guideline thresholds are fine. Examples: 'Does not budget 10% for reserves', 'Budgets at least 10% for reserves', 'No crime/fidelity insurance in place', 'More than 15% of units 60+ days delinquent', 'Operating deficit reported', 'Pending litigation involving the association'. null for needs_docs findings.",
      "source": {"doc": "file name", "doc_type": "Budget|Financials|Questionnaire|Board minutes|Insurance|Engineering|Offering plan|Other", "page": number or null, "as_of": "YYYY-MM-DD or period text or null"}}
   ],
   "next_step": "one sentence: the most useful next action before committing significant transaction expenses",
@@ -99,6 +100,7 @@ module.exports = async (req, res) => {
     data.findings = data.findings.filter(f => f && TIERS.includes(f.tier) && f.title).slice(0, 20).map(f => ({
       category: String(f.category || 'other').slice(0, 30), tier: f.tier, title: String(f.title).slice(0, 120), detail: String(f.detail || '').slice(0, 400),
       guide_ref: f.guide_ref ? String(f.guide_ref).slice(0, 30) : null,
+      public_statement: f.public_statement && f.tier !== 'needs_docs' ? String(f.public_statement).replace(/\$[\d,.]+[kKmM]?|\b\d+(\.\d+)?\s?%(?! of units)/g, '').slice(0, 120) : null,
       source: { doc: String((f.source && f.source.doc) || '').slice(0, 120), doc_type: String((f.source && f.source.doc_type) || '').slice(0, 30), page: (f.source && Number.isFinite(+f.source.page)) ? +f.source.page : null, as_of: (f.source && f.source.as_of) ? String(f.source.as_of).slice(0, 40) : null } }));
     res.status(200).json({ data, usage: j.usage });
   } catch (e) {
