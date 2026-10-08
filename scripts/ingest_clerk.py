@@ -7,7 +7,7 @@ import xml.etree.ElementTree as ET
 
 KEY = os.environ["CLERK_AUTH_KEY"].strip()
 PROXY = os.environ["CLERK_PROXY_URL"].strip()
-FOLDER = os.environ.get("CLERK_FOLDER", "").strip()
+FOLDER = os.environ.get("CLERK_FOLDER", "").strip() or "Records"
 API = "https://www2.miamidadeclerk.gov/Developers/api/FTPapi"
 opener = urllib.request.build_opener(urllib.request.ProxyHandler({"http": PROXY, "https": PROXY}))
 def get(params, accept="application/xml"):
@@ -32,10 +32,16 @@ state = json.load(open(state_path)) if os.path.exists(state_path) else {"files":
 
 listing = get({"folderListName": FOLDER}).decode("utf-8", "replace")
 print("listing head:", re.sub(r"\s+", " ", listing.replace(KEY, "***"))[:500])
-names = re.findall(r"[\w.\-]+\.(?:zip|txt|csv|dat|xml)", listing, re.I)
-names = sorted(set(names))
+root = ET.fromstring(listing.encode("utf-8"))
+names = []
+for f in root.iter():
+    if f.tag.split("}")[-1] == "FileinFolder":
+        d = {c.tag.split("}")[-1]: (c.text or "").strip() for c in f}
+        names.append(d.get("Name", "") + ("." + d["Extension"].lower() if d.get("Extension") else ""))
+names = sorted(set(n for n in names if n))
+MAXNEW = int(os.environ.get("MAXNEW", "40"))
 print("files in folder:", len(names), names[:5])
-new = [n for n in names if n not in state["files"]]
+new = [n for n in names if n not in state["files"]][:MAXNEW]
 print("new files:", len(new))
 
 MORT = re.compile(r"^(MOR|MTG|MORT|MORTGAGE)$", re.I)
@@ -61,6 +67,9 @@ def rows_from(blob, name):
 added = 0
 for n in new:
     blob = get({"fileName": n, "folderName": FOLDER}, accept="application/octet-stream")
+    if blob[:2] != b"PK" and blob.lstrip()[:1] == b"<" and b"Failed" in blob[:400]:
+        print(n, "download failed:", re.sub(r"\s+", " ", blob[:300].decode("utf-8", "replace").replace(KEY, "***"))); continue
+    print(n, "bytes:", len(blob))
     cols = None; kept = 0
     for r in rows_from(blob, n):
         cols = cols or list(r.keys())

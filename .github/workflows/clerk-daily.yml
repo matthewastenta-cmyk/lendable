@@ -12,6 +12,7 @@ jobs:
           CLERK_AUTH_KEY: "${{ secrets.CLERK_AUTH_KEY }}"
           CLERK_PROXY_URL: "${{ secrets.CLERK_PROXY_URL }}"
           CLERK_FOLDER: "${{ vars.CLERK_FOLDER || secrets.CLERK_FOLDER }}"
+          MAXNEW: "${{ github.event_name == 'workflow_dispatch' && '1' || '40' }}"
         run: |
           set +e
           python3 scripts/ingest_clerk.py > /tmp/clerk_log.txt 2>&1; code=$?
