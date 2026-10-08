@@ -699,7 +699,7 @@ const sbVals=()=>({profile:PROFILE,mine:MINE,deals:DEALS,lendercontacts:LCONTACT
 function syncStat(t,bad){const el=$('syncstatus');if(el){el.textContent=t;el.style.color=bad?'var(--bad)':''}}
 function authMsg(t,bad){const m=$('authmsg');m.textContent=t;m.style.color=bad?'var(--bad)':''}
 function loadScript(src){return new Promise((res,rej)=>{const sc=document.createElement('script');sc.src=src;sc.onload=res;sc.onerror=()=>rej(Error('script'));document.head.appendChild(sc)})}
-function sbInit(){if(!sbReady)sbReady=(async()=>{if(!/^https?:$/.test(location.protocol))return null;try{const c=await (await fetch('/api/config')).json();if(!c.enabled)return null;
+function sbInit(){if(!sbReady)sbReady=(async()=>{if(!/^https?:$/.test(location.protocol))return null;try{const c=await (await fetch('/api/config',{cache:'no-store'})).json();if(!c.enabled){window.__authOff=c.reason||'not configured';return null}
   if(!window.supabase)await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js');
   SB=window.supabase.createClient(c.url,c.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'implicit',storageKey:'pa-auth'}});
   SB.auth.onAuthStateChange((ev,session)=>{SBUSER=session?session.user:null;authUi()});
@@ -708,7 +708,7 @@ function authUi(){if(!SBUSER)syncStat('');else if(!$('syncstatus').textContent)s
 let otpEmail='';
 async function authStart(){const em=$('email').value.trim();if(!em)return;PROFILE=Object.assign({},PROFILE,{name:$('name').value.trim()||PROFILE.name||'',email:em,role:$('role').value||PROFILE.role||'agent'});try{localStorage.setItem('lendable:profile:v1',JSON.stringify(PROFILE))}catch(e){}authMsg('Sending your code…');$('authsend').disabled=true;
   const sb=await sbInit();
-  if(!sb){$('authsend').disabled=false;authMsg('Accounts aren’t available here yet, so you’re in guest mode. Your work saves on this device only.');enter();return}
+  if(!sb){$('authsend').disabled=false;authMsg('Sign-in isn’t connected ('+(window.__authOff||'server unreachable')+'). You’re in guest mode for now.',true);return}
   const {error}=await sb.auth.signInWithOtp({email:em,options:{shouldCreateUser:true,emailRedirectTo:location.origin+location.pathname,data:{name:$('name').value.trim(),role:$('role').value}}});
   $('authsend').disabled=false;
   if(error){authMsg(/rate|limit|seconds/i.test(error.message)?'Too many codes requested. Wait a minute and try again.':'Couldn’t send the code: '+error.message,true);return}
