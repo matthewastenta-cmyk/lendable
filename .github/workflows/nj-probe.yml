@@ -1,0 +1,11 @@
+name: NJ probe
+on: { workflow_dispatch: {} }
+permissions: { contents: write }
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          python3 scripts/nj_probe.py > /tmp/nj_log.txt 2>&1; echo "exit $?" >> /tmp/nj_log.txt
+          mkdir /tmp/log && cd /tmp/log && cp /tmp/nj_log.txt . && git init -q && git checkout -q -b data-logs && git add -A && git -c user.name=bot -c user.email=bot@example.com commit -qm log && git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" data-logs
