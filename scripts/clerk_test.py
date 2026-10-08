@@ -17,16 +17,24 @@ seen = 0
 for r in cands[:N]:
     folio = r["PARCEL_ID"].strip()
     q = urllib.parse.urlencode({"parameter1": folio, "parameter2": "FN", "authKey": key})
-    body = via.open(urllib.request.Request("https://www2.miamidadeclerk.gov/Developers/api/OfficialRecords?" + q, headers={"Accept": "application/json", "User-Agent": "Mozilla/5.0"}), timeout=60).read().decode("utf-8", "replace")
-    j = json.loads(body)
+    body = via.open(urllib.request.Request("https://www2.miamidadeclerk.gov/Developers/api/OfficialRecords?" + q, headers={"Accept": "application/xml", "User-Agent": "Mozilla/5.0"}), timeout=60).read().decode("utf-8", "replace")
+    import xml.etree.ElementTree as ET
+    root = ET.fromstring(body)
+    strip = lambda t: t.split("}")[-1]
+    j = {strip(c.tag): (c.text or "") for c in root if len(c) == 0}
+    recs = []
+    for el in root.iter():
+        kids = list(el)
+        if kids and all(len(k) == 0 for k in kids) and any(strip(k.tag) == "DOC_TYPE" for k in kids):
+            recs.append({strip(k.tag): (k.text or "").strip() for k in kids})
+    j["OfficialRecordList"] = recs
     if not seen:
         def shape(v, d=0):
             if isinstance(v, dict): return {k: shape(x, d+1) for k, x in list(v.items())[:40]} if d < 3 else "{...}"
             if isinstance(v, list): return [len(v), shape(v[0], d+1) if v else None]
             return type(v).__name__
-        print("RAW SHAPE:", json.dumps(shape(j))[:3000])
+        print("top-level:", {k: v for k, v in j.items() if k != "IPAddress"})
     recs = j.get("OfficialRecordList") or []
-    if isinstance(recs, dict): recs = next((v for v in recs.values() if isinstance(v, list)), [recs])
     print("\nfolio", folio[:9] + "....", "sale", r["SALE_YR"], r["SALE_MO"], r["SALE_PRC"], "| status", j.get("Status"), j.get("StatusDesc"), "| balance", j.get("UnitsBalance"), "| records", len(recs))
     if recs and not seen:
         print("fields:", sorted(recs[0].keys())); seen = 1
