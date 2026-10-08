@@ -1,0 +1,16 @@
+name: build NJ (Hoboken + Jersey City)
+on:
+  workflow_dispatch:
+  schedule: [{ cron: "7 10 * * 1" }]   # Mondays, after SIRS + FHA pulls
+permissions: { contents: write }
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          set +e
+          python3 scripts/build_nj.py 2> /tmp/nj_log.txt; code=$?; echo "exit $code" >> /tmp/nj_log.txt
+          if [ $code -eq 0 ]; then git add data/nj.json; git diff --cached --quiet || (git -c user.name="lendable-bot" -c user.email="noreply@anthropic.com" commit -m "Rebuild NJ building list" && git pull -q --rebase && git push); fi
+          mkdir /tmp/log && cd /tmp/log && cp /tmp/nj_log.txt . && git init -q && git checkout -q -b data-logs && git add -A && git -c user.name=bot -c user.email=bot@example.com commit -qm log && git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" data-logs
+          exit $code

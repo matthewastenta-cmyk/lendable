@@ -4,7 +4,7 @@ import html, json, os, re, sys, time, urllib.parse, urllib.request
 from datetime import date
 
 COUNTIES = [("NY", "NEW YORK"), ("NY", "KINGS"), ("NY", "QUEENS"), ("NY", "BRONX"), ("NY", "RICHMOND"),
-            ("FL", "MIAMI-DADE"), ("FL", "BROWARD"), ("FL", "PALM BEACH")]
+            ("FL", "MIAMI-DADE"), ("FL", "BROWARD"), ("FL", "PALM BEACH"), ("NJ", "HUDSON")]
 URL = "https://entp.hud.gov/idapp/html/condo1.cfm"
 
 def fetch(state, county, start):
