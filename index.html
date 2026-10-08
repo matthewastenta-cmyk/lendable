@@ -1,14 +1,19 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <div class="toast hide" id="toast" role="status" aria-live="polite"></div>
 
-<title>Lendable</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2040%2040%22%3E%3Crect%20width%3D%2240%22%20height%3D%2240%22%20rx%3D%2211%22%20fill%3D%22%236848dc%22%2F%3E%3Cpath%20fill%3D%22white%22%20d%3D%22M7%207h11v18h5v-7h6v7h5v9H7z%22%2F%3E%3Cpath%20fill%3D%22%236848dc%22%20d%3D%22M10%2011h2v3h-2zm5%200h2v3h-2zm-5%207h2v3h-2zm5%200h2v3h-2zm11%203h2v3h-2zm-15%208h3v2h-3zm7%200h3v2h-3zm7%200h3v2h-3z%22%2F%3E%3C%2Fsvg%3E">
+<title>Pocket Approval</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20rx%3D%2224%22%20fill%3D%22%235B3FD6%22/%3E%3Crect%20x%3D%2222%22%20y%3D%2222%22%20width%3D%2234%22%20height%3D%2256%22%20rx%3D%222%22%20fill%3D%22%23fff%22/%3E%3Cpath%20fill%3D%22%235B3FD6%22%20d%3D%22M28%2030h7v7h-7zm15%200h7v7h-7zm-15%2013h7v7h-7zm15%200h7v7h-7zm-15%2013h7v7h-7z%22/%3E%3Ccircle%20cx%3D%2262%22%20cy%3D%2258%22%20r%3D%2216%22%20fill%3D%22%235B3FD6%22%20stroke%3D%22%23fff%22%20stroke-width%3D%227%22/%3E%3Cpath%20d%3D%22M73%2070l12%2012%22%20stroke%3D%22%23fff%22%20stroke-width%3D%228%22%20stroke-linecap%3D%22round%22/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#5B3FD6">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Pocket Approval">
 <style>
 /* Layout: sign-up split screen → workspace with slim sidebar, central chat, right building brief; a full-width Building List view swaps in for chat + brief. */
 :root{
   --bg:#fafafe;--surface:#ffffff;--surface-2:#f8f8fc;--surface-3:#f3f1f9;--surface-4:#faf9fd;
   --line:#e9e8ef;--line-2:#dfdce9;--ink:#202235;--muted:#78798b;--faint:#9999a7;
-  --accent:#6848dc;--deep:#5132bd;--soft:#f1edff;--glow:#d7caff;--on-accent:#ffffff;
+  --accent:#5b3fd6;--deep:#4a2fc0;--soft:#f1edff;--glow:#d7caff;--on-accent:#ffffff;
   --good:#347457;--good-bg:#eef8f3;--warn:#8c682c;--warn-bg:#fff8eb;--bad:#b42318;--bad-bg:#fdecea;
   --shadow:rgba(38,34,66,.08);--scrim:rgba(27,23,54,.32);
   --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
@@ -33,7 +38,7 @@ small{font-size:13px;color:var(--muted)}
 .hide{display:none!important}
 .num{font-variant-numeric:tabular-nums}
 
-.brand{display:flex;align-items:center;gap:10px;font-size:25px;font-weight:650;letter-spacing:-1px}
+.brand{display:flex;align-items:center;gap:10px;font-size:21px;font-weight:650;letter-spacing:-.8px;white-space:nowrap}
 .logo{width:36px;height:36px;flex-shrink:0;display:grid;place-items:center;background:var(--accent);border-radius:11px;box-shadow:0 5px 14px var(--shadow);color:var(--accent)}
 .logo svg{width:100%;height:100%}
 .theme{display:flex;padding:4px;border:1px solid var(--line);border-radius:24px;background:var(--surface);gap:3px}
@@ -419,7 +424,7 @@ tbody tr:hover .open,tbody tr:focus-within .open{opacity:1}
 
 <section id="signup">
   <header class="top">
-    <div class="brand"><span class="logo"><svg viewBox="0 0 40 40" aria-hidden="true" focusable="false"><path fill="#ffffff" d="M7 7h11v18h5v-7h6v7h5v9H7z"/><path fill="currentColor" d="M10 11h2v3h-2zm5 0h2v3h-2zm-5 7h2v3h-2zm5 0h2v3h-2zm11 3h2v3h-2zm-15 8h3v2h-3zm7 0h3v2h-3zm7 0h3v2h-3z"/></svg></span>lendable</div>
+    <div class="brand"><span class="logo"><svg viewBox="0 0 100 100" aria-hidden="true" focusable="false"><rect x="22" y="22" width="34" height="56" rx="2" fill="#ffffff"/><path fill="currentColor" d="M28 30h7v7h-7zm15 0h7v7h-7zm-15 13h7v7h-7zm15 0h7v7h-7zm-15 13h7v7h-7z"/><circle cx="62" cy="58" r="16" fill="currentColor" stroke="#ffffff" stroke-width="7"/><path d="M73 70l12 12" stroke="#ffffff" stroke-width="8" stroke-linecap="round"/></svg></span>pocket approval</div>
     <div class="topright"><span class="muted" style="font-size:14px">Built for real estate professionals</span></div>
   </header>
   <main class="auth">
@@ -428,7 +433,7 @@ tbody tr:hover .open,tbody tr:focus-within .open{opacity:1}
       <h1>A clearer path.<br>A more confident deal.</h1>
       <p>Building intelligence and financing guidance, together in one conversation.</p>
       <div class="mini">
-        <div class="minihead"><span class="logo" style="width:28px;height:28px"><svg viewBox="0 0 40 40" aria-hidden="true" focusable="false"><path fill="#ffffff" d="M7 7h11v18h5v-7h6v7h5v9H7z"/><path fill="currentColor" d="M10 11h2v3h-2zm5 0h2v3h-2zm-5 7h2v3h-2zm5 0h2v3h-2zm11 3h2v3h-2zm-15 8h3v2h-3zm7 0h3v2h-3zm7 0h3v2h-3z"/></svg></span><strong style="font-size:14px">Lendable assistant</strong></div>
+        <div class="minihead"><span class="logo" style="width:28px;height:28px"><svg viewBox="0 0 100 100" aria-hidden="true" focusable="false"><rect x="22" y="22" width="34" height="56" rx="2" fill="#ffffff"/><path fill="currentColor" d="M28 30h7v7h-7zm15 0h7v7h-7zm-15 13h7v7h-7zm15 0h7v7h-7zm-15 13h7v7h-7z"/><circle cx="62" cy="58" r="16" fill="currentColor" stroke="#ffffff" stroke-width="7"/><path d="M73 70l12 12" stroke="#ffffff" stroke-width="8" stroke-linecap="round"/></svg></span><strong style="font-size:14px">Pocket Approval assistant</strong></div>
         <div class="question">Can you check 108 Leonard Street for my buyer?</div>
         <h3>108 Leonard Street</h3><small>Manhattan · Condo</small>
         <div style="margin:12px 0"><span class="pill">Financing history found</span></div>
@@ -439,7 +444,7 @@ tbody tr:hover .open,tbody tr:focus-within .open{opacity:1}
     </div>
     <div class="authright"><div class="signupbox">
       <h2>Your next deal starts here.</h2>
-      <p>Create your Lendable workspace.</p>
+      <p>Create your Pocket Approval workspace.</p>
       <button class="outline" id="google"><span class="g">G</span>Continue with Google</button>
       <div class="divider">or continue with email</div>
       <form id="signupform">
@@ -455,7 +460,7 @@ tbody tr:hover .open,tbody tr:focus-within .open{opacity:1}
 
 <section id="workspace" class="workspace hide">
   <aside class="sidebar" id="sidebar">
-    <div class="brand"><span class="logo"><svg viewBox="0 0 40 40" aria-hidden="true" focusable="false"><path fill="#ffffff" d="M7 7h11v18h5v-7h6v7h5v9H7z"/><path fill="currentColor" d="M10 11h2v3h-2zm5 0h2v3h-2zm-5 7h2v3h-2zm5 0h2v3h-2zm11 3h2v3h-2zm-15 8h3v2h-3zm7 0h3v2h-3zm7 0h3v2h-3z"/></svg></span>lendable</div>
+    <div class="brand"><span class="logo"><svg viewBox="0 0 100 100" aria-hidden="true" focusable="false"><rect x="22" y="22" width="34" height="56" rx="2" fill="#ffffff"/><path fill="currentColor" d="M28 30h7v7h-7zm15 0h7v7h-7zm-15 13h7v7h-7zm15 0h7v7h-7zm-15 13h7v7h-7z"/><circle cx="62" cy="58" r="16" fill="currentColor" stroke="#ffffff" stroke-width="7"/><path d="M73 70l12 12" stroke="#ffffff" stroke-width="8" stroke-linecap="round"/></svg></span>pocket approval</div>
     <button class="new" id="new"><span>＋</span>New conversation</button>
     <div class="nav">
       <button class="navbtn selected" id="nav-chat"><span class="ic">✧</span>Building assistant</button>
@@ -499,7 +504,7 @@ tbody tr:hover .open,tbody tr:focus-within .open{opacity:1}
         <div class="composerwrap">
           <form class="composer" id="chatform">
             <button type="button" class="attach" id="attach" aria-label="Underwrite Project Documents">＋</button>
-            <textarea id="prompt" aria-label="Message Lendable" placeholder="Enter a building address…" rows="2"></textarea>
+            <textarea id="prompt" aria-label="Message Pocket Approval" placeholder="Enter a building address…" rows="2"></textarea>
             <button class="send" aria-label="Send message" type="submit">↑</button>
           </form>
           <div class="composernote" id="composernote">Recent mortgage activity · Financing history does not establish current project approval.</div>
@@ -588,7 +593,7 @@ tbody tr:hover .open,tbody tr:focus-within .open{opacity:1}
       <section class="pageview hide" id="dealsview" aria-labelledby="dealstitle"><div class="pageinner" style="max-width:1180px">
         <div class="eyebrow" style="font-size:12px;margin-bottom:6px">Your pipeline</div>
         <h2 id="dealstitle">My deals</h2>
-        <p style="color:var(--muted);font-size:14px;margin-top:4px;max-width:680px">Upload a contract and Lendable pulls out the price, dates, lender and every attorney, broker and loan officer, with one tap to call or email. Each deal links to its building’s DOB and litigation flags.</p>
+        <p style="color:var(--muted);font-size:14px;margin-top:4px;max-width:680px">Upload a contract and Pocket Approval pulls out the price, dates, lender and every attorney, broker and loan officer, with one tap to call or email. Each deal links to its building’s DOB and litigation flags.</p>
         <div class="alertcards" id="dealalerts"></div>
         <div class="controls" style="margin-top:16px">
           <input class="search" id="dealq" type="search" placeholder="Search address, lender, attorney…" aria-label="Search my deals">
@@ -599,7 +604,7 @@ tbody tr:hover .open,tbody tr:focus-within .open{opacity:1}
         </div>
         <div id="dealfilter"></div>
         <div id="deallist"></div>
-        <p class="listfoot" style="margin-top:18px">Deals and documents are saved on this device for now. Contracts are read by Lendable AI to fill in the deal; check the extracted figures and dates against the contract.</p>
+        <p class="listfoot" style="margin-top:18px">Deals and documents are saved on this device for now. Contracts are read by Pocket Approval AI to fill in the deal; check the extracted figures and dates against the contract.</p>
       </div></section>
       <section class="pageview hide" id="dobview" aria-labelledby="dobtitle"><div class="pageinner" style="max-width:820px">
         <div class="eyebrow" style="font-size:12px;margin-bottom:6px">NYC Buildings &amp; HPD records</div>
@@ -621,7 +626,7 @@ tbody tr:hover .open,tbody tr:focus-within .open{opacity:1}
   <p>Send the building details to your lending contact so they can investigate current project eligibility.</p>
   <form id="reviewform">
     <div class="field"><label>Send to lenders that recently financed this building</label><div class="chips" id="lenderpick" role="group" aria-label="Choose lenders"></div><div id="lendercontacts"></div>
-      <label for="reviewemail" style="margin-top:12px;font-size:13px;color:var(--muted)">Other email (optional)</label><input type="email" id="reviewemail" placeholder="Any other loan officer’s email"><div class="recipientnote" id="recipnote">Tap a lender, add your contact there once, and Lendable remembers it on this device.</div></div>
+      <label for="reviewemail" style="margin-top:12px;font-size:13px;color:var(--muted)">Other email (optional)</label><input type="email" id="reviewemail" placeholder="Any other loan officer’s email"><div class="recipientnote" id="recipnote">Tap a lender, add your contact there once, and Pocket Approval remembers it on this device.</div></div>
     <div class="field"><label for="reviewsubject">Subject</label><input id="reviewsubject"></div>
     <label for="reviewbody">Review request</label>
     <textarea id="reviewbody"></textarea>
@@ -833,19 +838,19 @@ function send(t,_noMia){
   if(t==='Open the DOB assistant'){setView('dob');return}
   if(!_noMia)add(t,true);$('sidebar').classList.remove('open');setView('chat');
   if(/^(show )?(me )?(all|the full)? ?(buildings|building list|list)$/i.test(t)||t==='Show all buildings'){add('<p>Opening the full building list. You can filter by condo/co-op or lender and click any row to come back here with it.</p>');setTimeout(()=>setView('list'),350);return}
-  if(/visa|foreign national|dscr|bank statement|self.employed/i.test(t)&&!/board package/i.test(t)){if(aiReady()){askAI(t);return}add('<p>Lendable will help narrow the financing path using the borrower’s profile and current lender guidelines.</p><p>For visa or foreign-national scenarios, the connected assistant will ask about residency, visa category, property use, and documentation. For DSCR or bank statement scenarios, it will ask about property cash flow or business deposits and the proposed loan.</p><p>This preview does not have lender program rules connected yet. No program eligibility or approval has been established.</p>'+choices(['Check a building']));return}
+  if(/visa|foreign national|dscr|bank statement|self.employed/i.test(t)&&!/board package/i.test(t)){if(aiReady()){askAI(t);return}add('<p>Pocket Approval will help narrow the financing path using the borrower’s profile and current lender guidelines.</p><p>For visa or foreign-national scenarios, the connected assistant will ask about residency, visa category, property use, and documentation. For DSCR or bank statement scenarios, it will ask about property cash flow or business deposits and the proposed loan.</p><p>This preview does not have lender program rules connected yet. No program eligibility or approval has been established.</p>'+choices(['Check a building']));return}
   if(/litigation|insurance|local law\s*11|fisp|fa[cç]ade|investment concentration|investor concentration/i.test(t)&&!/board package/i.test(t)){if(aiReady()){askAI(t);return}add('<p>A building issue does not automatically mean there is no financing path.</p><div class="pathbox"><strong>Potential financing path · lender review required</strong><br>This issue may warrant an exception request, remediation, or an alternative lending program. A lender review is needed to determine the available path.</div><p>Litigation type, insurance terms, façade report findings, and ownership concentration need individual review. Safety and critical-repair concerns may prevent agency eligibility until resolved.</p><p>This preview has not reviewed documents or established eligibility. Upload the building package to preview the intake, or request a loan officer review once a building is selected.</p><p><a href="https://selling-guide.fanniemae.com/sel/b4-2.1-03/ineligible-projects" target="_blank" rel="noopener">Fannie Mae project eligibility guidance ↗</a></p>');return}
   if(!_noMia&&(MIA_HINT.test(t)||(/^\s*\d/.test(t)&&!findBuilding(t)))){if(!MIA&&/^https?:$/.test(location.protocol)){loadMiami().then(()=>{const mm=findMiami(t);if(mm)showMiami(mm);else if(MIA_HINT.test(t))add('<p>I couldn’t find that address among Miami-Dade condo buildings. Try the street address as it appears on the tax roll, e.g. “1800 Sunset Harbour Dr”.</p>');else send(t,true)});return}
     const mm=findMiami(t);if(mm){showMiami(mm);return}if(MIA_HINT.test(t)&&MIA){add('<p>I couldn’t find that address among Miami-Dade condo buildings. Try the street address as it appears on the tax roll, e.g. “1800 Sunset Harbour Dr”.</p>');return}}
   const match=findBuilding(t);if(match){showBuilding(match);
-    if(/sublet|rent (it |the unit |my unit )?out|renting|pets?\b|dogs?\b|flip tax|board|polic|allow|guarantor|pied/i.test(t))add('<p>Lendable doesn’t have '+esc(match.address)+'’s building rules yet (sublet, pets, flip tax, financing limits). Confirm them in the proprietary lease and house rules, or ask the managing agent or listing agent for the policy in writing.</p>'+choices(['Can co-op owners rent out their unit?','What do co-op boards look for financially?']));
+    if(/sublet|rent (it |the unit |my unit )?out|renting|pets?\b|dogs?\b|flip tax|board|polic|allow|guarantor|pied/i.test(t))add('<p>Pocket Approval doesn’t have '+esc(match.address)+'’s building rules yet (sublet, pets, flip tax, financing limits). Confirm them in the proprietary lease and house rules, or ask the managing agent or listing agent for the policy in writing.</p>'+choices(['Can co-op owners rent out their unit?','What do co-op boards look for financially?']));
     return}
   if(t==='Building only'||t==='Next steps'){add('<p>For this building, the next step is to verify current project eligibility with a lender. Request the condo or co-op questionnaire, current financials, insurance, and details of any assessments or litigation.</p>'+choices(['Show observed lenders','Check another building']));return}
   if(t==='Show observed lenders'&&selected){const names=selected.lenders.map(l=>l.name);assistant((names.length?esc(names.join(', '))+'.':'No lender was identified for this building.')+(selected.unknown?' One or more closings were financed by a lender that wasn’t identified in the source.':'')+' These reflect observed financing in the workbook. This preview does not rank lenders or verify current approval.');return}
   if(t==='Check another building'||t==='Check a building'){awaiting='address';add('<p>What’s the building address? You can also pick one below or from the full list.</p>'+choices(['108 Leonard Street','330 Spring Street','250 W 96th Street','Show all buildings']));return}
     {const am=t.match(/\d+[a-z]?(?:-\d+)?\s+[a-z0-9.' -]{2,40}?\b(street|st|avenue|ave|place|pl|drive|dr|road|rd|broadway|boulevard|blvd|terrace|lane|way|square|plaza|park row|bowery)\b/i);const cm=findCity(am?am[0]:t);
     if(cm){const fin=buildings.find(b=>b.city===cm);fin?showBuilding(fin):showCityBuilding(cm);
-      if(/sublet|rent (it |the unit |my unit )?out|renting|pets?\b|dogs?\b|flip tax|board|polic|allow|guarantor|pied|doorm[ae]n|amenit|gym/i.test(t))add('<p>Lendable doesn’t have this building’s rules or amenities yet (sublet, pets, flip tax, doorman). Confirm them in the proprietary lease and house rules, or ask the managing agent or listing agent.</p>');
+      if(/sublet|rent (it |the unit |my unit )?out|renting|pets?\b|dogs?\b|flip tax|board|polic|allow|guarantor|pied|doorm[ae]n|amenit|gym/i.test(t))add('<p>Pocket Approval doesn’t have this building’s rules or amenities yet (sublet, pets, flip tax, doorman). Confirm them in the proprietary lease and house rules, or ask the managing agent or listing agent.</p>');
       return}}
   const guide=findGuide(t);if(guide){showGuide(guide);return}
   const lender=findLender(t);if(lender&&(t.length<70||/which|what|where|list|show/i.test(t))&&!/\b(how|why|should)\b/i.test(t)){lenderResults(lender);return}
@@ -938,7 +943,7 @@ function renderLenderPick(b){
   const names=(b.lenders||[]).map(l=>l.name);
   $('lenderpick').innerHTML=names.length?names.map(n=>'<button type="button" class="lchip'+(pickedLenders.has(n)?' on':'')+'" data-lpick="'+esc(n)+'">'+(pickedLenders.has(n)?'✓ ':'')+esc(n)+'</button>').join(''):'<small>No identified lenders for this building yet. Use the email box below.</small>';
   $('lendercontacts').innerHTML=[...pickedLenders].map(n=>'<div class="lcontact"><span>'+esc(n)+'</span><input type="email" data-lemail="'+esc(n)+'" value="'+esc(LCONTACTS[n]||'')+'" placeholder="Your contact’s email"></div>').join('');
-  const r=recipients();$('recipnote').textContent=r.length?'Sending to: '+r.join(', '):'Tap a lender, add your contact there once, and Lendable remembers it on this device.';
+  const r=recipients();$('recipnote').textContent=r.length?'Sending to: '+r.join(', '):'Tap a lender, add your contact there once, and Pocket Approval remembers it on this device.';
   updateBodyGreeting();updateMailto()}
 function updateBodyGreeting(){const v=$('reviewbody').value;const g=pickedLenders.size?'Hi '+[...pickedLenders].map(n=>SHORT[n]||n).join(' / ')+' team,':'Hi,';$('reviewbody').value=v.replace(/^Hi[^\n]*,/,g)}
 $('lenderpick').addEventListener('click',e=>{const c=e.target.closest('[data-lpick]');if(!c||!selected)return;const n=c.dataset.lpick;pickedLenders.has(n)?pickedLenders.delete(n):pickedLenders.add(n);renderLenderPick(selected);if(pickedLenders.has(n)&&!LCONTACTS[n]){const i=document.querySelector('[data-lemail="'+CSS.escape(n)+'"]');if(i)i.focus()}});
@@ -999,7 +1004,7 @@ function parseSearch(t){
   if(/\bcondops?\b/.test(s))notes.push('Condops aren’t separated in city records. They usually appear as co-ops or condos.');
   else if(/\bcondo(minium)?s?\b/.test(s)){f.type=0;any=true}
   else if(/\bco-?ops?\b|cooperative/.test(s)){f.type=1;any=true}
-  else if(/\brentals?\b|rental buildings?/.test(s)){notes.push('Lendable covers condos and co-ops only, so rentals aren’t included.')}
+  else if(/\brentals?\b|rental buildings?/.test(s)){notes.push('Pocket Approval covers condos and co-ops only, so rentals aren’t included.')}
   if(/\belevator\b/.test(s)){f.elev=1;any=true}
   if(/walk-?ups?\b/.test(s)){f.elev=0;any=true}
   let m;
@@ -1239,7 +1244,7 @@ const GUIDE=[
 - **Sublet fees**, often a percentage of monthly maintenance.
 - **Condops and condos** are typically more flexible.
 
-For a specific building, check the house rules or sublet policy, ask the managing agent, or ask the listing agent for it in writing. Lendable doesn’t have building-specific sublet policies yet.`},
+For a specific building, check the house rules or sublet policy, ask the managing agent, or ask the listing agent for it in writing. Pocket Approval doesn’t have building-specific sublet policies yet.`},
  {g:'Co-op boards & rules',id:'board-package',t:'What goes in a board package?',k:/board package|board app(lication)?\b|purchase application/i,b:`A board package is the buyer’s application to the co-op (or the condo’s right-of-first-refusal waiver request). Start with **the managing agent’s own checklist and forms**, because those control order, copies and format. Typical contents:
 
 - **Application forms**, the building’s own plus any credit/background authorization and fees
@@ -1348,14 +1353,14 @@ Open DOB violations (like an unsafe facade filing) are a reason to ask questions
 ];
 function md(s){return esc(s).split(/\n{2,}/).map(block=>{const lines=block.split('\n');if(lines.every(l=>/^\s*[-•*]\s+/.test(l)))return '<ul>'+lines.map(l=>'<li>'+l.replace(/^\s*[-•*]\s+/,'')+'</li>').join('')+'</ul>';const out=[];let ul=[];for(const l of lines){if(/^\s*[-•*]\s+/.test(l))ul.push('<li>'+l.replace(/^\s*[-•*]\s+/,'')+'</li>');else{if(ul.length){out.push('<ul>'+ul.join('')+'</ul>');ul=[]}out.push('<p>'+l.replace(/^#+\s*/,'')+'</p>')}}if(ul.length)out.push('<ul>'+ul.join('')+'</ul>');return out.join('')}).join('').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/(^|[^*])\*([^*\s][^*]*?)\*(?!\*)/g,'$1<em>$2</em>').replace(/\b(https:\/\/selling-guide\.fanniemae\.com\/sel\/[a-z0-9.\/-]+)/gi,'<a href="$1" target="_blank" rel="noopener">$1</a>').replace(/\(((?:B\d-[\d.]+-\d{2}(?:, | to |–)?)+)\)/g,(m,list)=>'('+list.replace(/B\d-[\d.]+-\d{2}/g,sec=>'<a href="'+fnmaUrl(sec)+'" target="_blank" rel="noopener">'+sec+'</a>')+')').replace(/\((B\d-[\d.]+-\d{2})\)/g,(m,sec)=>'(<a href="'+fnmaUrl(sec)+'" target="_blank" rel="noopener">'+sec+'</a>)')}
 function findGuide(t){const ex=GUIDE.find(x=>x.t===t);if(ex)return ex;if(t.length>(aiReady()?48:110))return null;const pref=/fannie|fnma|agency|conforming|warrant/i.test(t)?GUIDE.filter(x=>x.g==='Fannie Mae project standards').find(x=>x.k.test(t)):null;return pref||GUIDE.find(x=>x.k.test(t))}
-function showGuide(x){setView('chat');add('<div class="guidecard"><div class="gh"><div class="srclabel"><span class="dot"></span>Lendable guide · '+esc(x.g)+'</div><h3>'+esc(x.t)+'</h3></div><div class="guidebody">'+md(x.b)+'</div><div class="guidefoot">General guidance. Each building’s documents and the lender control.</div></div>'+choices([...(x.cta?[x.cta[0]]:[]),'Ask a follow-up']));}
+function showGuide(x){setView('chat');add('<div class="guidecard"><div class="gh"><div class="srclabel"><span class="dot"></span>Pocket Approval guide · '+esc(x.g)+'</div><h3>'+esc(x.t)+'</h3></div><div class="guidebody">'+md(x.b)+'</div><div class="guidefoot">General guidance. Each building’s documents and the lender control.</div></div>'+choices([...(x.cta?[x.cta[0]]:[]),'Ask a follow-up']));}
 function renderGuide(){const groups=[...new Set(GUIDE.map(x=>x.g))];$('guidegrid').innerHTML=groups.map(g=>'<div class="guidegroup"><h3>'+esc(g)+'</h3>'+GUIDE.filter(x=>x.g===g).map(x=>'<button class="topic" data-guide="'+x.id+'">'+esc(x.t)+'</button>').join('')+'</div>').join('')}
 
-/* ---------- Lendable AI (real answers via the viewer's Claude) ---------- */
+/* ---------- Pocket Approval AI (real answers via the viewer's Claude) ---------- */
 let sampleFn=null,aiOff=false,aiCtl=null,aiTurns=[];
-(async()=>{try{if(window.claude?.use){sampleFn=await window.claude.use('sample');if(sampleFn)$('composernote').textContent='Lendable AI answers general questions · Financing history ≠ project approval'}}catch(e){}})();
+(async()=>{try{if(window.claude?.use){sampleFn=await window.claude.use('sample');if(sampleFn)$('composernote').textContent='Pocket Approval AI answers general questions · Financing history ≠ project approval'}}catch(e){}})();
 let serverAI=false;
-(async()=>{if(!/^https?:$/.test(location.protocol))return;await new Promise(r=>setTimeout(r,1500));if(sampleFn)return;try{const r=await fetch('api/ask');if(r.ok&&/json/.test(r.headers.get('content-type')||'')){const j=await r.json();if(j.configured){serverAI=true;$('composernote').textContent='Lendable AI answers general questions · Financing history ≠ project approval'}}}catch(e){}})();
+(async()=>{if(!/^https?:$/.test(location.protocol))return;await new Promise(r=>setTimeout(r,1500));if(sampleFn)return;try{const r=await fetch('api/ask');if(r.ok&&/json/.test(r.headers.get('content-type')||'')){const j=await r.json();if(j.configured){serverAI=true;$('composernote').textContent='Pocket Approval AI answers general questions · Financing history ≠ project approval'}}}catch(e){}})();
 async function serverSample(turns,ctx,signal){
   let r;try{r=await fetch('api/ask',{method:'POST',headers:{'content-type':'application/json'},signal,body:JSON.stringify({system:RULES+'\n\n'+FANNIE,context:ctx,messages:turns})})}catch(e){throw {code:e&&e.name==='AbortError'?'cancelled':'upstream_error'}}
   const j=await r.json().catch(()=>({}));
@@ -1373,12 +1378,12 @@ function contextBlock(q){
 const FNMA_URLS={"B4-2.1-01": "b4-2.1-01/general-information-project-standards", "B4-2.1-02": "b4-2.1-02/waiver-project-review", "B4-2.1-03": "b4-2.1-03/ineligible-projects", "B4-2.1-04": "b4-2.1-04/environmental-hazard-assessments", "B4-2.1-05": "b4-2.1-05/unacceptable-environmental-hazards", "B4-2.1-06": "b4-2.1-06/remedial-actions-environmental-hazard-assessments-below-standards", "B4-2.2-01": "b4-2.2-01/full-review-process", "B4-2.2-02": "b4-2.2-02/full-review-additional-eligibility-requirements-units-new-and-newly-converted-condo-projects", "B4-2.2-03": "b4-2.2-03/fha-approved-condo-review-eligibility", "B4-2.2-04": "b4-2.2-04/project-eligibility-review-service-pers", "B4-2.2-05": "b4-2.2-05/projects-special-considerations", "B4-2.3-01": "b4-2.3-01/eligibility-requirements-units-pud-projects", "B4-2.3-02": "b4-2.3-02/co-op-project-eligibility", "B4-2.3-03": "b4-2.3-03/legal-requirements-co-op-projects", "B4-2.3-04": "b4-2.3-04/loan-eligibility-co-op-share-loans", "B7-3-03": "b7-3-03/master-property-insurance-requirements-project-developments", "B7-3-04": "b7-3-04/individual-property-insurance-requirements-unit-project-development", "B7-4-01": "b7-4-01/general-liability-insurance-requirements-project-developments", "B7-4-02": "b7-4-02/fidelitycrime-insurance-requirements-project-developments"};
 const fnmaUrl=sec=>'https://selling-guide.fanniemae.com/sel/'+(FNMA_URLS[sec.toUpperCase()]||'b4-2/project-standards');
 const FANNIE="FANNIE MAE PROJECT STANDARDS — reference summary from the Fannie Mae Selling Guide (Guide edition Sept 2, 2026) plus Lender Letter LL-2026-03. Cite sections by number in parentheses, e.g. (B4-2.1-03); the app links them automatically. Summaries, not verbatim text; the lender confirms against the live Guide and its own overlays.\n\nREVIEW TYPES (B4-2.1-01, B4-2.1-02, LL-2026-03)\n- Limited Review is RETIRED (mandatory for applications dated on/after Aug 3, 2026). Established projects now need a Full Review unless they qualify for a Waiver of Project Review.\n- Waiver of Project Review (B4-2.1-02): detached condo units; condo projects of 2–4 units; condo projects of 5–10 units that are not part of a master association or larger development; PUD units (except certain manufactured-home PUDs); Fannie Mae-owned condo loans refinanced as a limited cash-out refi at max 80% LTV. Waiver is NOT available for co-ops. Even when waived: no condo hotel/motel, houseboat, timeshare or segmented ownership; no unaddressed critical repairs or evacuation orders; not terminating or in bankruptcy/receivership; not \"Unavailable\" in Condo Project Manager (CPM); insurance rules still apply.\n- Full Review (B4-2.2-01): required for attached condo units in larger projects (new or established) and for co-ops. Lenders must use CPM for condo Full Reviews. Valid for 1 year before the note date for established projects, 180 days for new projects.\n- PERS (B4-2.2-04): Fannie Mae's own review. Required for newly converted non-gut-rehab condos/co-ops over 10 units, limited/shared-equity co-ops, and certain manufactured-home/land-trust projects; optional for other new projects. Conditional approval lasts 9 months, final approval 18 months. Loans need Final Project Approval.\n- FHA-approved condos (B4-2.2-03) may be delivered on the basis of a valid HUD approval.\n- Project type codes at delivery: S = Full Review established condo, R = Full Review new condo, T = Fannie-approved (CPM/PERS), U = FHA-approved, V = review waived, 1 = Full Review co-op, 2 = Fannie-approved co-op.\n- Established condo = 90%+ of units conveyed, 100% complete, no further phasing, HOA control turned over to owners. Otherwise it is a new project.\n\nINELIGIBLE PROJECTS (B4-2.1-03)\n- Hotel/motel/condotel or resort-style operation (rental pooling, front desk, daily cleaning, hotel management, transient use). Red flags: 75%+ investor/second-home owners, units under 400 sq ft, resort locations.\n- Timeshare, fractional or segmented ownership; houseboats; multi-dwelling units (one legal unit split into several dwellings).\n- Single-entity ownership above: 2 units in projects of 5–20 units; 20% of units in projects of 21+ units (limited exceptions exist).\n- Commercial / non-residential space above 35% of the project (HOA-owned residential amenities don't count).\n- HOA income over 10% from non-incidental businesses (restaurant, spa, health club open to the public); up to 15% allowed in specific cases.\n- Mandatory memberships paid to a third party (e.g. golf club); recreational leases to the developer.\n- Pending litigation involving the HOA/co-op or developer about safety, structural soundness, habitability or functional use. Generally acceptable: non-monetary disputes, insured claims, minor HOA-as-plaintiff matters, damages not exceeding 10% of funded reserves, recovery for already-remediated issues, localized unit damage, HOA collection/foreclosure actions.\n- Critical repairs / significant deferred maintenance: material deficiencies that could fail within a year; mold, water intrusion or damaging leaks; advanced physical deterioration; failed mandatory structural safety inspections; or unfunded repairs over $10,000 per unit needed within 12 months. Structural/mechanical inspections within the last 3 years can't show unaddressed critical repairs. Ineligible until remediated.\n- Evacuation order for an unsafe condition: ineligible until remediated and deemed safe.\n- Special assessment for critical repairs that are still unaddressed.\n- Projects being terminated, deconverted or dissolved, or in bankruptcy, insolvency or receivership.\n- Co-ops: sponsor can't hold more than its unsold units; tax-sheltered syndicate leasing is not allowed.\n\nCONDO FULL REVIEW (B4-2.2-01, B4-2.2-02)\n- Budget must fund replacement reserves of at least 10% of the budget today; this rises to 15% of annual budgeted assessment income for Full Review loans on Jan 4, 2027. A reserve study (within 3 years) can support adequate reserves; from Aug 3, 2026 the budget must include the study's highest recommended reserve allocation and baseline funding is not acceptable.\n- No more than 15% of units 60+ days delinquent on common charges (or on any special assessment).\n- The 50% investor-concentration limit was RETIRED by LL-2026-03.\n- Units, common elements and amenities must be owned by the HOA; the developer may not keep an ownership interest in project facilities.\n- New / newly converted projects: at least 50% of units (in the project or legal phase) conveyed or under contract to primary or second-home buyers; substantially complete (certificate of occupancy; buyer-selection items excepted); one legal phase per building; completion assurances for unfinished common elements; units available for immediate occupancy.\n- Max 6 months of common charges may have lien priority (more only where state law allowed it before Jan 14, 2014).\n- Condo Project Questionnaire (Form 1076) is optional but encouraged.\n\nCO-OPS (B4-2.3-02, B4-2.3-03, B4-2.3-04)\n- Full Review (or PERS) required; no waiver. Newly converted non-gut co-ops go through PERS unless at least 3 years old or 2–4 units.\n- Financials: recent operating budget plus 2 years audited financials (or corporate tax returns) showing adequate cash flow for debt and operating costs and adequate replacement and operating reserves. Current-year negative cash flow may not exceed 5% of the latest audited financial statement, and no two consecutive years of operating loss.\n- No more than 15% of shareholders 60+ days past due to the co-op.\n- At least 50% of shares sold to principal-residence buyers; 100% complete, no phasing.\n- Sponsor-held units: sponsor current on obligations; sponsor's negative cash flow capped at 5% of the budget; if the sponsor defaults, other owners' charges can't rise more than 10%.\n- Blanket (underlying) mortgage may be FHA or conventional, including a balloon; remaining term at least 3 months if refinancing is secured or it will be paid off.\n- Pro-rata share of project debt can't exceed 35% of debt plus appraised equity value (40% with documented compensating factors).\n- Recognition agreement (or equivalent document language) required: co-op must notify the lender of blanket-mortgage delinquency (30 days), insurance lapse, condemnation, IRC 216 problems, shareholder 90-day delinquency; lender may cure defaults; lease must be assumable by the lender. Lender needs a stock power and UCC filings/lien searches; the share loan is first lien except for the co-op's customary lien for unpaid charges.\n- Board approval: evidence the board approved the buyer is required before sale to Fannie Mae. The co-op can't restrict a lender's sale of a foreclosed unit, and must allow the lender to sublet if it can't sell within 60 days of foreclosure.\n- Flip tax acceptable if the lender is exempt from it on foreclosure transfers, OR it is profit-based, OR it is under 5% of value (flat fee, per share, percentage or per room).\n- Share loans: principal residence or second home only — investment co-op loans are not eligible. LTV is the loan amount over the lower of price or appraised value of the shares (excluding the unit's share of the blanket mortgage). Credit score, DTI and reserves follow the Eligibility Matrix.\n\nINSURANCE (B7-3-03, B7-3-04, B7-4-01, B7-4-02, LL-2026-03)\n- Master property policy: at least 100% of estimated replacement cost (guaranteed/extended replacement cost or insurer estimate is acceptable documentation); replacement-cost loss settlement except roofs; actual cash value not acceptable. Required perils include fire, wind, hail, water damage, sprinkler leakage, weight of snow/ice and others.\n- Master deductible: max 5% of the coverage amount per occurrence, and max $50,000 per unit (per-unit cap effective July 1, 2026).\n- Building ordinance coverage (A, B, C) and, where there is central heating/cooling, boiler/machinery coverage (lesser of $2 million or replacement cost) are required.\n- Unit owner (HO-6) policy required when the master policy doesn't cover the interior or has a per-unit deductible; HO-6 deductible max is the greater of 5% of coverage or $2,500.\n- General liability: at least $1 million per occurrence (not required when project review is waived).\n- Fidelity/crime: required for condo and co-op projects over 20 units (not for waived projects or where needed coverage is $5,000 or less). Amount: 3 months of assessments on all units if financial controls are in place; otherwise the maximum funds in the HOA's or manager's custody.\n- Servicers must verify master insurance annually (effective Jan 1, 2027).\n";
-const RULES=`You are Lendable, an AI assistant inside a web app for New York City real estate professionals — Realtors (including brand-new agents), attorneys and loan officers — focused on condos, co-ops and condops in Manhattan, then Brooklyn and Queens. Act like a knowledgeable, practical "pocket loan officer" and a patient mentor.
+const RULES=`You are Pocket Approval, an AI assistant inside a web app for New York City real estate professionals — Realtors (including brand-new agents), attorneys and loan officers — focused on condos, co-ops and condops in Manhattan, then Brooklyn and Queens. Act like a knowledgeable, practical "pocket loan officer" and a patient mentor.
 
 STYLE: Lead with the direct answer. Then at most 5 short bullet points ("- " lines). Use **bold** sparingly. No headings, no tables. Usually under 170 words. Ask at most one follow-up question, only if it truly changes the answer. Plain English; define jargon for newer agents.
 
 RULES:
-1. Building-specific facts (sublet policy, pets, flip tax, financing limits, board requirements, approvals) exist only if shown in BUILDING DATA. Right now we only have observed financing history. If asked about a specific building's rules, say Lendable doesn't have that building's policy yet and say where to confirm it (proprietary lease and house rules, offering plan, managing agent, listing agent). Never guess a specific building's policy; you may describe common NYC patterns, labeled as typical.
+1. Building-specific facts (sublet policy, pets, flip tax, financing limits, board requirements, approvals) exist only if shown in BUILDING DATA. Right now we only have observed financing history. If asked about a specific building's rules, say Pocket Approval doesn't have that building's policy yet and say where to confirm it (proprietary lease and house rules, offering plan, managing agent, listing agent). Never guess a specific building's policy; you may describe common NYC patterns, labeled as typical.
 2. Past financing is not current project approval. Never say a building is approved, warrantable or eligible.
 3. For Fannie Mae condo, co-op and project-insurance questions, answer from FANNIE MAE PROJECT STANDARDS below and cite the section number in parentheses, e.g. (B4-2.1-03); the app turns it into a link, so don't write URLs. Say it reflects the Guide as of Sept 2, 2026 and that the lender confirms against the live Guide and its own overlays. If the summary doesn't cover something, say so rather than guessing. Freddie Mac, FHA, VA and portfolio/jumbo programs have their own rules; don't apply Fannie Mae limits to them. Never invent section numbers, dates or figures.
 4. Building issues (litigation, insurance, FISP/Local Law 11 façade, reserves, investor or sponsor concentration): an issue doesn't automatically eliminate every financing path. Use this idea: "This issue may warrant an exception request, remediation, or an alternative lending program. A lender review is needed to determine the available path." Never say issues can be waived. Unresolved critical or safety repairs can block agency eligibility until fixed.
@@ -1390,10 +1395,10 @@ CONTEXT:
 `;
 async function askAI(q){
   setView('chat');
-  if(!aiReady()){add('<p>Lendable AI isn’t available in this view, so I can’t answer open-ended questions here. You can still look up buildings, browse the Realtor guide, and build a board package.</p>'+choices(['Open the DOB assistant','Show all buildings']));return}
+  if(!aiReady()){add('<p>Pocket Approval AI isn’t available in this view, so I can’t answer open-ended questions here. You can still look up buildings, browse the Realtor guide, and build a board package.</p>'+choices(['Open the DOB assistant','Show all buildings']));return}
   aiCtl?.abort();aiCtl=new AbortController();const ctl=aiCtl;
   aiTurns.push({role:'user',content:q});if(aiTurns.length>12)aiTurns=aiTurns.slice(-12);while(aiTurns.length&&aiTurns[0].role!=='user')aiTurns.shift();
-  add('<div class="srclabel"><span class="dot"></span>Lendable AI · general guidance <button class="stop" data-stop>Stop</button></div><div class="aitext"><p class="thinking">Thinking…</p></div>');
+  add('<div class="srclabel"><span class="dot"></span>Pocket Approval AI · general guidance <button class="stop" data-stop>Stop</button></div><div class="aitext"><p class="thinking">Thinking…</p></div>');
   const box=$('messages').lastElementChild,out=box.querySelector('.aitext'),stop=box.querySelector('[data-stop]');
   stop.onclick=()=>ctl.abort();
   try{
@@ -1402,8 +1407,8 @@ async function askAI(q){
   }catch(e){
     aiTurns.pop();
     const keep=e&&e.text?md(e.text):'';
-    const msg={cancelled:'Stopped.',rate_limited:'Lendable AI is busy or your usage limit was reached. Try again in a bit.',session_expired:'Sign in to Claude again to use Lendable AI.',refused:'I can’t help with that one. Try rephrasing.'}[e?.code];
-    if(['not_granted','sampling_disabled','not_declared','capability_disabled','capability_removed'].includes(e?.code)){aiOff=true;out.innerHTML='<p>Lendable AI isn’t turned on for this view. You can still use the building lookup, the Realtor guide and the board package builder.</p>'}
+    const msg={cancelled:'Stopped.',rate_limited:'Pocket Approval AI is busy or your usage limit was reached. Try again in a bit.',session_expired:'Sign in to Claude again to use Pocket Approval AI.',refused:'I can’t help with that one. Try rephrasing.'}[e?.code];
+    if(['not_granted','sampling_disabled','not_declared','capability_disabled','capability_removed'].includes(e?.code)){aiOff=true;out.innerHTML='<p>Pocket Approval AI isn’t turned on for this view. You can still use the building lookup, the Realtor guide and the board package builder.</p>'}
     else out.innerHTML=(e?.code==='refused'?'':keep)+'<p class="thinking">'+esc(msg||'The answer was interrupted. Try asking again.')+'</p>';
   }finally{stop.remove()}
 }
@@ -1503,7 +1508,7 @@ function mineSummary(m){const b=findBuilding(m.address);const st=(STATUS[m.statu
     x?'DOB (as of '+new Date(x.at).toLocaleDateString()+'): '+(x.active?x.active+' open DOB/ECB violations':'no open DOB violations')+(x.unsafe?'; unsafe facade (FISP)':'')+(x.vacate?'; vacate order in effect':'')+(x.facade?'; facade status '+x.facade:'')+(x.lit?'; '+x.lit+' open HPD litigation case'+(x.lit>1?'s':''):x.lit===0?'; no open HPD litigation':''):'DOB: not checked',
     ...(b&&b.lenders.length?['Lenders recently financing ('+FIN.window+'): '+b.lenders.map(l=>l.name).join(', ')]:[]),
     ...(m.docs&&m.docs.length?['Documents on file: '+m.docs.map(d=>d.name).join(', ')]:[]),
-    '','Shared from Lendable. Past financing is not project approval; confirm with the lender.'].join('\n')}
+    '','Shared from Pocket Approval. Past financing is not project approval; confirm with the lender.'].join('\n')}
 $('minelist').addEventListener('change',async e=>{const card=e.target.closest('[data-mine]');if(!card)return;const id=card.dataset.mine,m=MINE[id];if(!m)return;
   if(e.target.matches('[data-mstatus]')){m.status=e.target.value;m.updated=Date.now();mineSave();return}
   if(e.target.matches('[data-madd]')){const files=[...e.target.files];let skipped=0;const contracts=[];for(const f of files){try{await docsAdd(id,f);if(isContractName(f.name))contracts.push([f,m.docs[m.docs.length-1]])}catch(err){skipped++}}mineSave();renderMine();if(skipped)alert(skipped+' file(s) couldn’t be saved (over 20 MB or storage unavailable in this view).');for(const [f,meta] of contracts)runDealExtract(f,id,meta)}});
@@ -1518,7 +1523,7 @@ $('minelist').addEventListener('click',async e=>{const th=e.target.closest('[dat
   const gd=e.target.closest('[data-gotodeal]');if(gd){openDeal(gd.dataset.gotodeal);return}
   const del=e.target.closest('[data-mdel]');if(del){const d=m.docs[+del.dataset.mdel];if(d&&confirm('Remove '+d.name+'?')){await docsDel(d.key);m.docs.splice(+del.dataset.mdel,1);m.updated=Date.now();mineSave();renderMine()}return}
   if(e.target.closest('[data-mlook]')){send(m.address);return}
-  if(e.target.closest('[data-mshare]')){const text=mineSummary(m);try{if(navigator.share){await navigator.share({title:m.address+' · Lendable',text});return}}catch(err){if(err&&err.name==='AbortError')return}try{await navigator.clipboard.writeText(text);e.target.textContent='Copied ✓';setTimeout(()=>e.target.textContent='Share summary',2000)}catch(err){prompt('Copy this summary:',text)}return}
+  if(e.target.closest('[data-mshare]')){const text=mineSummary(m);try{if(navigator.share){await navigator.share({title:m.address+' · Pocket Approval',text});return}}catch(err){if(err&&err.name==='AbortError')return}try{await navigator.clipboard.writeText(text);e.target.textContent='Copied ✓';setTimeout(()=>e.target.textContent='Share summary',2000)}catch(err){prompt('Copy this summary:',text)}return}
   if(e.target.closest('[data-mremove]')){if(!confirm('Remove '+m.address+' from My buildings? Your notes and documents for it will be deleted from this device.'))return;for(const d of m.docs||[])await docsDel(d.key);delete MINE[id];mineSave();refreshSaveButtons();renderMine()}});
 $('mineq').oninput=e=>{mineState.q=e.target.value;renderMine()};
 $('minealerts').onclick=e=>{const c=e.target.closest('[data-mf]');if(!c)return;mineState.f=mineState.f===c.dataset.mf?'':c.dataset.mf;renderMine()};
@@ -1583,7 +1588,7 @@ async function dealFromFile(file,buildingId,meta){
   if(!meta){meta=bid&&MINE[bid]?(await docsAdd(bid,file,/commit/i.test(d.doc_type||'')?'Commitment letter':'Contract'),MINE[bid].docs[MINE[bid].docs.length-1]):await docPut(file,'Contract')}
   if(!deal.docs.some(x=>x.key===meta.key))deal.docs.push(Object.assign({},meta,{type:/commit/i.test(d.doc_type||'')?'Commitment letter':/rider/i.test(d.doc_type||'')?'Rider':'Contract'}));
   DEALS[deal.id]=deal;dealSave();mineSave();return {deal,merged}}
-const EXERR={scanned:'This looks like a scanned contract. Scanned files can be read on the live site, not in this preview.',too_big:'That scanned file is over 3 MB. Upload a text PDF, or a smaller scan.',no_ai:'Contract reading needs Lendable AI, which isn’t available in this view.',not_configured:'Contract reading needs the Anthropic key set up on Vercel.',rate_limited:'Lendable AI is busy. Try again in a minute.',nothing:'Couldn’t find deal details in that file. Is it the contract?',unsupported_type:'Upload a PDF or a photo of the contract.',unreadable:'Couldn’t read that file. Try again or add the deal manually.'};
+const EXERR={scanned:'This looks like a scanned contract. Scanned files can be read on the live site, not in this preview.',too_big:'That scanned file is over 3 MB. Upload a text PDF, or a smaller scan.',no_ai:'Contract reading needs Pocket Approval AI, which isn’t available in this view.',not_configured:'Contract reading needs the Anthropic key set up on Vercel.',rate_limited:'Pocket Approval AI is busy. Try again in a minute.',nothing:'Couldn’t find deal details in that file. Is it the contract?',unsupported_type:'Upload a PDF or a photo of the contract.',unreadable:'Couldn’t read that file. Try again or add the deal manually.'};
 async function runDealExtract(file,buildingId,meta){
   toast('<span class="extracting">◈</span> Reading '+esc(file.name)+' for deal details…',0);
   try{const {deal,merged}=await dealFromFile(file,buildingId,meta);
@@ -1600,7 +1605,7 @@ const CAL_KINDS=[['commitDate','Commitment deadline',3],['closingDate','Closing'
 const ymdC=d=>d.replace(/-/g,'');
 const nextDay=d=>{const x=new Date(d+'T12:00');x.setDate(x.getDate()+1);return x.toISOString().slice(0,10)};
 function calTitle(d,label){return label+': '+(d.address||'Deal')+(d.unit?' #'+d.unit:'')}
-function calBody(d){return dealSummary(d).replace(/\nShared from Lendable\.$/,'')+'\n\nAdded from Lendable.'}
+function calBody(d){return dealSummary(d).replace(/\nShared from Pocket Approval\.$/,'')+'\n\nAdded from Pocket Approval.'}
 function calLoc(d){return [d.address,d.unit?'Unit '+d.unit:'',d.borough].filter(Boolean).join(', ')}
 function outlookLink(d,k,label){const v=d[k];return 'https://outlook.office.com/calendar/0/deeplink/compose?path=%2Fcalendar%2Faction%2Fcompose&rru=addevent&allday=true&startdt='+v+'&enddt='+nextDay(v)+'&subject='+encodeURIComponent(calTitle(d,label))+'&location='+encodeURIComponent(calLoc(d))+'&body='+encodeURIComponent(calBody(d))}
 function googleLink(d,k,label){const v=d[k];return 'https://calendar.google.com/calendar/render?action=TEMPLATE&dates='+ymdC(v)+'/'+ymdC(nextDay(v))+'&text='+encodeURIComponent(calTitle(d,label))+'&location='+encodeURIComponent(calLoc(d))+'&details='+encodeURIComponent(calBody(d))}
@@ -1610,12 +1615,12 @@ function icsEvents(d,only){const stamp=new Date().toISOString().replace(/[-:]/g,
   return CAL_KINDS.filter(([k])=>d[k]&&(!only||only===k)&&(only||k!=='contractDate')).map(([k,label,remind])=>['BEGIN:VEVENT','UID:'+d.id+'-'+k+'@lendable','DTSTAMP:'+stamp,'DTSTART;VALUE=DATE:'+ymdC(d[k]),'DTEND;VALUE=DATE:'+ymdC(nextDay(d[k])),'SUMMARY:'+icsEsc(calTitle(d,label)),'LOCATION:'+icsEsc(calLoc(d)),'DESCRIPTION:'+icsEsc(calBody(d)),
     ...(remind?['BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+icsEsc(calTitle(d,label)),'TRIGGER:-P'+remind+'D','END:VALARM']:[]),'END:VEVENT'].map(icsFold).join('\r\n'))}
 function icsDownload(events,name){if(!events.length){toast('No commitment or closing dates to add yet.');return}
-  const txt=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Lendable//Deals//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH',...events,'END:VCALENDAR'].join('\r\n');
+  const txt=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Pocket Approval//Deals//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH',...events,'END:VCALENDAR'].join('\r\n');
   const url=URL.createObjectURL(new Blob([txt],{type:'text/calendar;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=name.replace(/[^\w #.-]/g,'')+'.ics';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000)}
 function calSection(d){const ks=CAL_KINDS.filter(([k])=>d[k]&&k!=='contractDate');
   if(!ks.length)return '<div class="dsec">Calendar</div><p class="emptyhint" style="margin:0">Add a commitment or closing date to put it on your calendar.</p>';
   return '<div class="dsec">Add to calendar</div><div class="ccards">'+ks.map(([k,label,remind])=>'<div class="ccard"><div class="cr">'+label+'</div><div class="cn">'+esc(fmtDate(d[k]))+'</div><div class="cl">All-day event'+(remind?' · reminder '+remind+' day'+(remind>1?'s':'')+' before (iPhone/.ics)':'')+'</div><div class="cacts"><a class="cact" href="'+esc(outlookLink(d,k,label))+'" target="_blank" rel="noopener">Outlook</a><a class="cact" href="'+esc(googleLink(d,k,label))+'" target="_blank" rel="noopener">Google</a><button class="cact" data-dics="'+k+'">iPhone / .ics</button></div></div>').join('')+'</div>'}
-$('dealcal').onclick=()=>icsDownload(Object.values(DEALS).filter(isOpen).flatMap(d=>icsEvents(d)),'Lendable deal dates');
+$('dealcal').onclick=()=>icsDownload(Object.values(DEALS).filter(isOpen).flatMap(d=>icsEvents(d)),'Pocket Approval deal dates');
 /* rendering */
 function bFlags(d){const m=d.buildingId&&MINE[d.buildingId];if(!m)return null;return m.dob?{bad:dobBad(m.dob),m}:{bad:null,m}}
 function dealAlerts(all){
@@ -1656,7 +1661,7 @@ function renderDeals(){
   const hay=d=>[d.address,d.unit,d.lender,d.buyers,d.sellers,d.notes,...d.contacts.flatMap(c=>[c.name,c.firm,c.email])].join(' ').toLowerCase();
   const sv=d=>{const k=dealState.sort;return k==='address'?(d.address||'').toLowerCase():k==='price'?(d.price||0):k==='status'?Object.keys(DSTAT).indexOf(d.status):k==='lender'?(d.lender||'~').toLowerCase():(d.closingDate||'9999')};
   const rows=all.filter(d=>(!fb||d.buildingId===dealState.building)&&(!groups||groups.includes(d))&&(!dealState.s||(dealState.s==='open'?isOpen(d):!isOpen(d)))&&(!q||hay(d).includes(q))).sort((a,b)=>{const x=sv(a),y=sv(b);return (x<y?-1:x>y?1:0)*dealState.dir});
-  if(!all.length){$('deallist').innerHTML='<div class="mycard" style="margin-top:14px"><h3>No deals yet</h3><p class="emptyhint" style="margin:6px 0 0">Tap <strong>＋ New deal from contract</strong> and upload the signed contract (PDF or photo). Lendable fills in the price, dates, lender and every attorney, broker and loan officer it finds. Contracts you add in <strong>My buildings</strong> show up here too.</p></div>';return}
+  if(!all.length){$('deallist').innerHTML='<div class="mycard" style="margin-top:14px"><h3>No deals yet</h3><p class="emptyhint" style="margin:6px 0 0">Tap <strong>＋ New deal from contract</strong> and upload the signed contract (PDF or photo). Pocket Approval fills in the price, dates, lender and every attorney, broker and loan officer it finds. Contracts you add in <strong>My buildings</strong> show up here too.</p></div>';return}
   const th=(k,l)=>'<th data-dsort="'+k+'">'+l+(dealState.sort===k?(dealState.dir>0?' ↑':' ↓'):'')+'</th>';
   $('deallist').innerHTML=rows.length?'<div class="mtwrap"><table class="mtable"><thead><tr>'+th('address','Property')+th('status','Stage')+th('price','Price')+th('closing','Closing')+th('lender','Lender')+'<th class="nosort">Building</th><th class="nosort">Contacts</th><th class="nosort"></th></tr></thead><tbody>'+
     rows.map(d=>{const open=dealState.open===d.id;const n=daysTo(d.closingDate);const bf=bFlags(d);
@@ -1677,7 +1682,7 @@ function dealSummary(d){const roles=d.contacts.map(c=>(ROLES[c.role]||'Contact')
     ...(d.price?['Price: '+money(d.price)+(d.loan?' · Loan '+money(d.loan):'')]:[]),...(d.lender?['Lender: '+d.lender]:[]),
     ...(d.contractDate?['Contract: '+fmtDate(d.contractDate)]:[]),...(d.commitDate?['Commitment date: '+fmtDate(d.commitDate)]:[]),...(d.closingDate?['Closing: '+fmtDate(d.closingDate)]:[]),
     ...(roles.length?['',...roles]:[]),...(m&&m.dob?['','Building: '+(dobBad(m.dob)?'DOB/HPD flags on file':'no open DOB violations or HPD cases')+' (as of '+new Date(m.dob.at).toLocaleDateString()+')']:[]),
-    '','Shared from Lendable.'].join('\n')}
+    '','Shared from Pocket Approval.'].join('\n')}
 $('dealq').oninput=e=>{dealState.q=e.target.value;renderDeals()};
 $('dealseg').onclick=e=>{const b=e.target.closest('[data-ds]');if(!b)return;dealState.s=b.dataset.ds;$('dealseg').querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b));renderDeals()};
 $('dealalerts').onclick=e=>{const c=e.target.closest('[data-df]');if(!c)return;dealState.f=dealState.f===c.dataset.df?'':c.dataset.df;renderDeals()};
@@ -1696,7 +1701,7 @@ dealsEl.addEventListener('click',async e=>{
   if(e.target.closest('[data-cadd]')){d.contacts.push({role:'other',name:'',firm:'',phone:'',email:''});dealState.edit=d.id+':'+(d.contacts.length-1);dealSave();renderDeals();setTimeout(()=>{const i=document.querySelector('[data-cf="name"]');if(i)i.focus()},30);return}
   const o=e.target.closest('[data-dopen]');if(o){const x=d.docs[+o.dataset.dopen];if(x)docOpen(x.key,x.name);return}
   const dl=e.target.closest('[data-ddel]');if(dl){const x=d.docs[+dl.dataset.ddel];if(x&&confirm('Remove '+x.name+' from this deal?')){await docsDel(x.key);d.docs.splice(+dl.dataset.ddel,1);dealSave();renderDeals()}return}
-  if(e.target.closest('[data-dshare]')){const text=dealSummary(d);try{if(navigator.share){await navigator.share({title:(d.address||'Deal')+' · Lendable',text});return}}catch(err){if(err&&err.name==='AbortError')return}try{await navigator.clipboard.writeText(text);e.target.textContent='Copied ✓';setTimeout(()=>e.target.textContent='Share deal summary',2000)}catch(err){prompt('Copy this summary:',text)}return}
+  if(e.target.closest('[data-dshare]')){const text=dealSummary(d);try{if(navigator.share){await navigator.share({title:(d.address||'Deal')+' · Pocket Approval',text});return}}catch(err){if(err&&err.name==='AbortError')return}try{await navigator.clipboard.writeText(text);e.target.textContent='Copied ✓';setTimeout(()=>e.target.textContent='Share deal summary',2000)}catch(err){prompt('Copy this summary:',text)}return}
   if(e.target.closest('[data-dremove]')){if(!confirm('Remove this deal? Its contacts and notes will be deleted from this device. Documents also saved in My buildings stay there.'))return;for(const x of d.docs)await docsDel(x.key);delete DEALS[d.id];dealSave();renderDeals()}});
 dealsEl.addEventListener('change',async e=>{const row=e.target.closest('[data-deal]');if(!row)return;const d=DEALS[row.dataset.deal];if(!d)return;
   if(e.target.matches('[data-dstatus]')){d.status=e.target.value;d.updated=Date.now();dealSave();dealAlerts(Object.values(DEALS));return}

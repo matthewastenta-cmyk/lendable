@@ -31,7 +31,7 @@ module.exports = async (req, res) => {
   const system = String(body && body.system || '');
   const context = String(body && body.context || '').slice(0, MAX_CONTEXT);
   // Only accept Lendable's own instructions, so the endpoint can't be used as a general-purpose chatbot.
-  if (!system.startsWith('You are Lendable') || system.length > MAX_SYSTEM) return res.status(400).json({ error: 'bad_request' });
+  if (!(system.startsWith('You are Pocket Approval') || system.startsWith('You are Lendable')) || system.length > MAX_SYSTEM) return res.status(400).json({ error: 'bad_request' });
   let messages = Array.isArray(body.messages) ? body.messages : [];
   messages = messages
     .filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
