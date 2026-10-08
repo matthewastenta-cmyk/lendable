@@ -446,8 +446,6 @@ tbody tr:hover .open,tbody tr:focus-within .open{opacity:1}
     <div class="authright"><div class="signupbox">
       <h2>Your next deal starts here.</h2>
       <p>Create your Pocket Approval workspace.</p>
-      <button class="outline" id="google"><span class="g">G</span>Continue with Google</button>
-      <div class="divider">or continue with email</div>
       <form id="signupform">
         <div class="field"><label for="name">Full name</label><input id="name" autocomplete="name" placeholder="Your name" required></div>
         <div class="field"><label for="email">Email</label><input id="email" type="email" autocomplete="email" placeholder="you@example.com" required></div>
@@ -459,10 +457,16 @@ tbody tr:hover .open,tbody tr:focus-within .open{opacity:1}
           <option value="buyer">Home buyer or seller</option>
           <option value="other">Other (title, managing agent…)</option>
         </select></div>
-        <button class="primary full" type="submit">Preview my workspace</button>
+        <button class="primary full" type="submit" id="authsend">Email me a sign-in code</button>
       </form>
-      <p class="demofoot">Design preview · No account is created.</p>
-      <button class="skip" id="skip">Explore the assistant →</button>
+      <form id="otpform" class="hide">
+        <p style="margin:0 0 10px;font-size:14px">We sent a code to <strong id="otpto"></strong>. Enter it below. It expires in an hour.</p>
+        <div class="field"><label for="otp">Sign-in code</label><input id="otp" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6,10}" maxlength="10" placeholder="123456" required></div>
+        <button class="primary full" type="submit" id="otpgo">Sign in</button>
+        <button class="skip" type="button" id="otpback" style="margin-top:12px">Use a different email</button>
+      </form>
+      <p class="demofoot" id="authmsg">No password needed. Your saved buildings and deals sync to your account.</p>
+      <button class="skip" id="skip">Explore without an account →</button>
     </div></div>
   </main>
 </section>
@@ -481,8 +485,8 @@ tbody tr:hover .open,tbody tr:focus-within .open{opacity:1}
       <button class="navbtn" id="nav-docs"><span class="ic">▤</span>Underwrite Project Documents</button>
     </div>
     <div class="sidebarbottom">
-      <div class="avatar" id="avatar">MS</div>
-      <div style="min-width:0"><strong id="username" style="font-size:14px">Matt Stenta</strong><div style="font-size:12px;color:var(--muted)" id="userrole">Agent workspace</div></div>
+      <div class="avatar" id="avatar">G</div>
+      <div style="min-width:0"><strong id="username" style="font-size:14px">Guest</strong><div style="font-size:12px;color:var(--muted)" id="userrole">Agent workspace</div></div>
     </div>
     <button class="footerback" id="back">View sign-up screen</button>
   </aside>
@@ -686,11 +690,64 @@ const ROLES_U={agent:['Agent workspace','LET\'S MOVE YOUR DEAL FORWARD','a real 
 let PROFILE={};try{PROFILE=JSON.parse(localStorage.getItem('lendable:profile:v1'))||{}}catch(e){}
 function applyProfile(){const r=ROLES_U[PROFILE.role]||ROLES_U.agent;$('userrole').textContent=r[0];$('welcomeeyebrow').textContent=r[1];const n=(PROFILE.name||'').trim();if(n){$('username').textContent=n;$('avatar').textContent=n.split(/\s+/).map(x=>x[0]).slice(0,2).join('').toUpperCase()}}
 (()=>{if(PROFILE.name)$('name').value=PROFILE.name;if(PROFILE.email)$('email').value=PROFILE.email;if(PROFILE.role)$('role').value=PROFILE.role;})();
-function enter(){setTimeout(()=>{try{loadDB()}catch(e){}},600);const n=$('name').value.trim(),em=$('email').value.trim(),rr=$('role').value?{value:$('role').value}:null;if(n||rr){PROFILE={name:n||PROFILE.name||'',email:em||PROFILE.email||'',role:rr?rr.value:(PROFILE.role||'agent')};try{localStorage.setItem('lendable:profile:v1',JSON.stringify(PROFILE))}catch(e){}}applyProfile();$('signup').classList.add('hide');$('workspace').classList.remove('hide')}
-$('signupform').onsubmit=e=>{e.preventDefault();enter()};
+function enter(){setTimeout(()=>{try{loadDB()}catch(e){}},600);const n=$('name').value.trim(),em=$('email').value.trim(),rr=$('role').value?{value:$('role').value}:null;if(n||rr){PROFILE={name:n||PROFILE.name||'',email:em||PROFILE.email||'',role:rr?rr.value:(PROFILE.role||'agent')};try{localStorage.setItem('lendable:profile:v1',JSON.stringify(PROFILE))}catch(e){}cloudQueue('profile')}applyProfile();$('signup').classList.add('hide');$('workspace').classList.remove('hide')}
+$('signupform').onsubmit=e=>{e.preventDefault();authStart()};
 $('skip').onclick=enter;
-$('google').onclick=()=>{enter();assistant('This is the sign-up design preview. Google sign-in will be connected when account creation is added. You can explore the building assistant below.')};
-$('back').onclick=()=>{$('workspace').classList.add('hide');$('signup').classList.remove('hide')};
+/* ---------- accounts & cloud sync (Supabase: email code sign-in, per-user rows protected by RLS) ---------- */
+let SB=null,SBUSER=null,sbReady=null;const SB_KINDS={profile:'lendable:profile:v1',mine:'lendable:mybuildings:v1',deals:'lendable:deals:v1',lendercontacts:'lendable:lendercontacts:v1'};
+const sbVals=()=>({profile:PROFILE,mine:MINE,deals:DEALS,lendercontacts:LCONTACTS});
+function authMsg(t,bad){const m=$('authmsg');m.textContent=t;m.style.color=bad?'var(--bad)':''}
+function loadScript(src){return new Promise((res,rej)=>{const sc=document.createElement('script');sc.src=src;sc.onload=res;sc.onerror=()=>rej(Error('script'));document.head.appendChild(sc)})}
+function sbInit(){if(!sbReady)sbReady=(async()=>{if(!/^https?:$/.test(location.protocol))return null;try{const c=await (await fetch('/api/config')).json();if(!c.enabled)return null;
+  if(!window.supabase)await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js');
+  SB=window.supabase.createClient(c.url,c.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'pa-auth'}});
+  SB.auth.onAuthStateChange((ev,session)=>{SBUSER=session?session.user:null;authUi()});
+  const {data}=await SB.auth.getSession();SBUSER=data.session?data.session.user:null;return SB}catch(e){console.warn('auth off',e);return null}})();return sbReady}
+function authUi(){$('back').textContent=SBUSER?'Sign out':'View sign-up screen';$('back').title=SBUSER?('Signed in as '+(SBUSER.email||'')):''}
+let otpEmail='';
+async function authStart(){const em=$('email').value.trim();if(!em)return;authMsg('Sending your code…');$('authsend').disabled=true;
+  const sb=await sbInit();
+  if(!sb){$('authsend').disabled=false;authMsg('Accounts aren’t available here yet, so you’re in guest mode. Your work saves on this device only.');enter();return}
+  const {error}=await sb.auth.signInWithOtp({email:em,options:{shouldCreateUser:true,data:{name:$('name').value.trim(),role:$('role').value}}});
+  $('authsend').disabled=false;
+  if(error){authMsg(/rate|limit|seconds/i.test(error.message)?'Too many codes requested. Wait a minute and try again.':'Couldn’t send the code: '+error.message,true);return}
+  otpEmail=em;$('otpto').textContent=em;$('signupform').classList.add('hide');$('otpform').classList.remove('hide');authMsg('Check your inbox (and spam). The email comes from Supabase for now.');setTimeout(()=>$('otp').focus(),50)}
+$('otpback').onclick=()=>{$('otpform').classList.add('hide');$('signupform').classList.remove('hide');authMsg('No password needed. Your saved buildings and deals sync to your account.')};
+$('otpform').onsubmit=async e=>{e.preventDefault();const code=$('otp').value.replace(/\D/g,'');if(code.length<6)return;$('otpgo').disabled=true;authMsg('Signing you in…');
+  const {data,error}=await SB.auth.verifyOtp({email:otpEmail,token:code,type:'email'});$('otpgo').disabled=false;
+  if(error){authMsg(/expired|invalid/i.test(error.message)?'That code didn’t work or has expired. Check it, or go back and send a new one.':'Sign-in failed: '+error.message,true);return}
+  SBUSER=data.user;await cloudPull(true);enter();authUi();toast('Signed in. Your buildings and deals now sync across devices.')};
+async function authSignOut(){if(!confirm('Sign out? Your buildings and deals stay saved in your account.'))return;try{await cloudFlush()}catch(e){}try{await SB.auth.signOut()}catch(e){}
+  Object.values(SB_KINDS).forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});try{localStorage.removeItem('pa-synced')}catch(e){}location.reload()}
+/* sync: first sign-in on a device merges local + cloud; afterwards the cloud copy wins */
+const tsOf=x=>x&&(x.upd||x.updated||x.saved||x.created||0)||0;
+function mergeMap(a,b){const o=Object.assign({},a||{});for(const [k,v] of Object.entries(b||{})){if(!(k in o)||tsOf(v)>=tsOf(o[k]))o[k]=v}return o}
+let cloudTimer=null,cloudDirty=new Set(),pulling=false;
+function cloudQueue(kind){if(!SBUSER||pulling)return;cloudDirty.add(kind);clearTimeout(cloudTimer);cloudTimer=setTimeout(()=>cloudFlush().catch(()=>{}),1200)}
+async function cloudFlush(){if(!SB||!SBUSER||!cloudDirty.size)return;const kinds=[...cloudDirty];cloudDirty.clear();const v=sbVals();const now=new Date().toISOString();
+  const {error}=await SB.from('user_state').upsert(kinds.map(k=>({user_id:SBUSER.id,kind:k,data:v[k]||{},updated_at:now})));
+  if(error){kinds.forEach(k=>cloudDirty.add(k));console.warn('sync',error.message)}else{try{localStorage.setItem('pa-lastpush',now)}catch(e){}}}
+async function cloudPull(first){if(!SB||!SBUSER)return;pulling=true;let merge=false;try{
+  const {data,error}=await SB.from('user_state').select('kind,data,updated_at');if(error){console.warn('pull',error.message);return}
+  const got={};(data||[]).forEach(r=>got[r.kind]=r.data);merge=first||localStorage.getItem('pa-synced')!==SBUSER.id;
+  if(got.profile&&Object.keys(got.profile).length)PROFILE=merge?Object.assign({},got.profile,PROFILE.name?{name:PROFILE.name}:{},PROFILE.role?{role:PROFILE.role}:{}):got.profile;
+  PROFILE.email=SBUSER.email||PROFILE.email;
+  if(got.mine)MINE=merge?mergeMap(got.mine,MINE):got.mine;
+  if(got.deals)DEALS=merge?mergeMap(got.deals,DEALS):got.deals;
+  if(got.lendercontacts)LCONTACTS=merge?Object.assign({},got.lendercontacts,LCONTACTS):got.lendercontacts;
+  const v=sbVals();for(const [k,key] of Object.entries(SB_KINDS)){try{localStorage.setItem(key,JSON.stringify(v[k]))}catch(e){}}
+  try{localStorage.setItem('pa-synced',SBUSER.id)}catch(e){}
+  try{$('minecount').textContent=Object.keys(MINE).length;$('dealcount').textContent=Object.keys(DEALS).length;applyProfile();
+    if(!$('mineview').classList.contains('hide'))renderMine();if(!$('dealsview').classList.contains('hide'))renderDeals()}catch(e){}
+  }finally{pulling=false}
+  if(merge){cloudDirty=new Set(Object.keys(SB_KINDS));await cloudFlush()}}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')cloudFlush().catch(()=>{});else if(SBUSER)cloudPull(false).catch(()=>{})});
+window.addEventListener('pagehide',()=>{cloudFlush().catch(()=>{})});
+/* returning users skip the sign-up screen */
+sbInit().then(async sb=>{authUi();if(sb&&SBUSER){await cloudPull(false);enter()}});
+
+
+$('back').onclick=()=>{if(SBUSER){authSignOut();return}$('workspace').classList.add('hide');$('signup').classList.remove('hide')};
 $('menu').onclick=()=>$('sidebar').classList.toggle('open');
 $('paneltoggle').onclick=()=>$('panel').classList.toggle('open');
 
@@ -965,7 +1022,7 @@ function renderLenderPick(b){
   updateBodyGreeting();updateMailto()}
 function updateBodyGreeting(){const v=$('reviewbody').value;const g=pickedLenders.size?'Hi '+[...pickedLenders].map(n=>SHORT[n]||n).join(' / ')+' team,':'Hi,';$('reviewbody').value=v.replace(/^Hi[^\n]*,/,g)}
 $('lenderpick').addEventListener('click',e=>{const c=e.target.closest('[data-lpick]');if(!c||!selected)return;const n=c.dataset.lpick;pickedLenders.has(n)?pickedLenders.delete(n):pickedLenders.add(n);renderLenderPick(selected);if(pickedLenders.has(n)&&!LCONTACTS[n]){const i=document.querySelector('[data-lemail="'+CSS.escape(n)+'"]');if(i)i.focus()}});
-$('lendercontacts').addEventListener('input',e=>{const i=e.target.closest('[data-lemail]');if(!i)return;LCONTACTS[i.dataset.lemail]=i.value.trim();try{localStorage.setItem(LC_KEY,JSON.stringify(LCONTACTS))}catch(err){}const r=recipients();$('recipnote').textContent=r.length?'Sending to: '+r.join(', '):'';updateMailto()});
+$('lendercontacts').addEventListener('input',e=>{const i=e.target.closest('[data-lemail]');if(!i)return;LCONTACTS[i.dataset.lemail]=i.value.trim();try{localStorage.setItem(LC_KEY,JSON.stringify(LCONTACTS))}catch(err){}cloudQueue('lendercontacts');const r=recipients();$('recipnote').textContent=r.length?'Sending to: '+r.join(', '):'';updateMailto()});
 function updateMailto(){$('mailreview').href='mailto:'+recipients().map(encodeURIComponent).join(',')+'?subject='+encodeURIComponent($('reviewsubject').value)+'&body='+encodeURIComponent($('reviewbody').value)}
 function openReview(){
   if(!selected)return;const b=selected;
@@ -1440,7 +1497,7 @@ const STATUS={unreviewed:['Not reviewed','grey'],clean:['✓ Clean','good'],issu
 let MINE={};try{MINE=JSON.parse(localStorage.getItem(MINE_KEY))||{}}catch(e){}
 const mineId=b=>norm(b.address)+'|'+String(b.borough||'').toLowerCase();
 const saveTargets=new Map();
-function mineSave(){try{localStorage.setItem(MINE_KEY,JSON.stringify(MINE))}catch(e){}const n=Object.keys(MINE).length;$('minecount').textContent=n}
+function mineSave(){try{localStorage.setItem(MINE_KEY,JSON.stringify(MINE))}catch(e){}cloudQueue('mine');const n=Object.keys(MINE).length;$('minecount').textContent=n}
 function saveBtn(b){const id=mineId(b);saveTargets.set(id,b);const on=!!MINE[id];return '<button class="savebtn'+(on?' on':'')+'" data-save="'+esc(id)+'">'+(on?'★ In My buildings':'☆ Save to My buildings')+'</button>'}
 function refreshSaveButtons(){document.querySelectorAll('[data-save]').forEach(x=>{const on=!!MINE[x.dataset.save];x.classList.toggle('on',on);x.textContent=on?'★ In My buildings':'☆ Save to My buildings'})}
 function dobSummary(d){if(!d||!d.found)return null;return {active:d.active||0,unsafe:!!d.unsafe,vacate:(d.vacates||[]).length,facade:d.facade?d.facade.status:null,lit:d.lit==null?null:d.lit,at:Date.now()}}
@@ -1554,7 +1611,7 @@ let DEALS={};try{DEALS=JSON.parse(localStorage.getItem(DEAL_KEY))||{}}catch(e){}
 const DSTAT={active:['In contract','amber'],uw:['In underwriting','amber'],ctc:['Clear to close','good'],closed:['Closed','grey'],dead:['Fell through','red']};
 const ROLES={buyer_attorney:'Buyer’s attorney',seller_attorney:'Seller’s attorney',buyer_broker:'Buyer’s broker',listing_broker:'Listing broker',lender:'Lender / loan officer',escrow_agent:'Escrow agent',title:'Title',managing_agent:'Managing agent',other:'Contact'};
 const dealState={q:'',s:'',f:'',open:null,building:null,edit:null,sort:'closing',dir:1};
-function dealSave(){try{localStorage.setItem(DEAL_KEY,JSON.stringify(DEALS))}catch(e){}$('dealcount').textContent=Object.keys(DEALS).length}
+function dealSave(){try{localStorage.setItem(DEAL_KEY,JSON.stringify(DEALS))}catch(e){}cloudQueue('deals');$('dealcount').textContent=Object.keys(DEALS).length}
 const dealsFor=bid=>Object.values(DEALS).filter(d=>d.buildingId===bid);
 const isContractName=n=>/contract|purchase|\bcos\b|rider|agreement|offer|commitment|\bpsa\b|deal ?sheet|term ?sheet/i.test(n);
 const fmtDate=d=>{if(!d)return '';const x=new Date(d+'T12:00');return isNaN(x)?d:x.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})};
@@ -1590,7 +1647,7 @@ function mergeDeal(deal,d){const set=(k,v)=>{if(v&&!deal[k])deal[k]=v};
   if(d.notes)deal.notes=deal.notes?(deal.notes.includes(d.notes)?deal.notes:deal.notes+'\n'+d.notes):String(d.notes);
   for(const c of contactsFrom(d))if(!deal.contacts.some(x=>sameContact(x,c)))deal.contacts.push(c);
   // remember the loan officer's email for review requests on this lender
-  const lo=deal.contacts.find(c=>c.role==='lender'&&c.email);const ln=deal.lender&&findLender(deal.lender);if(lo&&ln&&!LCONTACTS[ln]){LCONTACTS[ln]=lo.email;try{localStorage.setItem(LC_KEY,JSON.stringify(LCONTACTS))}catch(e){}}
+  const lo=deal.contacts.find(c=>c.role==='lender'&&c.email);const ln=deal.lender&&findLender(deal.lender);if(lo&&ln&&!LCONTACTS[ln]){LCONTACTS[ln]=lo.email;try{localStorage.setItem(LC_KEY,JSON.stringify(LCONTACTS))}catch(e){}cloudQueue('lendercontacts');}
   deal.updated=Date.now();return deal}
 function newDeal(o){return Object.assign({id:'d'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),buildingId:null,address:'',unit:'',borough:'',type:'',status:'active',price:null,deposit:null,loan:null,contractDate:'',closingDate:'',commitDate:'',lender:'',buyers:'',sellers:'',contacts:[],docs:[],notes:'',created:Date.now(),updated:Date.now()},o||{})}
 function linkBuilding(deal,addr,city,ptype){if(!addr)return;const mm=MIA&&(MIA_HINT.test(addr+' '+(city||''))||!findBuilding(addr))?findMiami(addr+' '+(city||'')):null;const b=mm?miaB(mm):(findBuilding(addr+' '+(city||''))||findBuilding(addr));const bo=b||{address:addr,borough:city||'',type:ptype||'',lenders:[]};ensureSaved(bo);deal.buildingId=mineId(bo);deal.address=bo.address;deal.borough=bo.borough||city||'';deal.type=bo.type||ptype||''}
