@@ -13,7 +13,7 @@ Also: Bronx condo/co-op buildings from MapPLUTO are merged into buildings-db.jso
 certificates (TLS) are counted per building, and a verification report vs. the previous lender data
 (embedded in index.html) is written to /tmp/acris_report.txt.
 """
-import json, re, sys, time, datetime as dt, urllib.request, urllib.parse, collections
+import json, re, sys, time, difflib, datetime as dt, urllib.request, urllib.parse, collections
 
 B = 'https://data.cityofnewyork.us/resource/'
 RP_MASTER, RP_LEGALS, RP_PARTIES = 'bnx9-e6tj', '8h5j-fqxa', '636b-3b5g'
@@ -23,6 +23,7 @@ BOROS = ['Manhattan', 'Brooklyn', 'Queens', 'Bronx']          # app borough inde
 ACRIS_BORO = {'1': 0, '3': 1, '4': 2, '2': 3}                    # ACRIS borough code -> app index
 PLUTO_BORO = {'MN': 0, 'BK': 1, 'QN': 2, 'BX': 3}
 MIN_PRICE = 50000
+SUBSIDY = re.compile(r'HOUSING PRESERVATION|HOUSING DEVELOPMENT CORP|ENERGY EFFICIENCY|NYCEEC|HOUSING TRUST FUND|CITY OF NEW YORK|NEW YORK CITY HOUSING|\\bHDC\\b|\\bHPD\\b|DEPARTMENT OF HOUSING')
 calls = 0
 
 def log(*a):
@@ -98,10 +99,11 @@ ALIAS = {'JPMORGAN CHASE': 'JPMorgan Chase', 'CHASE': 'JPMorgan Chase', 'CITIBAN
          'MORGAN STANLEY PRIVATE': 'Morgan Stanley Private Bank', 'MORGAN STANLEY': 'Morgan Stanley Private Bank', 'HSBC': 'HSBC Bank USA',
          'TD': 'TD Bank', 'CITIZENS': 'Citizens Bank', 'BANK AMERICA': 'Bank of America', 'AMERICA': 'Bank of America', 'NATIONAL COOPERATIVE': 'National Cooperative Bank',
          'NCB': 'National Cooperative Bank', 'US': 'U.S. Bank', 'U S': 'U.S. Bank', 'FIRST REPUBLIC': 'First Republic Bank', 'PNC': 'PNC Bank',
-         'GOLDMAN SACHS': 'Goldman Sachs Bank USA', 'UBS': 'UBS Bank USA', 'M T': 'M&T Bank', 'MANUFACTURERS TRADERS TRUST': 'M&T Bank'}
+         'GOLDMAN SACHS': 'Goldman Sachs Bank USA', 'GR AFFINITY': 'Guaranteed Rate Affinity', 'JP MORGAN CHASE': 'JPMorgan Chase', 'J P MORGAN CHASE': 'JPMorgan Chase', 'CROSS COUNTRY MORTGAGE': 'CrossCountry Mortgage', 'LOANDEPOT COM': 'loanDepot', 'STATE NEW YORK MORTGAGE AGENCY': 'SONYMA (State of New York Mortgage Agency)', 'CMG MORTGAGE': 'CMG Home Loans', 'BARRINGTON TRUST': 'Wintrust Mortgage (Barrington Bank & Trust)', 'FIRST CITIZENS': 'First Citizens Bank', 'BMO': 'BMO Bank', 'BMO HARRIS': 'BMO Bank', 'UBS': 'UBS Bank USA', 'M T': 'M&T Bank', 'MANUFACTURERS TRADERS TRUST': 'M&T Bank'}
 def core(n):
-    s = re.sub(r'[^A-Z0-9 ]', ' ', str(n).upper().replace('&', ' '))
-    s = re.sub(r'\b(ISAOA|ATIMA|ISAOA/ATIMA)\b.*$', '', s)
+    s = str(n).upper()
+    s = re.sub(r'\b(DBA|D/B/A|AKA|F/K/A|FKA|I/L/T/L/N|I/L/T/N|ISAOA|ATIMA|ITS SUCCESSORS)\b.*$', '', s)
+    s = re.sub(r'[^A-Z0-9 ]', ' ', s.replace('&', ' '))
     return ' '.join(w for w in s.split() if w not in DROP)
 
 def build_namer(canon):
@@ -117,7 +119,10 @@ def build_namer(canon):
         if c in table: return table[c]
         for k in keys:
             if k and (c.startswith(k + ' ') or c == k): return table[k]
+        best = difflib.get_close_matches(c, keys, n=1, cutoff=0.88) if len(c) >= 6 else []
+        if best: return table[best[0]]
         if not BIZ.search(r) and (',' in r or (2 <= len(r.split()) <= 4 and not re.search(r'\d', r))): return 'Private lender (individual)'
+        r = re.sub(r'\s*\b(DBA|D/B/A|I/L/T/L/N|I/L/T/N|ISAOA|ATIMA)\b.*$', '', r).strip(' ,.')
         r2 = re.sub(r'[,.]?\s*\b(N\.?A\.?|ISAOA.*|ATIMA.*|INC\.?|CORP\.?|CORPORATION|L\.?L\.?C\.?)\s*$', '', r.strip()).strip(' ,.')
         return ' '.join(w if w in ('USA', 'CMG', 'NYC', 'NY') else w.capitalize() for w in r2.split())
     return name
@@ -137,11 +142,10 @@ def main():
 
     # ---- PLUTO: condo + co-op buildings in the four boroughs ----
     sel = 'borough,block,lot,bbl,address,zipcode,bldgclass,numfloors,unitsres,yearbuilt,histdist,landmark'
-    pl = paged(PLUTO, "borough in('MN','BK','QN','BX') AND (bldgclass like 'R%' OR bldgclass in('D4','C6','D0','C8'))", select=sel, order='bbl')
+    pl = paged(PLUTO, "borough in('MN','BK','QN','BX') AND (bldgclass like 'R%' OR bldgclass in('D4','C6','D0','C8','D9','D7'))", select=sel, order='bbl')
     log('PLUTO condo/co-op lots', len(pl))
     byblock = collections.defaultdict(list); bybbl = {}
     for p in pl:
-        if p.get('bldgclass') in ('RG', 'RP', 'RS', 'RT', 'RW', 'RK', 'RB', 'RH', 'R5', 'R7', 'R8', 'RC', 'RA', 'RI', 'R0'): continue  # garage, storage, commercial, office, timeshare etc.
         bi = PLUTO_BORO[p['borough']]; p['_b'] = bi; p['_k'] = akey('', p.get('address', ''))
         byblock[(bi, int(p['block']))].append(p); bybbl[(bi, int(p['block']), int(p['lot']))] = p
 
@@ -207,18 +211,18 @@ def main():
     # ---- match sales to financing ----
     need_rp, need_pp = set(), set()
     for s in sales:
-        best = None
+        c = []
         if s['coop']:
             for rec, i in ucc.get((s['bi'], s['blk'], s['lot'], s['unit']), []):
                 dd = (d(rec) - d(s['rec'])).days
-                if -45 <= dd <= 60 and (best is None or abs(dd) < abs(best[0])): best = (dd, i)
-            if best: need_pp.add(best[1])
+                if -45 <= dd <= 60: c.append((abs(dd), i))
+            need_pp.update(i for _, i in c)
         else:
             for rec, i in mtg.get((s['bi'], s['blk'], s['lot']), []):
                 dd = (d(rec) - d(s['rec'])).days
-                if -10 <= dd <= 45 and (best is None or abs(dd) < abs(best[0])): best = (dd, i)
-            if best: need_rp.add(best[1])
-        s['fin'] = best[1] if best else None
+                if -10 <= dd <= 45: c.append((abs(dd), i))
+            need_rp.update(i for _, i in c)
+        s['fin'] = [i for _, i in sorted(c)] or None
     log('financed', sum(1 for s in sales if s['fin']), 'of', len(sales))
 
     def lenders_of(ds, ids):
@@ -228,11 +232,13 @@ def main():
         return out
     lp = lenders_of(RP_PARTIES, need_rp); lp.update(lenders_of(PP_PARTIES, need_pp))
     raw_seen = collections.Counter()
-    def lender(i):
-        names = [namer(n) for n in lp.get(i, [])]
-        for n in lp.get(i, []): raw_seen[(n.upper().strip(), namer(n))] += 1
-        names = [n for n in names if n]
-        return names[0] if names else None
+    def lender(ids):
+        # first identified purchase lender among the matching filings, nearest first; skip subsidy / energy / agency liens
+        for i in ids:
+            for n in lp.get(i, []):
+                nm = namer(n); raw_seen[(n.upper().strip(), nm)] += 1
+                if nm and not SUBSIDY.search(n.upper()): return nm
+        return None
 
     # ---- aggregate per building ----
     agg = {}
@@ -246,6 +252,7 @@ def main():
         k = (p['_b'], int(p['block']), int(p['lot']))
         a = agg.setdefault(k, dict(p=p, sales=0, fin=0, unknown=0, latest='', lenders=collections.Counter(), coop=s['coop']))
         a['sales'] += 1
+        if s.get('num') and s.get('st'): a.setdefault('al', collections.Counter())[akey(s['num'], s['st'])] += 1
         if s['fin']:
             a['fin'] += 1; a['latest'] = max(a['latest'], s['rec'])
             ln = lender(s['fin'])
@@ -301,15 +308,16 @@ def main():
         addr = addr_by_bbl.get(bbl) or pretty(p.get('address', ''))
         typ = 1 if p['bldgclass'][0] in 'CD' else 0
         rows.append([addr, p['_b'], typ, a['fin'], a['latest'] or '—', [[li(n), c] for n, c in a['lenders'].most_common()], a['unknown'], a['sales'],
-                     [tls[k], tls_last[k]] if tls.get(k) else 0, bbl])
+                     [tls[k], tls_last[k]] if tls.get(k) else 0, bbl,
+                     [pretty(x) for x, _ in a.get('al', collections.Counter()).most_common(4) if norm_js(pretty(x)) != norm_js(addr)][:3]])
     for k in tls:
         if k not in agg:
             p = bybbl.get(k)
-            if p: rows.append([addr_by_bbl.get(int(float(p['bbl']))) or pretty(p.get('address', '')), p['_b'], 1 if p['bldgclass'][0] in 'CD' else 0, 0, '—', [], 0, 0, [tls[k], tls_last[k]], int(float(p['bbl']))])
+            if p: rows.append([addr_by_bbl.get(int(float(p['bbl']))) or pretty(p.get('address', '')), p['_b'], 1 if p['bldgclass'][0] in 'CD' else 0, 0, '—', [], 0, 0, [tls[k], tls_last[k]], int(float(p['bbl'])), []])
     rows.sort(key=lambda r: (r[1], r[0]))
     mon = lambda x: x.strftime('%b %-d, %Y')
     out = {'source': 'NYC ACRIS via NYC Open Data', 'asOf': latest, 'window': mon(start) + ' – ' + mon(end), 'boroughs': BOROS,
-           'cols': ['address', 'borough', 'type', 'financedClosings', 'latest', 'lenders[[i,count]]', 'lenderUnknown', 'salesChecked', 'taxLienSale[count,latest]|0', 'bbl'],
+           'cols': ['address', 'borough', 'type', 'financedClosings', 'latest', 'lenders[[i,count]]', 'lenderUnknown', 'salesChecked', 'taxLienSale[count,latest]|0', 'bbl', 'aliases'],
            'lenders': names, 'rows': rows}
     json.dump(out, open('data/nyc_lenders.json', 'w'), separators=(',', ':'))
     log('wrote data/nyc_lenders.json', len(rows), 'buildings,', sum(r[3] for r in rows), 'financed closings,', len(names), 'lender names', '| calls', calls, '| %.0fs' % (time.time() - t0))
@@ -318,7 +326,9 @@ def main():
     R = []
     R.append('ACRIS vs. previous lender data (Marketproof export)')
     R.append('ACRIS window: %s (published through %s)  | previous window: %s' % (out['window'], latest, OLD.get('window')))
-    new = {norm_js(r[0]): r for r in rows}
+    new = {}
+    for r in rows:
+        for a_ in [r[0]] + r[10]: new.setdefault(norm_js(a_), r)
     old = [r for r in OLD.get('rows', [])]
     found = [r for r in old if norm_js(r[0]) in new]
     R.append('Previous buildings: %d | found in ACRIS output: %d (%.1f%%)' % (len(old), len(found), 100 * len(found) / max(1, len(old))))
