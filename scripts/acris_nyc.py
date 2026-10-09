@@ -13,7 +13,7 @@ Also: Bronx condo/co-op buildings from MapPLUTO are merged into buildings-db.jso
 certificates (TLS) are counted per building, and a verification report vs. the previous lender data
 (embedded in index.html) is written to /tmp/acris_report.txt.
 """
-import json, re, sys, time, difflib, datetime as dt, urllib.request, urllib.parse, collections
+import os, json, re, sys, time, difflib, datetime as dt, urllib.request, urllib.parse, collections
 
 B = 'https://data.cityofnewyork.us/resource/'
 RP_MASTER, RP_LEGALS, RP_PARTIES = 'bnx9-e6tj', '8h5j-fqxa', '636b-3b5g'
@@ -136,9 +136,9 @@ def main():
     OLD = json.loads(m.group(1)) if m else {'lenders': [], 'rows': []}
     namer = build_namer(OLD.get('lenders', []))
 
-    # ---- window: last 365 days of what ACRIS has published ----
+    # ---- window: last 24 months (WINDOW_DAYS) of what ACRIS has published ----
     latest = get(RP_MASTER, {'$select': 'max(recorded_datetime) as m', '$where': "doc_type='DEED'"})[0]['m'][:10]
-    end = d(latest); start = end - dt.timedelta(days=365); pre = start - dt.timedelta(days=60)
+    end = d(latest); start = end - dt.timedelta(days=int(os.environ.get('WINDOW_DAYS', '730'))); pre = start - dt.timedelta(days=60)
     log('ACRIS published through', latest, '| window', start, '->', end)
     idlo = pre.strftime('%Y%m%d')
 
