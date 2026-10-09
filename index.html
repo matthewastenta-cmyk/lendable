@@ -712,11 +712,11 @@ const FIN_BOROS=FIN.boroughs||['Manhattan','Brooklyn','Queens','Bronx'],FIN_TYPE
 const buildings=FIN.rows.map(r=>({address:r[0],borough:FIN_BOROS[r[1]],type:FIN_TYPES[r[2]],closings:r[3],latest:r[4],
   lenders:r[5].map(([i,c])=>({name:FIN.lenders[i],count:c})),unknown:r[6],sales:r[7]||0,tls:r[8]||0,aliases:r[10]||[],key:norm(r[0])}));
 const byKey=new Map();buildings.forEach(b=>{if(!byKey.has(b.key))byKey.set(b.key,b)});buildings.forEach(b=>b.aliases.forEach(a=>{const k=norm(a);if(!byKey.has(k))byKey.set(k,b)}));
-const DEMO={address:'Harborview Test Condominium',borough:'Sample building',type:'Condo',closings:0,latest:'—',lenders:[],unknown:0,sales:0,tls:0,aliases:[],demo:true,market:'demo',key:'harborviewtestcondominium'};
+const DEMO={address:'100 Harborview Plaza',name:'Harborview Test Condominium',borough:'Sample building',type:'Condo',closings:0,latest:'—',lenders:[],unknown:0,sales:0,tls:0,aliases:['Harborview Test Condominium'],demo:true,market:'demo'};DEMO.key=norm(DEMO.address);buildings.push(DEMO);byKey.set(DEMO.key,DEMO);
 const isDemoQ=t=>/harbou?r\s?view/i.test(t);
 function showDemo(b){selected=b;setView('chat');
   add('<p><strong>Harborview Test Condominium</strong> is a fictional sample building for demonstrations. Upload its document package to see a review.</p>'+
-    '<div class="result"><div class="resultheader"><div><h3>Harborview Test Condominium</h3><p>Sample building · Condo · 120 units · Built 1987 · 14 stories</p></div><div class="pillstack"><span class="pill">Demo building</span></div></div>'+
+    '<div class="result"><div class="resultheader"><div><h3>Harborview Test Condominium</h3><p>100 Harborview Plaza · Sample building · Condo · 120 units · Built 1987 · 14 stories</p></div><div class="pillstack"><span class="pill">Demo building</span></div></div>'+
     '<div class="resultfooter">Fictional building used for demonstrations. Not a real property or public record. Findings for this building are never shared.</div></div>'+assessSlot(b)+
     '<div class="choices">'+saveBtn(b)+choices(['Check another building']).replace(/^<div class="choices">|<\/div>$/g,'')+'</div>');
   try{renderBrief(b)}catch(e){}awaiting=null}
