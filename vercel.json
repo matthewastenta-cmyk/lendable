@@ -5,6 +5,9 @@
     },
     "api/assess.js": {
       "maxDuration": 90
+    },
+    "api/ask.js": {
+      "maxDuration": 60
     }
   }
 }

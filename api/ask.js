@@ -46,7 +46,7 @@ module.exports = async (req, res) => {
       headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
       body: JSON.stringify({
         model: MODEL,
-        max_tokens: 900,
+        max_tokens: 4000,
         system: [
           { type: 'text', text: system, cache_control: { type: 'ephemeral' } }, // same on every question → cached at ~10% of the price
           { type: 'text', text: context || 'No building selected.' },
