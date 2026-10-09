@@ -481,6 +481,7 @@ tbody tr:hover .open,tbody tr:focus-within .open{opacity:1}
         <div class="field" id="namefield"><label for="name">Full name</label><input id="name" autocomplete="name" placeholder="Your name"></div>
         <div class="field"><label for="email">Work email</label><input id="email" type="email" autocomplete="username" placeholder="you@yourcompany.com" required></div>
         <div class="field"><label for="pw">Password</label><input id="pw" type="password" autocomplete="new-password" minlength="8" placeholder="8+ characters" required></div>
+        <label class="tg" id="agreewrap" style="margin:4px 0 12px;align-items:flex-start;font-size:13.5px"><input type="checkbox" id="agree"> <span>I agree to the <a href="terms.html" target="_blank" rel="noopener">Terms of Use</a> and <a href="privacy.html" target="_blank" rel="noopener">Privacy Policy</a>.</span></label>
         <button class="primary full" type="submit" id="authsend">Create account</button>
         <div style="display:flex;justify-content:space-between;gap:10px;margin-top:12px;font-size:13.5px">
           <button class="linkbtn" type="button" id="authmode">Already have an account? Sign in</button>
@@ -500,6 +501,7 @@ tbody tr:hover .open,tbody tr:focus-within .open{opacity:1}
       </form>
       <p class="demofoot" id="authmsg">Your saved buildings and deals sync to your account. <button class="linkbtn" type="button" id="maillink">Email me a sign-in link instead</button></p>
       <button class="skip" id="skip">Explore without an account →</button>
+      <p class="demofoot" style="margin-top:14px"><a href="terms.html" target="_blank" rel="noopener">Terms</a> · <a href="privacy.html" target="_blank" rel="noopener">Privacy</a></p>
     </div></div>
   </main>
 </section>
@@ -522,6 +524,7 @@ tbody tr:hover .open,tbody tr:focus-within .open{opacity:1}
       <div style="min-width:0"><strong id="username" style="font-size:14px">Guest</strong><div style="font-size:12px;color:var(--muted)" id="userrole">Agent workspace</div><div id="syncstatus" style="font-size:11px;color:var(--muted)"></div></div>
     </div>
     <button class="footerback" id="back">View sign-up screen</button>
+    <div style="font-size:11.5px;color:var(--muted);padding:6px 4px 0"><a href="terms.html" target="_blank" rel="noopener" style="color:inherit">Terms</a> · <a href="privacy.html" target="_blank" rel="noopener" style="color:inherit">Privacy</a></div>
   </aside>
 
   <div class="workmain">
@@ -742,16 +745,17 @@ function sbInit(){if(!sbReady)sbReady=(async()=>{if(!/^https?:$/.test(location.p
 function showPwReset(){$('workspace').classList.add('hide');$('signup').classList.remove('hide');$('signupform').classList.add('hide');$('otpform').classList.add('hide');$('pwresetform').classList.remove('hide');$('pwresetto').textContent=SBUSER?SBUSER.email:'';authMsg('');setTimeout(()=>$('pw2').focus(),50)}
 function authUi(){if(!SBUSER)syncStat('');else if(!$('syncstatus').textContent)syncStat('Signed in as '+(SBUSER.email||''));$('back').textContent=SBUSER?'Sign out':'View sign-up screen';$('back').title=SBUSER?('Signed in as '+(SBUSER.email||'')):''}
 let otpEmail='',authSignin=false;
-function authMode(signin){authSignin=signin;$('namefield').classList.toggle('hide',signin);$('rolefield').classList.toggle('hide',signin);$('authsend').textContent=signin?'Sign in':'Create account';
+function authMode(signin){authSignin=signin;$('namefield').classList.toggle('hide',signin);$('rolefield').classList.toggle('hide',signin);$('agreewrap').classList.toggle('hide',signin);$('authsend').textContent=signin?'Sign in':'Create account';
   $('pw').setAttribute('autocomplete',signin?'current-password':'new-password');$('authmode').textContent=signin?'New here? Create an account':'Already have an account? Sign in';
   $('forgot').classList.toggle('hide',!signin);$('authsub').textContent=signin?'Welcome back.':'Create your Pocket Approval workspace.'}
 $('authmode').onclick=()=>authMode(!authSignin);
-function rememberProfile(em){PROFILE=Object.assign({},PROFILE,{name:$('name').value.trim()||PROFILE.name||'',email:em||PROFILE.email||'',role:$('role').value||PROFILE.role||''});if(em&&!FREE_MAIL.test(em))PROFILE.workEmail=em;try{localStorage.setItem('lendable:profile:v1',JSON.stringify(PROFILE))}catch(e){}}
+function rememberProfile(em){PROFILE=Object.assign({},PROFILE,{name:$('name').value.trim()||PROFILE.name||'',email:em||PROFILE.email||'',role:$('role').value||PROFILE.role||''});if(em&&!FREE_MAIL.test(em))PROFILE.workEmail=em;if($('agree')&&$('agree').checked&&!authSignin)PROFILE.agreedTerms='2026-10-08@'+new Date().toISOString();try{localStorage.setItem('lendable:profile:v1',JSON.stringify(PROFILE))}catch(e){}}
 const FREE_MAIL=/@(gmail|googlemail|yahoo|ymail|icloud|me|mac|outlook|hotmail|live|msn|aol|proton|protonmail|gmx|comcast|verizon|att)\.[a-z.]+$/i;
 async function pwnedCount(pw){try{const h=[...new Uint8Array(await crypto.subtle.digest('SHA-1',new TextEncoder().encode(pw)))].map(x=>x.toString(16).padStart(2,'0')).join('').toUpperCase();
   const r=await fetch('https://api.pwnedpasswords.com/range/'+h.slice(0,5),{headers:{'Add-Padding':'true'}});if(!r.ok)return 0;const t=await r.text();const line=t.split('\n').find(l=>l.startsWith(h.slice(5)));return line?parseInt(line.split(':')[1])||0:0}catch(e){return 0}}
 async function needSB(){const sb=await sbInit();if(!sb)authMsg('Sign-in isn’t connected ('+(window.__authOff||'server unreachable')+'). You can explore without an account for now.',true);return sb}
 async function authStart(){const em=$('email').value.trim(),pw=$('pw').value;if(!em||!pw)return;if(pw.length<8){authMsg('Use at least 8 characters for your password.',true);return}
+  if(!authSignin&&!$('agree').checked){authMsg('Please agree to the Terms of Use and Privacy Policy to create your account.',true);return}
   if(!authSignin&&!$('role').value){authMsg('Pick what you do (“I am a…”) so we can tailor your workspace.',true);$('role').focus();return}
   if(!authSignin){const n=await pwnedCount(pw);if(n>0){authMsg('That password has shown up in known data breaches, so it’s easy for attackers to guess. Please choose a different one.',true);$('pw').focus();return}}
   rememberProfile(em);const sb=await needSB();if(!sb)return;$('authsend').disabled=true;authMsg(authSignin?'Signing you in…':'Creating your account…');
