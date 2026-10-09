@@ -1098,10 +1098,12 @@ function pubFindings(b,dob){const F=[],add=(tier,title,detail,src)=>F.push({tier
   const fr=b.market==='miami'||b.market==='nj'?(m&&m.fha):null;const fs=fr?(/^approved/i.test(fr.status)&&fr.exp>=new Date().toISOString().slice(0,10)):fhaState(fhaFor(b))==='approved';
   if(fs)add('meets','FHA-approved (HUD)','On HUD’s approved condo list. A good sign, not Fannie Mae approval.','HUD FHA condo list');
   return F}
-function assessHtml(b,dob,loading){const id=mineId(b),as=MINE[id]&&MINE[id].assessment;
+function assessHtml(b,dob,loading,shared){const id=mineId(b),as=MINE[id]&&MINE[id].assessment;
   const docF=(as&&as.findings||[]).map(f=>({tier:f.tier,title:f.title,detail:f.detail+(f.guide_ref&&!/B\d-/.test(f.detail)?' ('+f.guide_ref+')':''),src:'From '+(f.source&&f.source.doc_type||'document')+(f.source&&f.source.as_of?' ('+f.source.as_of+')':'')+(f.source&&f.source.page?' · p. '+f.source.page:'')+' · uploaded '+fmtDateS(new Date(as.at).toISOString().slice(0,10))+' · not lender verified'}));
-  let F=docF.concat(pubFindings(b,dob));
-  if(!as)F.push({tier:'needs_docs',title:'Reserves, budget and delinquencies not yet reviewed',detail:'Upload the budget, financial statements or questionnaire to check reserve contributions, operating results and delinquencies against agency guidelines.',src:'',upload:true});
+  const mineCats=new Set((as&&as.findings||[]).map(f=>f.category));
+  const shF=(shared||[]).filter(r=>!mineCats.has(r.category)).map(r=>({tier:r.tier,title:r.statement,detail:'',src:'Shared by a Pocket Approval user · from '+(r.doc_type||'building documents')+(r.as_of?' ('+r.as_of+')':'')+' · added '+fmtDateS(String(r.created_at).slice(0,10))+' · not lender verified'}));
+  let F=docF.concat(shF,pubFindings(b,dob));
+  if(!as&&!shF.length)F.push({tier:'needs_docs',title:'Reserves, budget and delinquencies not yet reviewed',detail:'Upload the budget, financial statements or questionnaire to check reserve contributions, operating results and delinquencies against agency guidelines.',src:'',upload:true});
   F.sort((a,c)=>TIER_ORD[a.tier]-TIER_ORD[c.tier]);
   const worst=F.length?F[0].tier:'needs_docs';
   const chip={guideline_issue:['red','Likely guideline issue'],concern:['amber','Further review'],needs_docs:['grey','Documents needed'],meets:['','No issues found so far']}[worst];
@@ -1113,10 +1115,15 @@ function assessHtml(b,dob,loading){const id=mineId(b),as=MINE[id]&&MINE[id].asse
     F.map(f=>'<div class="frow t-'+f.tier+'"><span class="fic">'+TIER_IC[f.tier]+'</span><div><strong>'+esc(f.title)+'</strong><span class="tierlbl">'+(f.lbl||TIER_LBL[f.tier])+'</span><p>'+esc(f.detail)+(f.upload?' <button class="linkbtn" data-assessup>Upload documents →</button>':'')+'</p>'+(f.src?'<small class="fsrc">'+esc(f.src)+'</small>':'')+'</div></div>').join('')+
     '<div class="nextstep"><strong>Recommended next step</strong>'+esc(next)+'</div>'+
     '<div class="afoot">Findings reflect documents and records as of the dates shown; conditions may have changed since. Get the most current documents before relying on them. Findings are informational and do not constitute project approval, loan eligibility, or a lending commitment. A negative preliminary assessment isn’t proof that no mortgage is available: portfolio, non-agency and exception lenders may still finance buildings that miss standard agency requirements.</div></div>'}
+const SHARED={};
+async function sharedFor(b){const k=mineId(b);if(k in SHARED)return SHARED[k];SHARED[k]=[];try{const sb=await sbInit();if(!sb)return [];
+  const {data,error}=await sb.from('building_findings').select('category,tier,statement,doc_type,as_of,created_at').eq('building_key',k).order('created_at',{ascending:false}).limit(30);
+  if(!error&&data)SHARED[k]=data}catch(e){}return SHARED[k]}
+async function publishFindings(b,rows){if(!SB||!SBUSER||!rows.length)return;try{const {error}=await SB.from('building_findings').insert(rows.map(r=>({building_key:mineId(b),address:b.address,market:b.market||'nyc',category:r.category,tier:r.tier,statement:String(r.status).slice(0,140),doc_type:r.doc_type||null,as_of:r.as_of||null})));if(!error)delete SHARED[mineId(b)];else console.warn('publish',error.message)}catch(e){}}
 let assessN=0;
 function assessSlot(b){const id='as'+(++assessN);const nyc=b.market!=='miami'&&b.market!=='nj';
-  setTimeout(async()=>{const el=()=>document.getElementById(id);if(!nyc||!/^https?:$/.test(location.protocol)){if(el())el().innerHTML=assessHtml(b,null,false);return}
-    try{const d=await getDOB(b);if(el())el().innerHTML=assessHtml(b,d,false)}catch(e){if(el())el().innerHTML=assessHtml(b,null,false)}},0);
+  setTimeout(async()=>{const el=()=>document.getElementById(id);if(!/^https?:$/.test(location.protocol)){if(el())el().innerHTML=assessHtml(b,null,false);return}
+    const [d,sh]=await Promise.all([nyc?getDOB(b).catch(()=>null):Promise.resolve(null),sharedFor(b)]);if(el())el().innerHTML=assessHtml(b,d,false,sh)},0);
   return '<div id="'+id+'">'+assessHtml(b,null,nyc&&/^https?:$/.test(location.protocol))+'</div>'}
 document.addEventListener('click',e=>{const u=e.target.closest('[data-assessup]');if(u){e.preventDefault();openUpload()}const w=e.target.closest('#sharewhy');if(w){e.preventDefault();alert('Shared: short yes/no statements against agency guidelines, e.g. “Does not budget 10% for reserves” or “No crime/fidelity insurance in place”, with the document type and date. No dollar figures, quotes or page references.\n\nNever shared: the documents themselves, names of owners, buyers, sellers or board members, unit details tied to a person, prices, loan terms, your notes, or your identity.')}});
 async function docPayload(x){const f=x.file,isPdf=/pdf/i.test(f.type)||/\.pdf$/i.test(f.name);let text='';
@@ -1133,7 +1140,7 @@ async function runAssessment(b,q,share){const id=mineId(b);ensureSaved(b);
   if(!r||!r.ok||!j.data){add('<p>'+(j.error==='rate_limited'?'Too many reviews in the last hour. Try again later.':'The document review didn’t finish. Try again in a moment.')+'</p>');return}
   const d=j.data;const SHARE_STATUS={meets:'Conforms to agency guidelines',guideline_issue:'Does not appear to conform',concern:'Further review recommended'};
   MINE[id].assessment={at:Date.now(),docs:docs.map(x=>({name:x.name,type:x.type})),period:d.doc_period||'',findings:d.findings,shareable:share?d.findings.filter(f=>SHARE_STATUS[f.tier]).map(f=>({category:f.category,status:f.public_statement||SHARE_STATUS[f.tier],tier:f.tier,doc_type:f.source&&f.source.doc_type||'',as_of:f.source&&f.source.as_of||''})):[],next_step:d.next_step||'',financing_note:d.financing_note||'',building_name:d.building_name||'',share:!!share};
-  MINE[id].upd=Date.now();mineSave();
+  MINE[id].upd=Date.now();mineSave();if(share)publishFindings(b,MINE[id].assessment.shareable);
   const n=d.findings.length,gi=d.findings.filter(f=>f.tier==='guideline_issue').length,co=d.findings.filter(f=>f.tier==='concern').length;
   add('<p>Done. '+n+' finding'+(n!==1?'s':'')+(gi?', including <strong>'+gi+' likely guideline issue'+(gi>1?'s':'')+'</strong>':'')+(co?(gi?' and ':', including ')+co+' potential concern'+(co>1?'s':''):'')+'.'+(skipped.length?' Skipped: '+esc(skipped.join(', '))+'.':'')+'</p>'+assessSlot(b)+(d.financing_note?'<p style="font-size:14px;color:var(--muted)">'+esc(d.financing_note)+'</p>':'')+choices(['Request a building review','Check another building']))}
 
