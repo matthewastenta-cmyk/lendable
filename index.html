@@ -712,6 +712,14 @@ const FIN_BOROS=FIN.boroughs||['Manhattan','Brooklyn','Queens','Bronx'],FIN_TYPE
 const buildings=FIN.rows.map(r=>({address:r[0],borough:FIN_BOROS[r[1]],type:FIN_TYPES[r[2]],closings:r[3],latest:r[4],
   lenders:r[5].map(([i,c])=>({name:FIN.lenders[i],count:c})),unknown:r[6],sales:r[7]||0,tls:r[8]||0,aliases:r[10]||[],key:norm(r[0])}));
 const byKey=new Map();buildings.forEach(b=>{if(!byKey.has(b.key))byKey.set(b.key,b)});buildings.forEach(b=>b.aliases.forEach(a=>{const k=norm(a);if(!byKey.has(k))byKey.set(k,b)}));
+const DEMO={address:'Harborview Test Condominium',borough:'Sample building',type:'Condo',closings:0,latest:'—',lenders:[],unknown:0,sales:0,tls:0,aliases:[],demo:true,market:'demo',key:'harborviewtestcondominium'};
+const isDemoQ=t=>/harbou?r\s?view/i.test(t);
+function showDemo(b){selected=b;setView('chat');
+  add('<p><strong>Harborview Test Condominium</strong> is a fictional sample building for demonstrations. Upload its document package to see a review.</p>'+
+    '<div class="result"><div class="resultheader"><div><h3>Harborview Test Condominium</h3><p>Sample building · Condo · 120 units · Built 1987 · 14 stories</p></div><div class="pillstack"><span class="pill">Demo building</span></div></div>'+
+    '<div class="resultfooter">Fictional building used for demonstrations. Not a real property or public record. Findings for this building are never shared.</div></div>'+assessSlot(b)+
+    '<div class="choices">'+saveBtn(b)+choices(['Check another building']).replace(/^<div class="choices">|<\/div>$/g,'')+'</div>');
+  try{renderBrief(b)}catch(e){}awaiting=null}
 function tlsPill(b){return b&&b.tls?'<span class="pill red" title="ACRIS tax lien sale certificate: the city sold unpaid property tax or charges on this building lot or on '+(b.tls[0]>1?b.tls[0]+' of its units':'one of its units')+'. Ask whether it is the building or a single unit.">⚑ City tax lien sold'+(b.tls[0]>1?' ('+b.tls[0]+' lots)':'')+' · '+esc(monYr(b.tls[1]))+'</span>':''}
 function finShare(b){return b&&b.sales?'<div class="metric" style="display:block;font-size:13.5px"><span>'+b.closings+' of '+b.sales+' recorded sales here had a mortgage or co-op loan filed ('+Math.round(100*b.closings/b.sales)+'% financed).</span></div>':''}
 const ALL_LENDERS=FIN.lenders.slice();
@@ -843,7 +851,7 @@ function choices(items){return '<div class="choices">'+items.map(x=>'<button cla
 function lenderChips(b){return b.lenders.map(l=>'<span class="chip">'+esc(SHORT[l.name]||l.name)+'</span>').join('')+(b.unknown?'<span class="chip unknown">Lender unknown</span>':'')}
 const cityLinks='<a class="source" href="https://a836-acris.nyc.gov/CP/" target="_blank" rel="noopener">ACRIS property records ↗</a><a class="source" href="https://a810-bisweb.nyc.gov/bisweb/bispi00.jsp" target="_blank" rel="noopener">DOB building records ↗</a>';
 
-function showBuilding(b){
+function showBuilding(b){if(b&&b.demo)return showDemo(b);
   selected=b;setView('chat');
   const address=esc(b.address),loc=esc(b.borough)+' · '+esc(b.type);
   const rows=b.lenders.map(l=>'<div class="resultlender"><span>'+esc(l.name)+'</span><small class="num">'+l.count+' closing'+(l.count>1?'s':'')+'</small></div>').join('')+
@@ -985,7 +993,8 @@ function send(t,_noMia){
   if(t==='Open the DOB assistant'){setView('dob');return}
   if(!_noMia)add(t,true);$('sidebar').classList.remove('open');setView('chat');
   {const words=t.split(/\s+/).length,isQ=words>=5&&(/\?\s*$/.test(t)||/^(what|how|why|can|could|should|is|are|does|do|did|will|would|which|explain|tell me|help|walk me)\b/i.test(t)||/\b(rectif|fix|cure|curing|resolv|remed|next steps?|workaround|get (it )?approved|make it (warrantable|financeable)|what (can|should) (be|i|we) do)/i.test(t));
-   if(isQ&&aiReady()){const m=findBuilding(t);if(m&&m!==selected){selected=m}askAI(t);return}}
+   if(isQ&&aiReady()){const m=isDemoQ(t)?DEMO:findBuilding(t);if(m&&m!==selected){selected=m}askAI(t);return}}
+  if(isDemoQ(t)){showDemo(DEMO);return}
   if(/^(show )?(me )?(all|the full)? ?(buildings|building list|list)$/i.test(t)||t==='Show all buildings'){add('<p>Opening the full building list. You can filter by condo/co-op or lender and click any row to come back here with it.</p>');setTimeout(()=>setView('list'),350);return}
   if(/visa|foreign national|dscr|bank statement|self.employed/i.test(t)&&!/board package/i.test(t)){if(aiReady()){askAI(t);return}add('<p>Pocket Approval will help narrow the financing path using the borrower’s profile and current lender guidelines.</p><p>For visa or foreign-national scenarios, the connected assistant will ask about residency, visa category, property use, and documentation. For DSCR or bank statement scenarios, it will ask about property cash flow or business deposits and the proposed loan.</p><p>This preview does not have lender program rules connected yet. No program eligibility or approval has been established.</p>'+choices(['Check a building']));return}
   if(/litigation|insurance|local law\s*11|fisp|fa[cç]ade|investment concentration|investor concentration/i.test(t)&&!/board package/i.test(t)){if(aiReady()){askAI(t);return}add('<p>A building issue does not automatically mean there is no financing path.</p><div class="pathbox"><strong>Potential financing path · lender review required</strong><br>This issue may warrant an exception request, remediation, or an alternative lending program. A lender review is needed to determine the available path.</div><p>Litigation type, insurance terms, façade report findings, and ownership concentration need individual review. Safety and critical-repair concerns may prevent agency eligibility until resolved.</p><p>This preview has not reviewed documents or established eligibility. Upload the building package to preview the intake, or request a loan officer review once a building is selected.</p><p><a href="https://selling-guide.fanniemae.com/sel/b4-2.1-03/ineligible-projects" target="_blank" rel="noopener">Fannie Mae project eligibility guidance ↗</a></p>');return}
@@ -1075,7 +1084,7 @@ $('copycsv').onclick=async()=>{
 };
 
 /* ---------- documents ---------- */
-function openUpload(){$('uploadnotice').textContent='';$('savedocwrap').classList.toggle('hide',!selected);if(selected)$('savedocname').textContent=selected.address;renderDocuments();$('uploaddialog').showModal()}
+function openUpload(){$('uploadnotice').textContent='';{const sf=$('sharefindings'),demo=!!(selected&&selected.demo);if(sf){if(demo)sf.checked=false;sf.disabled=demo}}$('savedocwrap').classList.toggle('hide',!selected);if(selected)$('savedocname').textContent=selected.address;renderDocuments();$('uploaddialog').showModal()}
 function renderDocuments(){$('documentlist').innerHTML=documentQueue.map((item,i)=>'<div class="fileitem"><span style="color:var(--accent)">▤</span><div class="filename"><strong>'+esc(item.file.name)+'</strong><small>'+Math.ceil(item.file.size/1024)+' KB</small></div><select class="filetype" aria-label="Document type for '+esc(item.file.name)+'" data-filetype="'+i+'">'+['Questionnaire','Financials','Budget','Insurance','Engineering / FISP','Board minutes','Litigation','Other'].map(t=>'<option'+(item.type===t?' selected':'')+'>'+t+'</option>').join('')+'</select><button class="removefile" aria-label="Remove '+esc(item.file.name)+'" data-removefile="'+i+'">×</button></div>').join('');$('adddocuments').disabled=!documentQueue.length;$('adddocuments').style.opacity=documentQueue.length?'1':'.5'}
 function guessType(n){n=n.toLowerCase();if(/questionnaire|quest/.test(n))return 'Questionnaire';if(/budget/.test(n))return 'Budget';if(/financ|statement|audit/.test(n))return 'Financials';if(/insur|coi|policy/.test(n))return 'Insurance';if(/fisp|ll11|facade|engineer/.test(n))return 'Engineering / FISP';if(/minutes/.test(n))return 'Board minutes';if(/litig|lawsuit/.test(n))return 'Litigation';return 'Other'}
 $('documentfiles').onchange=e=>{let rejected=0;for(const f of e.target.files){if(f.size>20*1024*1024){rejected++;continue}if(!documentQueue.some(x=>x.file.name===f.name&&x.file.size===f.size))documentQueue.push({file:f,type:guessType(f.name)})}renderDocuments();$('uploadnotice').textContent=rejected?'Files above 20 MB were skipped.':'';e.target.value=''};
@@ -1129,9 +1138,9 @@ const SHARED={};
 async function sharedFor(b){const k=mineId(b);if(k in SHARED)return SHARED[k];SHARED[k]=[];try{const sb=await sbInit();if(!sb)return [];
   const {data,error}=await sb.from('building_findings').select('category,tier,statement,doc_type,as_of,created_at').eq('building_key',k).order('created_at',{ascending:false}).limit(30);
   if(!error&&data)SHARED[k]=data}catch(e){}return SHARED[k]}
-async function publishFindings(b,rows){if(!SB||!SBUSER||!rows.length)return;try{const {error}=await SB.from('building_findings').insert(rows.map(r=>({building_key:mineId(b),address:b.address,market:b.market||'nyc',category:r.category,tier:r.tier,statement:String(r.status).slice(0,140),doc_type:r.doc_type||null,as_of:r.as_of||null})));if(!error)delete SHARED[mineId(b)];else console.warn('publish',error.message)}catch(e){}}
+async function publishFindings(b,rows){if(b&&b.demo)return;if(!SB||!SBUSER||!rows.length)return;try{const {error}=await SB.from('building_findings').insert(rows.map(r=>({building_key:mineId(b),address:b.address,market:b.market||'nyc',category:r.category,tier:r.tier,statement:String(r.status).slice(0,140),doc_type:r.doc_type||null,as_of:r.as_of||null})));if(!error)delete SHARED[mineId(b)];else console.warn('publish',error.message)}catch(e){}}
 let assessN=0;
-function assessSlot(b){const id='as'+(++assessN);const nyc=b.market!=='miami'&&b.market!=='nj';
+function assessSlot(b){const id='as'+(++assessN);const nyc=b.market!=='miami'&&b.market!=='nj'&&!b.demo;
   setTimeout(async()=>{const el=()=>document.getElementById(id);if(!/^https?:$/.test(location.protocol)){if(el())el().innerHTML=assessHtml(b,null,false);return}
     const [d,sh]=await Promise.all([nyc?getDOB(b).catch(()=>null):Promise.resolve(null),sharedFor(b)]);if(el())el().innerHTML=assessHtml(b,d,false,sh)},0);
   return '<div id="'+id+'">'+assessHtml(b,null,nyc&&/^https?:$/.test(location.protocol))+'</div>'}
@@ -1326,7 +1335,7 @@ const dobMem=new Map();
 const dobId=b=>(b.address+'|'+(b.borough||'')).toLowerCase();
 function lsGet(k){try{const v=JSON.parse(localStorage.getItem('dob:'+k));if(v&&Date.now()-v.at<864e5)return v}catch(e){}return null}
 function lsSet(k,v){try{localStorage.setItem('dob:'+k,JSON.stringify(v))}catch(e){}}
-function getDOB(b){
+function getDOB(b){if(b&&(b.demo||b.market==='demo'))return Promise.resolve({found:false});
   const k=dobId(b);if(dobMem.has(k))return dobMem.get(k);
   const hit=lsGet(k);if(hit){const p=Promise.resolve(hit);dobMem.set(k,p);return p}
   const p=(async()=>{
@@ -1647,7 +1656,7 @@ function refreshSaveButtons(){document.querySelectorAll('[data-save]').forEach(x
 function dobSummary(d){if(!d||!d.found)return null;return {active:d.active||0,unsafe:!!d.unsafe,vacate:(d.vacates||[]).length,facade:d.facade?d.facade.status:null,lit:d.lit==null?null:d.lit,at:Date.now()}}
 const dobBad=x=>!!x&&(x.active>0||x.lit>0||x.unsafe||x.vacate>0||/SWARMP/i.test(x.facade||''));
 function worse(o,n){if(!n)return false;if(!o)return dobBad(n);return n.active>o.active||(n.lit||0)>(o.lit||0)||(n.unsafe&&!o.unsafe)||n.vacate>o.vacate}
-function ensureSaved(b){const id=mineId(b);if(!MINE[id]){MINE[id]={address:b.address,borough:b.borough||'',type:b.type||'',market:b.market||'nyc',status:'unreviewed',notes:'',saved:Date.now(),updated:Date.now(),dob:null,docs:[]};if(b.market==='miami'){mineSave();return MINE[id]}getDOB(b).then(d=>{if(MINE[id]){MINE[id].dob=dobSummary(d);mineSave();if(!$('mineview').classList.contains('hide'))renderMine()}}).catch(()=>{})}mineSave();return MINE[id]}
+function ensureSaved(b){const id=mineId(b);if(!MINE[id]){MINE[id]={address:b.address,borough:b.borough||'',type:b.type||'',market:b.market||'nyc',status:'unreviewed',notes:'',saved:Date.now(),updated:Date.now(),dob:null,docs:[]};if(b.market==='miami'||b.demo){mineSave();return MINE[id]}getDOB(b).then(d=>{if(MINE[id]){MINE[id].dob=dobSummary(d);mineSave();if(!$('mineview').classList.contains('hide'))renderMine()}}).catch(()=>{})}mineSave();return MINE[id]}
 document.addEventListener('click',e=>{const x=e.target.closest('[data-save]');if(!x)return;const id=x.dataset.save;
   if(MINE[id]){setView('mine');return}
   const b=saveTargets.get(id);if(!b)return;ensureSaved(b);refreshSaveButtons();x.insertAdjacentHTML('afterend','<small class="savedmsg" style="display:block;color:var(--good);margin-top:4px">Saved. Add your verdict, notes and documents in My buildings.</small>');setTimeout(()=>document.querySelectorAll('.savedmsg').forEach(m=>m.remove()),4000)});
@@ -1714,7 +1723,7 @@ function renderMine(){
 }
 let mineChecking=false;
 async function refreshMine(force){
-  if(mineChecking)return;const ids=Object.keys(MINE).filter(id=>MINE[id].market!=='miami'&&MINE[id].market!=='nj').filter(id=>force||!MINE[id].dob||MINE[id].dob.lit===undefined||Date.now()-MINE[id].dob.at>864e5);if(!ids.length)return;
+  if(mineChecking)return;const ids=Object.keys(MINE).filter(id=>MINE[id].market!=='miami'&&MINE[id].market!=='nj'&&MINE[id].market!=='demo').filter(id=>force||!MINE[id].dob||MINE[id].dob.lit===undefined||Date.now()-MINE[id].dob.at>864e5);if(!ids.length)return;
   mineChecking=true;const btn=$('minerefresh');btn.disabled=true;btn.textContent='Checking '+ids.length+'…';
   const queue=ids.slice();
   async function worker(){while(queue.length){const id=queue.shift(),m=MINE[id];if(!m)continue;const b=findBuilding(m.address)||{address:m.address,borough:m.borough,type:m.type,lenders:[]};
