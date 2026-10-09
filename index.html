@@ -767,7 +767,7 @@ async function authStart(){const em=$('email').value.trim(),pw=$('pw').value;if(
   if(!data.session&&data.user&&Array.isArray(data.user.identities)&&data.user.identities.length===0){authMode(true);authMsg('That email already has an account. Enter your password to sign in, or tap “Forgot password?” to set one.',true);return}
   if(!data.session){otpEmail=em;$('otpto').textContent=em;$('signupform').classList.add('hide');$('otpform').classList.remove('hide');authMsg('One-time check: confirm your email, and you’re in for good on this device.');return}
   await authDone(data.user)}
-async function authDone(user){SBUSER=user;await cloudPull(true);enter();authUi();toast('Signed in. Your buildings and deals now sync across devices.');setTimeout(askWorkEmail,1200)}
+async function authDone(user){SBUSER=user;await cloudPull(true);enter();authUi();toast('Signed in. Your buildings and deals now sync across devices.');}
 function askWorkEmail(){if(!SBUSER||PROFILE.workEmail)return;const em=SBUSER.email||'';if(em&&!FREE_MAIL.test(em)){PROFILE.workEmail=em;cloudQueue('profile');return}
   toast('Add your work email so lenders and attorneys recognize your requests. <button class="linkbtn" id="addwork">Add work email</button>',15000);
   setTimeout(()=>{const b=document.getElementById('addwork');if(b)b.onclick=()=>{const v=(prompt('Your work email')||'').trim();if(/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(v)){PROFILE.workEmail=v;try{localStorage.setItem('lendable:profile:v1',JSON.stringify(PROFILE))}catch(e){}cloudQueue('profile');toast('Work email saved.')}}},50)}
@@ -816,7 +816,7 @@ async function cloudPull(first){if(!SB||!SBUSER)return;pulling=true;let merge=fa
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')cloudFlush().catch(()=>{});else if(SBUSER)cloudPull(false).catch(()=>{})});
 window.addEventListener('pagehide',()=>{cloudFlush().catch(()=>{})});
 /* returning users skip the sign-up screen */
-sbInit().then(async sb=>{authUi();if(PW_RECOVERY){try{history.replaceState(null,'',location.pathname)}catch(e){}if(SBUSER)showPwReset();return}if(sb&&SBUSER){const fresh=/access_token|type=magiclink|type=signup/.test(INIT_HASH);if(fresh)try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}await cloudPull(fresh&&localStorage.getItem('pa-synced')!==SBUSER.id);enter();if(fresh){toast('Signed in. Your buildings and deals now sync across devices.');setTimeout(askWorkEmail,1500)}}});
+sbInit().then(async sb=>{authUi();if(PW_RECOVERY){try{history.replaceState(null,'',location.pathname)}catch(e){}if(SBUSER)showPwReset();return}if(sb&&SBUSER){const fresh=/access_token|type=magiclink|type=signup/.test(INIT_HASH);if(fresh)try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}await cloudPull(fresh&&localStorage.getItem('pa-synced')!==SBUSER.id);enter();if(fresh){toast('Signed in. Your buildings and deals now sync across devices.');}}});
 
 
 $('back').onclick=()=>{if(SBUSER){authSignOut();return}$('workspace').classList.add('hide');$('signup').classList.remove('hide')};
