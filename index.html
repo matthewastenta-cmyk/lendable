@@ -231,6 +231,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent)}
 .starter small{display:block;margin-top:6px;font-size:12px;line-height:1.5}
 .tryrow{margin-top:22px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;font-size:13px;color:var(--muted)}
 .messages{flex:1;overflow:auto;padding:30px 36px}
+.pickcard{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;text-align:left;padding:16px 18px;border:1px solid var(--line-2);border-radius:13px;background:var(--surface);cursor:pointer;font:inherit;color:var(--ink);box-shadow:0 1px 2px rgba(32,34,53,.04)}.pickcard:hover{border-color:var(--accent)}.pickinfo{display:flex;flex-direction:column;gap:3px;min-width:0}.pickinfo strong{font-size:17px;font-weight:600}.pickinfo small{font-size:13px;color:var(--muted)}.pickgo{color:var(--accent);font-weight:600;font-size:14px;white-space:nowrap}
 .msg{scroll-margin-top:72px;max-width:700px;margin:0 auto 26px;display:flex;gap:13px}
 .msg .badge{background:var(--soft);color:var(--accent);width:31px;height:31px;flex-shrink:0;border-radius:10px;display:grid;place-items:center}
 .msg.user{justify-content:flex-end}
@@ -714,7 +715,7 @@ const buildings=FIN.rows.map(r=>({address:r[0],borough:FIN_BOROS[r[1]],type:FIN_
 const byKey=new Map();buildings.forEach(b=>{if(!byKey.has(b.key))byKey.set(b.key,b)});buildings.forEach(b=>b.aliases.forEach(a=>{const k=norm(a);if(!byKey.has(k))byKey.set(k,b)}));
 const DEMO={address:'100 Harborview Plaza',name:'Harborview Test Condominium',borough:'Sample building',type:'Condo',closings:0,latest:'—',lenders:[],unknown:0,sales:0,tls:0,aliases:['Harborview Test Condominium'],demo:true,market:'demo'};DEMO.key=norm(DEMO.address);buildings.push(DEMO);byKey.set(DEMO.key,DEMO);
 const isDemoQ=t=>/harbou?r\s?view/i.test(t);
-function showDemo(b){selected=b;setView('chat');
+function showDemo(b,full){selected=b;setView('chat');if(!full){pickBox('Harborview Test Condominium','100 Harborview Plaza · Demo building',()=>showDemo(b,true));return}
   add('<p><strong>Harborview Test Condominium</strong> is a fictional sample building for demonstrations. Upload its document package to see a review.</p>'+
     '<div class="result"><div class="resultheader"><div><h3>Harborview Test Condominium</h3><p>100 Harborview Plaza · Sample building · Condo · 120 units · Built 1987 · 14 stories</p></div><div class="pillstack"><span class="pill">Demo building</span></div></div>'+
     '<div class="resultfooter">Fictional building used for demonstrations. Not a real property or public record. Findings for this building are never shared.</div></div>'+assessSlot(b)+
@@ -851,7 +852,10 @@ function choices(items){return '<div class="choices">'+items.map(x=>'<button cla
 function lenderChips(b){return b.lenders.map(l=>'<span class="chip">'+esc(SHORT[l.name]||l.name)+'</span>').join('')+(b.unknown?'<span class="chip unknown">Lender unknown</span>':'')}
 const cityLinks='<a class="source" href="https://a836-acris.nyc.gov/CP/" target="_blank" rel="noopener">ACRIS property records ↗</a><a class="source" href="https://a810-bisweb.nyc.gov/bisweb/bispi00.jsp" target="_blank" rel="noopener">DOB building records ↗</a>';
 
-function showBuilding(b){if(b&&b.demo)return showDemo(b);
+const PICKS=new Map();let pickN=0;
+function pickBox(title,sub,open){const id='pk'+(++pickN);PICKS.set(id,open);add('<button class="pickcard" data-pick="'+id+'"><span class="pickinfo"><strong>'+esc(title)+'</strong><small>'+esc(sub)+'</small></span><span class="pickgo">Open →</span></button>')}
+document.addEventListener('click',e=>{const x=e.target.closest('[data-pick]');if(!x)return;const f=PICKS.get(x.dataset.pick);if(!f)return;const msg=x.closest('.msg');if(msg)msg.remove();f()});
+function showBuilding(b,full){if(b&&b.demo)return showDemo(b,full);if(!full){selected=b;setView('chat');pickBox(b.address,(b.borough||'')+' · '+(b.type||''),()=>showBuilding(b,true));awaiting='buyer';return}
   selected=b;setView('chat');
   const address=esc(b.address),loc=esc(b.borough)+' · '+esc(b.type);
   const rows=b.lenders.map(l=>'<div class="resultlender"><span>'+esc(l.name)+'</span><small class="num">'+l.count+' closing'+(l.count>1?'s':'')+'</small></div>').join('')+
@@ -899,7 +903,7 @@ function miaLenders(m){if(!MIA.meta.mortgagesSince)return '<div class="resultbod
 const NJ_LINKS='<a class="source" href="https://hudsoncountyregister.org" target="_blank" rel="noopener">Hudson County Register (deeds, mortgages, liens) ↗</a> <a class="source" href="https://www.nj.gov/treasury/taxation/lpt/statdata.shtml" target="_blank" rel="noopener">NJ sales data ↗</a> <a class="source" href="https://njparcels.com/" target="_blank" rel="noopener">NJ parcel lookup ↗</a>';
 function njReserve(m){return '<p class="emptyhint" style="margin:0">New Jersey now requires condo associations to get structural inspections and reserve studies (2024 law), but they aren’t filed with the state. Ask the association or managing agent for the latest reserve study, budget and any planned assessments.'+(m.y&&new Date().getFullYear()-m.y<=3?' This building is new (built '+m.y+'), so ask for the developer’s reserve funding plan.':'')+'</p>'}
 function njLenders(m){return '<div class="resultbody"><small style="display:block;font-size:12px;letter-spacing:.4px">LENDERS RECENTLY FINANCING THIS BUILDING</small><p class="emptyhint" style="margin:6px 0 0">Hudson County mortgage records aren’t connected yet. The county Register has them by name or book/page.</p></div>'}
-function showMiami(m){const b=miaB(m);selected=b;setView('chat');deal={};const nj=isNJ(m);
+function showMiami(m,full){const b=miaB(m);selected=b;setView('chat');deal={};const nj=isNJ(m);if(!full){pickBox(b.address,(m.c||'')+', '+(nj?'NJ':'FL')+' · '+(m.t||''),()=>showMiami(m,true));return}
   add('<p>Found <strong>'+esc(b.address)+'</strong> in '+(nj?esc(m.c)+' (Hudson County, NJ) tax records':'Miami-Dade county records')+': '+m.u+' '+(m.t==='Co-op'?'co-op':'condo')+' units'+(m.y?', built '+m.y:'')+'.</p>'+
     '<div class="result"><div class="resultheader"><div><h3>'+esc(b.address)+'</h3><p>'+esc(m.c)+', '+(nj?'NJ':'FL')+' '+esc(m.z)+' · '+esc(m.t)+'</p></div><div class="pillstack">'+(nj?'':sirsPill(m))+miaFhaPill(m)+'</div></div>'+
     (nj?njLenders(m):miaLenders(m))+'<div class="stats"><div><small>Units</small><strong class="num">'+m.u+'</strong></div><div><small>Year built</small><strong class="num">'+(m.y||'—')+'</strong></div><div><small>Recent sales</small><strong class="num">'+m.s+'</strong></div></div>'+
