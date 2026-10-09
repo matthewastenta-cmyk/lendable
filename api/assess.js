@@ -109,7 +109,7 @@ module.exports = async (req, res) => {
     data.findings = data.findings.filter(f => f && TIERS.includes(f.tier) && f.title).slice(0, 20).map(f => ({
       category: String(f.category || 'other').slice(0, 30), tier: f.tier, title: String(f.title).slice(0, 120), detail: String(f.detail || '').slice(0, 400),
       guide_ref: f.guide_ref ? String(f.guide_ref).slice(0, 30) : null,
-      public_statement: f.public_statement && f.tier !== 'needs_docs' ? String(f.public_statement).replace(/\$[\d,.]+[kKmM]?|\b\d+(\.\d+)?\s?%(?! of units)/g, '').slice(0, 120) : null,
+      public_statement: f.public_statement && f.tier !== 'needs_docs' ? String(f.public_statement).replace(/\$[\d,.]+[kKmM]?/g, '').replace(/\b(\d+(?:\.\d+)?)\s?%/g, (m, n) => ['10','15','20','25','35','50'].includes(n) ? n + '%' : '').replace(/\s{2,}/g, ' ').trim().slice(0, 120) : null,
       source: { doc: String((f.source && f.source.doc) || '').slice(0, 120), doc_type: String((f.source && f.source.doc_type) || '').slice(0, 30), page: (f.source && Number.isFinite(+f.source.page)) ? +f.source.page : null, as_of: (f.source && f.source.as_of) ? String(f.source.as_of).slice(0, 40) : null } }));
     res.status(200).json({ data, usage: j.usage });
   } catch (e) {
