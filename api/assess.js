@@ -32,6 +32,7 @@ Privacy rules — never break these:
 - Never include a purchase price, loan amount, loan terms or the parties to any individual transaction.
 - Findings must be about the building or association only.
 
+Keep each detail to one or two short sentences and return at most 16 findings, most important first.
 Return ONLY one JSON object, no prose, no code fences:
 {
   "building_name": "association / corporation name if stated, else null",
@@ -87,7 +88,7 @@ module.exports = async (req, res) => {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-      body: JSON.stringify({ model: MODEL, max_tokens: 3000, system: SYSTEM, messages: [{ role: 'user', content }] }),
+      body: JSON.stringify({ model: MODEL, max_tokens: 8000, system: SYSTEM, messages: [{ role: 'user', content }] }),
     });
     const j = await r.json();
     if (!r.ok) {
@@ -98,7 +99,12 @@ module.exports = async (req, res) => {
     const m = text.match(/\{[\s\S]*\}/);
     let data = null;
     try { data = m ? JSON.parse(m[0]) : null; } catch (e) { data = null; }
-    if (!data || !Array.isArray(data.findings)) return res.status(502).json({ error: 'unreadable', detail: text.slice(0, 200) });
+    if (!data && text.includes('"findings"')) {
+      // response was cut off: keep every complete finding
+      const cut = text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1);
+      for (const tail of [']}', ']\n}', '}]}']) { try { data = JSON.parse(cut + tail); break; } catch (e) {} }
+    }
+    if (!data || !Array.isArray(data.findings)) return res.status(502).json({ error: 'unreadable', detail: 'stop=' + j.stop_reason + ' ' + text.slice(0, 160) });
     const TIERS = ['guideline_issue', 'concern', 'needs_docs', 'meets'];
     data.findings = data.findings.filter(f => f && TIERS.includes(f.tier) && f.title).slice(0, 20).map(f => ({
       category: String(f.category || 'other').slice(0, 30), tier: f.tier, title: String(f.title).slice(0, 120), detail: String(f.detail || '').slice(0, 400),
