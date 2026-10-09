@@ -727,10 +727,11 @@ const ROLES_U={agent:['Agent workspace','LET\'S MOVE YOUR DEAL FORWARD','a real 
 let PROFILE={};try{PROFILE=JSON.parse(localStorage.getItem('lendable:profile:v1'))||{}}catch(e){}
 function applyProfile(){const r=ROLES_U[PROFILE.role]||ROLES_U.agent;$('userrole').textContent=r[0];$('welcomeeyebrow').textContent=r[1];const n=(PROFILE.name||'').trim();if(n){$('username').textContent=n;$('avatar').textContent=n.split(/\s+/).map(x=>x[0]).slice(0,2).join('').toUpperCase()}}
 (()=>{if(PROFILE.name)$('name').value=PROFILE.name;if(PROFILE.email)$('email').value=PROFILE.email;if(PROFILE.role)$('role').value=PROFILE.role;})();
-function enter(){setTimeout(()=>{try{loadDB()}catch(e){}},600);const n=$('name').value.trim(),em=$('email').value.trim(),rr=$('role').value?{value:$('role').value}:null;if(n||rr){PROFILE={name:n||PROFILE.name||'',email:em||PROFILE.email||'',role:rr?rr.value:(PROFILE.role||'agent')};try{localStorage.setItem('lendable:profile:v1',JSON.stringify(PROFILE))}catch(e){}cloudQueue('profile')}applyProfile();$('signup').classList.add('hide');$('workspace').classList.remove('hide')}
+function enter(){if(PW_RECOVERY)return;setTimeout(()=>{try{loadDB()}catch(e){}},600);const n=$('name').value.trim(),em=$('email').value.trim(),rr=$('role').value?{value:$('role').value}:null;if(n||rr){PROFILE={name:n||PROFILE.name||'',email:em||PROFILE.email||'',role:rr?rr.value:(PROFILE.role||'agent')};try{localStorage.setItem('lendable:profile:v1',JSON.stringify(PROFILE))}catch(e){}cloudQueue('profile')}applyProfile();$('signup').classList.add('hide');$('workspace').classList.remove('hide')}
 $('signupform').onsubmit=e=>{e.preventDefault();authStart()};
 $('skip').onclick=enter;
 /* ---------- accounts & cloud sync (Supabase: email code sign-in, per-user rows protected by RLS) ---------- */
+const INIT_HASH=location.hash||'';let PW_RECOVERY=/type=recovery/.test(INIT_HASH);
 let SB=null,SBUSER=null,sbReady=null;const SB_KINDS={profile:'lendable:profile:v1',mine:'lendable:mybuildings:v1',deals:'lendable:deals:v1',lendercontacts:'lendable:lendercontacts:v1'};
 const sbVals=()=>({profile:PROFILE,mine:MINE,deals:DEALS,lendercontacts:LCONTACTS});
 function syncStat(t,bad){const el=$('syncstatus');if(el){el.textContent=t;el.style.color=bad?'var(--bad)':''}}
@@ -740,7 +741,7 @@ function sbInit(){if(!sbReady)sbReady=(async()=>{if(!/^https?:$/.test(location.p
   if(!window.supabase)await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js');
   fetch(c.url+'/auth/v1/settings?apikey='+encodeURIComponent(c.key)).then(r=>r.json()).then(st=>{window.__googleOn=!!(st.external&&st.external.google);$('google').classList.toggle('hide',!window.__googleOn);$('googlediv').classList.toggle('hide',!window.__googleOn)}).catch(()=>{});
   SB=window.supabase.createClient(c.url,c.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'implicit',storageKey:'pa-auth'}});
-  SB.auth.onAuthStateChange((ev,session)=>{SBUSER=session?session.user:null;authUi();if(ev==='PASSWORD_RECOVERY')setTimeout(showPwReset,0)});
+  SB.auth.onAuthStateChange((ev,session)=>{SBUSER=session?session.user:null;authUi();if(ev==='PASSWORD_RECOVERY'){PW_RECOVERY=true;setTimeout(showPwReset,0)}});
   const {data}=await SB.auth.getSession();SBUSER=data.session?data.session.user:null;return SB}catch(e){console.warn('auth off',e);return null}})();return sbReady}
 function showPwReset(){$('workspace').classList.add('hide');$('signup').classList.remove('hide');$('signupform').classList.add('hide');$('otpform').classList.add('hide');$('pwresetform').classList.remove('hide');$('pwresetto').textContent=SBUSER?SBUSER.email:'';authMsg('');setTimeout(()=>$('pw2').focus(),50)}
 function authUi(){if(!SBUSER)syncStat('');else if(!$('syncstatus').textContent)syncStat('Signed in as '+(SBUSER.email||''));$('back').textContent=SBUSER?'Sign out':'View sign-up screen';$('back').title=SBUSER?('Signed in as '+(SBUSER.email||'')):''}
@@ -782,7 +783,7 @@ $('google').onclick=async()=>{rememberProfile('');const sb=await needSB();if(!sb
   const {error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname,queryParams:{prompt:'select_account'}}});
   if(error)authMsg(/not enabled|provider/i.test(error.message)?'Google sign-in is being set up. Use your work email for now.':'Couldn’t open Google: '+error.message,true)};
 $('pwresetform').onsubmit=async e=>{e.preventDefault();const pw=$('pw2').value;if(pw.length<8)return;if(await pwnedCount(pw)>0){authMsg('That password has shown up in known data breaches. Please choose a different one.',true);return}const {error}=await SB.auth.updateUser({password:pw});
-  if(error){authMsg('Couldn’t save: '+error.message,true);return}$('pwresetform').classList.add('hide');$('signupform').classList.remove('hide');const {data}=await SB.auth.getUser();await authDone(data.user)};
+  if(error){authMsg('Couldn’t save: '+error.message,true);return}PW_RECOVERY=false;$('pwresetform').classList.add('hide');$('signupform').classList.remove('hide');const {data}=await SB.auth.getUser();await authDone(data.user)};
 $('otpback').onclick=()=>{$('otpform').classList.add('hide');$('signupform').classList.remove('hide');authMsg('')};
 $('otpform').onsubmit=async e=>{e.preventDefault();const code=$('otp').value.replace(/\D/g,'');if(code.length<6)return;$('otpgo').disabled=true;authMsg('Signing you in…');
   const {data,error}=await SB.auth.verifyOtp({email:otpEmail,token:code,type:'email'});$('otpgo').disabled=false;
@@ -815,7 +816,7 @@ async function cloudPull(first){if(!SB||!SBUSER)return;pulling=true;let merge=fa
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')cloudFlush().catch(()=>{});else if(SBUSER)cloudPull(false).catch(()=>{})});
 window.addEventListener('pagehide',()=>{cloudFlush().catch(()=>{})});
 /* returning users skip the sign-up screen */
-sbInit().then(async sb=>{authUi();if(sb&&SBUSER){if(/type=recovery/.test(location.hash)){try{history.replaceState(null,'',location.pathname)}catch(e){}showPwReset();return}const fresh=/access_token|type=magiclink|type=signup/.test(location.hash);if(fresh)try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}await cloudPull(fresh&&localStorage.getItem('pa-synced')!==SBUSER.id);enter();if(fresh){toast('Signed in. Your buildings and deals now sync across devices.');setTimeout(askWorkEmail,1500)}}});
+sbInit().then(async sb=>{authUi();if(PW_RECOVERY){try{history.replaceState(null,'',location.pathname)}catch(e){}if(SBUSER)showPwReset();return}if(sb&&SBUSER){const fresh=/access_token|type=magiclink|type=signup/.test(INIT_HASH);if(fresh)try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}await cloudPull(fresh&&localStorage.getItem('pa-synced')!==SBUSER.id);enter();if(fresh){toast('Signed in. Your buildings and deals now sync across devices.');setTimeout(askWorkEmail,1500)}}});
 
 
 $('back').onclick=()=>{if(SBUSER){authSignOut();return}$('workspace').classList.add('hide');$('signup').classList.remove('hide')};
