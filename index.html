@@ -231,7 +231,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent)}
 .starter small{display:block;margin-top:6px;font-size:12px;line-height:1.5}
 .tryrow{margin-top:22px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;font-size:13px;color:var(--muted)}
 .messages{flex:1;overflow:auto;padding:30px 36px}
-.msg{max-width:700px;margin:0 auto 26px;display:flex;gap:13px}
+.msg{scroll-margin-top:72px;max-width:700px;margin:0 auto 26px;display:flex;gap:13px}
 .msg .badge{background:var(--soft);color:var(--accent);width:31px;height:31px;flex-shrink:0;border-radius:10px;display:grid;place-items:center}
 .msg.user{justify-content:flex-end}
 .bubble{padding:12px 18px;background:var(--surface-3);border-radius:13px;max-width:85%;font-size:15px;overflow-wrap:anywhere}
@@ -845,7 +845,7 @@ function reset(){selected=null;awaiting=null;deal={};$('messages').innerHTML='';
 $('new').onclick=reset;$('nav-chat').onclick=()=>setView('chat');$('nav-dob').onclick=()=>setView('dob');$('nav-mine').onclick=()=>setView('mine');$('nav-deals').onclick=()=>setView('deals');$('nav-search').onclick=()=>setView('search');$('nav-list').onclick=()=>setView('list');
 
 /* ---------- chat rendering ---------- */
-function add(html,user=false){$('welcome').classList.add('hide');$('messages').classList.remove('hide');const m=document.createElement('div');m.className='msg'+(user?' user':'');m.innerHTML=user?'<div class="bubble">'+esc(html)+'</div>':'<div class="badge">✧</div><div class="response">'+html+'</div>';$('messages').append(m);$('messages').scrollTop=$('messages').scrollHeight}
+function add(html,user=false){$('welcome').classList.add('hide');$('messages').classList.remove('hide');const m=document.createElement('div');m.className='msg'+(user?' user':'');m.innerHTML=user?'<div class="bubble">'+esc(html)+'</div>':'<div class="badge">✧</div><div class="response">'+html+'</div>';$('messages').append(m);if(!user&&/class="(result|assess)/.test(html)){const top=()=>{try{m.scrollIntoView({block:'start'})}catch(e){}};top();setTimeout(top,60)}else $('messages').scrollTop=$('messages').scrollHeight}
 function assistant(t){add('<p>'+t+'</p>')}
 function choices(items){return '<div class="choices">'+items.map(x=>'<button class="choice" data-choice="'+esc(x)+'">'+esc(x)+'</button>').join('')+'</div>'}
 function lenderChips(b){return b.lenders.map(l=>'<span class="chip">'+esc(SHORT[l.name]||l.name)+'</span>').join('')+(b.unknown?'<span class="chip unknown">Lender unknown</span>':'')}
