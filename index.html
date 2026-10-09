@@ -231,6 +231,20 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent)}
 .starter small{display:block;margin-top:6px;font-size:12px;line-height:1.5}
 .tryrow{margin-top:22px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;font-size:13px;color:var(--muted)}
 .messages{flex:1;overflow:auto;padding:30px 36px}
+.deckhint{font-size:12px;color:var(--muted);margin:14px 0 2px;letter-spacing:.2px}
+.deckrow{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding:6px 2px 12px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.deckrow::-webkit-scrollbar{display:none}
+.sec{flex:0 0 172px;scroll-snap-align:start;min-height:104px;text-align:left;border:1px solid var(--line-2);border-top:4px solid var(--line-2);border-radius:12px;padding:12px 13px;background:var(--surface);display:flex;flex-direction:column;gap:5px;font:inherit;color:var(--ink);cursor:pointer}
+.sec:hover{border-color:var(--accent)}.sec .shead{display:flex;align-items:center;gap:7px;font-weight:600;font-size:15px}.sec small{font-size:13px;color:var(--muted)}.sec .sgo{margin-top:auto;color:var(--accent);font-size:13px;font-weight:600}
+.sec .sdot{width:9px;height:9px;border-radius:50%;background:var(--faint);flex:none}
+.s-red{border-top-color:var(--bad)}.s-red .sdot{background:var(--bad)}.s-red small{color:var(--bad)}
+.s-amber{border-top-color:var(--warn)}.s-amber .sdot{background:#d29a2c}.s-amber small{color:var(--warn)}
+.s-green{border-top-color:var(--good)}.s-green .sdot{background:var(--good)}
+.s-blue{border-top-color:var(--accent)}.s-blue .sdot{background:var(--accent)}
+.secpanel{margin-top:14px;scroll-margin-top:72px}.secpanel h4{font-size:17px;margin:10px 0 4px}
+.secback{border:1px solid var(--line-2);background:var(--surface-3);color:var(--accent);border-radius:999px;padding:7px 13px;font:inherit;font-size:13.5px;font-weight:600;cursor:pointer}
+.secempty{color:var(--muted);font-size:14px;margin:8px 0}
+@media(max-width:600px){.sec{flex-basis:44%}}
 .pickcard{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;text-align:left;padding:16px 18px;border:1px solid var(--line-2);border-radius:13px;background:var(--surface);cursor:pointer;font:inherit;color:var(--ink);box-shadow:0 1px 2px rgba(32,34,53,.04)}.pickcard:hover{border-color:var(--accent)}.pickinfo{display:flex;flex-direction:column;gap:3px;min-width:0}.pickinfo strong{font-size:17px;font-weight:600}.pickinfo small{font-size:13px;color:var(--muted)}.pickgo{color:var(--accent);font-weight:600;font-size:14px;white-space:nowrap}
 .msg{scroll-margin-top:72px;max-width:700px;margin:0 auto 26px;display:flex;gap:13px}
 .msg .badge{background:var(--soft);color:var(--accent);width:31px;height:31px;flex-shrink:0;border-radius:10px;display:grid;place-items:center}
@@ -863,8 +877,8 @@ function showBuilding(b,full){if(b&&b.demo)return showDemo(b,full);if(!full){sel
   const idText=b.lenders.length?b.lenders.length+' identified lender'+(b.lenders.length>1?'s':''):'no identified lender';
   add('<p>I found <strong>'+address+'</strong> in recent mortgage activity: '+b.closings+' financed closing'+(b.closings>1?'s':'')+', '+idText+'.</p>'+
     '<div class="result"><div class="resultheader"><div><h3>'+address+'</h3><p>'+loc+'</p></div><div class="pillstack"><span class="pill">Financing history found</span>'+tlsPill(b)+fhaSlot(b)+dobSlot(b)+'</div></div>'+
-    '<div class="resultbody"><small style="display:block;font-size:12px;letter-spacing:.4px">LENDERS RECENTLY FINANCING THIS BUILDING</small>'+rows+finShare(b)+'</div>'+
-    '<div class="stats"><div><small>Financed closings</small><strong class="num">'+b.closings+'</strong></div><div><small>Latest activity</small><strong class="num">'+esc(b.latest)+'</strong></div><div><small>Identified lenders</small><strong class="num">'+b.lenders.length+'</strong></div></div>'+
+    (LENDSEC[mineId(b)]={label:'Lenders',sum:b.lenders.length+' lender'+(b.lenders.length!==1?'s':'')+' · '+b.closings+' closing'+(b.closings!==1?'s':''),html:'<small style="display:block;font-size:12px;letter-spacing:.4px;color:var(--muted);margin-bottom:4px">LENDERS RECENTLY FINANCING THIS BUILDING</small>'+rows+finShare(b)+
+    '<div class="stats" style="margin-top:10px"><div><small>Financed closings</small><strong class="num">'+b.closings+'</strong></div><div><small>Latest activity</small><strong class="num">'+esc(b.latest)+'</strong></div><div><small>Identified lenders</small><strong class="num">'+b.lenders.length+'</strong></div></div>'},'')+
     '<div class="resultfooter">From public records, as filed. Not a project approval, loan decision or legal advice. Confirm with your lender and attorney.</div><button class="reviewbtn" data-review>Request a building review</button></div>'+assessSlot(b)+
     '<div class="choices">'+saveBtn(b)+choices(['Next steps','Check another building']).replace(/^<div class="choices">|<\/div>$/g,'')+'</div>');
   renderBrief(b);
@@ -906,10 +920,10 @@ function njLenders(m){return '<div class="resultbody"><small style="display:bloc
 function showMiami(m,full){const b=miaB(m);selected=b;setView('chat');deal={};const nj=isNJ(m);if(!full){pickBox(b.address,(m.c||'')+', '+(nj?'NJ':'FL')+' · '+(m.t||''),()=>showMiami(m,true));return}
   add('<p>Found <strong>'+esc(b.address)+'</strong> in '+(nj?esc(m.c)+' (Hudson County, NJ) tax records':'Miami-Dade county records')+': '+m.u+' '+(m.t==='Co-op'?'co-op':'condo')+' units'+(m.y?', built '+m.y:'')+'.</p>'+
     '<div class="result"><div class="resultheader"><div><h3>'+esc(b.address)+'</h3><p>'+esc(m.c)+', '+(nj?'NJ':'FL')+' '+esc(m.z)+' · '+esc(m.t)+'</p></div><div class="pillstack">'+(nj?'':sirsPill(m))+miaFhaPill(m)+'</div></div>'+
-    (nj?njLenders(m):miaLenders(m))+'<div class="stats"><div><small>Units</small><strong class="num">'+m.u+'</strong></div><div><small>Year built</small><strong class="num">'+(m.y||'—')+'</strong></div><div><small>Recent sales</small><strong class="num">'+m.s+'</strong></div></div>'+
+    (LENDSEC[mineId(b)]={label:'Records & sales',sum:m.u+' units · '+m.s+' recent sale'+(m.s!==1?'s':''),html:(nj?njLenders(m):miaLenders(m))+'<div class="stats"><div><small>Units</small><strong class="num">'+m.u+'</strong></div><div><small>Year built</small><strong class="num">'+(m.y||'—')+'</strong></div><div><small>Recent sales</small><strong class="num">'+m.s+'</strong></div></div>'+
     '<div class="resultbody">'+(nj?njReserve(m):sirsDetail(m))+(m.s?'<div class="metric"><span>Median recorded sale</span><strong>'+money(m.sp)+'</strong></div><div class="metric"><span>Latest sale in '+(nj?'state deed file':'county file')+'</span><strong>'+esc(m.sl||'—')+'</strong></div>':'')+
     (!nj&&m.y&&new Date().getFullYear()-m.y>=25?'<div class="metric" style="display:block"><span>Built '+m.y+': milestone inspections and 40/50-year recertification apply. Check status before underwriting.</span></div>':'')+
-    '<div style="margin-top:8px">'+(nj?NJ_LINKS:MIA_LINKS)+'</div></div>'+
+    '<div style="margin-top:8px">'+(nj?NJ_LINKS:MIA_LINKS)+'</div></div>'},'')+
     '<div class="resultfooter">From public records, as filed. Not a project approval, loan decision or legal advice. Confirm with your lender and attorney.</div></div>'+assessSlot(b)+
     '<div class="choices">'+saveBtn(b)+choices(['Check another building']).replace(/^<div class="choices">|<\/div>$/g,'')+'</div>');
   $('brief').innerHTML='<div class="buildingicon">▤</div><h2>'+esc(b.address)+'</h2><small>'+esc(m.c)+', '+(nj?'NJ':'FL')+' · '+esc(m.t)+'</small>'+
@@ -1121,23 +1135,42 @@ function pubFindings(b,dob){const F=[],add=(tier,title,detail,src)=>F.push({tier
   const fr=b.market==='miami'||b.market==='nj'?(m&&m.fha):null;const fs=fr?(/^approved/i.test(fr.status)&&fr.exp>=new Date().toISOString().slice(0,10)):fhaState(fhaFor(b))==='approved';
   if(fs)add('meets','FHA-approved (HUD)','On HUD’s approved condo list. A good sign, not Fannie Mae approval.','HUD FHA condo list');
   return F}
+const LENDSEC={},DECK={};
+const CATSEC={reserves:'fin',operating:'fin',delinquency:'fin',special_assessment:'fin',capital_project:'fin',coop_financing:'fin',insurance:'ins',critical_repairs:'rep',litigation:'lit',single_entity:'proj',commercial:'proj',occupancy:'proj',hotel:'proj',house_rules:'proj',minutes_other:'min'};
+const SECS=[['fin','Financials','Upload the budget, financial statements or questionnaire to check reserves, operating results and delinquencies.'],['ins','Insurance','Upload the insurance certificate: master policy, liability, fidelity/crime and flood.'],['rep','Violations & repairs','Upload engineering or inspection reports, or any repair plan.'],['lit','Litigation','Upload the questionnaire or an attorney’s litigation letter.'],['proj','Questionnaire','Upload the lender questionnaire to check ownership concentration, commercial space and rentals.'],['min','Board minutes','Upload the last 12 to 24 months of board minutes.'],['oth','Other','']];
+function pubSec(t){return /litigation|lawsuit/i.test(t)?'lit':/vacate|facade|violation|unsafe|milestone|inspection/i.test(t)?'rep':/reserve|assessment|budget|tax lien/i.test(t)?'fin':/financing activity|FHA/i.test(t)?'lend':'oth'}
+function frowHtml(f){return '<div class="frow t-'+f.tier+'"><span class="fic">'+TIER_IC[f.tier]+'</span><div><strong>'+esc(f.title)+'</strong><span class="tierlbl">'+(f.lbl||TIER_LBL[f.tier])+'</span><p>'+esc(f.detail)+(f.upload?' <button class="linkbtn" data-assessup>Upload documents →</button>':'')+'</p>'+(f.src?'<small class="fsrc">'+esc(f.src)+'</small>':'')+'</div></div>'}
+function secSum(items){if(!items.length)return ['grey','Not reviewed'];const n=t=>items.filter(f=>f.tier===t).length,gi=n('guideline_issue'),co=n('concern'),nd=n('needs_docs');
+  return gi?['red',gi+' likely issue'+(gi>1?'s':'')]:co?['amber',co+' concern'+(co>1?'s':'')]:nd?['grey','Needs documents']:['green','Meets']}
 function assessHtml(b,dob,loading,shared){const id=mineId(b),as=MINE[id]&&MINE[id].assessment;
-  const docF=(as&&as.findings||[]).map(f=>({tier:f.tier,title:f.title,detail:f.detail+(f.guide_ref&&!/B\d-/.test(f.detail)?' ('+f.guide_ref+')':''),src:'From '+(f.source&&f.source.doc_type||'document')+(f.source&&f.source.as_of?' ('+f.source.as_of+')':'')+(f.source&&f.source.page?' · p. '+f.source.page:'')+' · uploaded '+fmtDateS(new Date(as.at).toISOString().slice(0,10))+' · not lender verified'}));
+  const docF=(as&&as.findings||[]).map(f=>({sec:/minute/i.test(f.source&&f.source.doc_type||'')?'min':CATSEC[f.category]||'oth',tier:f.tier,title:f.title,detail:f.detail+(f.guide_ref&&!/B\d-/.test(f.detail)?' ('+f.guide_ref+')':''),src:'From '+(f.source&&f.source.doc_type||'document')+(f.source&&f.source.as_of?' ('+f.source.as_of+')':'')+(f.source&&f.source.page?' · p. '+f.source.page:'')+' · uploaded '+fmtDateS(new Date(as.at).toISOString().slice(0,10))+' · not lender verified'}));
   const mineCats=new Set((as&&as.findings||[]).map(f=>f.category));
-  const shF=(shared||[]).filter(r=>!mineCats.has(r.category)).map(r=>({tier:r.tier,title:r.statement,detail:'',src:'Shared by a Pocket Approval user · from '+(r.doc_type||'building documents')+(r.as_of?' ('+r.as_of+')':'')+' · added '+fmtDateS(String(r.created_at).slice(0,10))+' · not lender verified'}));
-  let F=docF.concat(shF,pubFindings(b,dob));
-  if(!as&&!shF.length)F.push({tier:'needs_docs',title:'Reserves, budget and delinquencies not yet reviewed',detail:'Upload the budget, financial statements or questionnaire to check reserve contributions, operating results and delinquencies against agency guidelines.',src:'',upload:true});
+  const shF=(shared||[]).filter(r=>!mineCats.has(r.category)).map(r=>({sec:CATSEC[r.category]||'oth',tier:r.tier,title:r.statement,detail:'',src:'Shared by a Pocket Approval user · from '+(r.doc_type||'building documents')+(r.as_of?' ('+r.as_of+')':'')+' · added '+fmtDateS(String(r.created_at).slice(0,10))+' · not lender verified'}));
+  let F=docF.concat(shF,pubFindings(b,dob).map(f=>Object.assign(f,{sec:pubSec(f.title)})));
+  if(!as&&!shF.length)F.push({sec:'fin',tier:'needs_docs',title:'Reserves, budget and delinquencies not yet reviewed',detail:'Upload the budget, financial statements or questionnaire to check reserve contributions, operating results and delinquencies against agency guidelines.',src:'',upload:true});
   F.sort((a,c)=>TIER_ORD[a.tier]-TIER_ORD[c.tier]);
   const worst=F.length?F[0].tier:'needs_docs';
   const chip={guideline_issue:['red','Likely guideline issue'],concern:['amber','Further review'],needs_docs:['grey','Documents needed'],meets:['','No issues found so far']}[worst];
   const elig={guideline_issue:'Likely issue',concern:'Needs review',needs_docs:'Not yet assessed',meets:'No issues found'}[worst];
   const next=as&&as.next_step?as.next_step:worst==='meets'?'Confirm current eligibility with the lender and request the building package.':'Obtain the current building questionnaire, budget and financial statements and run them through Pocket Approval before committing significant transaction expenses.';
   return '<div class="assess" data-assess="'+esc(id)+'"><div class="ahead"><div><div class="eyebrow2">POCKET APPROVAL</div><h3>Building Financing Assessment</h3></div><span class="pill '+chip[0]+'">'+chip[1]+'</span></div>'+
+    deckHtml(b,id,F,loading)+
     '<div class="tiles"><div class="tile"><small>Agency eligibility</small><strong>'+elig+'</strong><small>Not lender verified</small></div><div class="tile"><small>Documents reviewed</small><strong>'+(as?as.docs.length+' document'+(as.docs.length>1?'s':''):shF.length?shF.length+' shared finding'+(shF.length>1?'s':''):'None yet')+'</strong><small>'+(as?esc(as.period||'Uploaded '+fmtDateS(new Date(as.at).toISOString().slice(0,10))):shF.length?'From other users’ documents · <button class="linkbtn" data-assessup>Add yours →</button>':'<button class="linkbtn" data-assessup>Upload to assess →</button>')+'</small></div></div>'+
-    (loading?'<div class="frow t-needs_docs"><span class="fic">…</span><div><strong>Checking city records…</strong></div></div>':'')+
-    F.map(f=>'<div class="frow t-'+f.tier+'"><span class="fic">'+TIER_IC[f.tier]+'</span><div><strong>'+esc(f.title)+'</strong><span class="tierlbl">'+(f.lbl||TIER_LBL[f.tier])+'</span><p>'+esc(f.detail)+(f.upload?' <button class="linkbtn" data-assessup>Upload documents →</button>':'')+'</p>'+(f.src?'<small class="fsrc">'+esc(f.src)+'</small>':'')+'</div></div>').join('')+
+
     '<div class="nextstep"><strong>Recommended next step</strong>'+esc(next)+'</div>'+
     '<div class="afoot">Findings reflect documents and records as of the dates shown; conditions may have changed since. Get the most current documents before relying on them. Findings are informational and do not constitute project approval, loan eligibility, or a lending commitment. A negative preliminary assessment isn’t proof that no mortgage is available: portfolio, non-agency and exception lenders may still finance buildings that miss standard agency requirements.</div></div>'}
+function deckHtml(b,id,F,loading){const L=LENDSEC[id],open=DECK[id]||null;
+  const secs=(L?[['lend',L.label,'']]:[]).concat(SECS).map(([k,name,hint])=>({k,name,hint,items:F.filter(f=>((f.sec==='lend'&&!L)?'oth':(f.sec||'oth'))===k)})).filter(x=>x.k!=='oth'||x.items.length);
+  const tile=x=>{let [c,t]=x.k==='lend'?['blue',L.sum]:secSum(x.items);if(x.k==='lend'&&x.items.length)x.items=x.items;if(loading&&x.k==='rep'&&!x.items.length){c='grey';t='Checking city records…'}
+    return '<button class="sec s-'+c+'" data-sec="'+x.k+'"><span class="shead"><span class="sdot"></span>'+esc(x.name)+'</span><small>'+esc(t)+'</small><span class="sgo">View →</span></button>'};
+  const panel=x=>'<div class="secpanel'+(open===x.k?'':' hide')+'" data-panel="'+x.k+'"><button class="secback" data-secback>← All sections</button><h4>'+esc(x.name)+'</h4>'+
+    (x.k==='lend'?L.html:'')+(x.items.length?x.items.map(frowHtml).join(''):x.k==='lend'?'':'<p class="secempty">Nothing reviewed here yet. '+esc(x.hint)+' <button class="linkbtn" data-assessup>Upload documents →</button></p>')+'</div>';
+  return '<div class="deckhint'+(open?' hide':'')+'">Swipe to choose a section</div><div class="deckrow'+(open?' hide':'')+'">'+secs.map(tile).join('')+'</div>'+secs.map(panel).join('')}
+document.addEventListener('click',e=>{const t=e.target.closest('[data-sec]'),bk=e.target.closest('[data-secback]');if(!t&&!bk)return;const a=e.target.closest('.assess');if(!a)return;
+  const key=t?t.dataset.sec:null;DECK[a.dataset.assess]=key;
+  a.querySelector('.deckrow').classList.toggle('hide',!!key);const h=a.querySelector('.deckhint');if(h)h.classList.toggle('hide',!!key);
+  a.querySelectorAll('.secpanel').forEach(p=>p.classList.toggle('hide',p.dataset.panel!==key));
+  const target=key?a.querySelector('.secpanel[data-panel="'+key+'"]'):a.querySelector('.deckrow');try{target.scrollIntoView({block:key?'start':'nearest',behavior:'smooth'})}catch(err){}});
 const SHARED={};
 async function sharedFor(b){const k=mineId(b);if(k in SHARED)return SHARED[k];SHARED[k]=[];try{const sb=await sbInit();if(!sb)return [];
   const {data,error}=await sb.from('building_findings').select('category,tier,statement,doc_type,as_of,created_at').eq('building_key',k).order('created_at',{ascending:false}).limit(30);
