@@ -231,6 +231,7 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent)}
 .starter small{display:block;margin-top:6px;font-size:12px;line-height:1.5}
 .tryrow{margin-top:22px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;font-size:13px;color:var(--muted)}
 .messages{flex:1;overflow:auto;padding:30px 36px}
+.fixplan{display:flex;gap:12px;align-items:center;justify-content:space-between;border:1px solid var(--glow);background:var(--soft);border-radius:12px;padding:12px 14px;margin:12px 0}.fixplan strong{font-size:14.5px}.fixplan p{margin:3px 0 0;font-size:13px;color:var(--muted)}
 .deckask{display:flex;gap:12px;align-items:center;justify-content:space-between;background:var(--soft);border:1px solid var(--glow);border-radius:12px;padding:12px 14px;margin:14px 0 4px}.deckask strong{font-size:14.5px}.deckask p{margin:3px 0 0;font-size:13px;color:var(--muted)}
 .secup{background:var(--accent);color:var(--on-accent);border:0;border-radius:999px;padding:9px 16px;font:inherit;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap}
 .secask{background:var(--surface-3);border-radius:12px;padding:14px;margin-top:8px}.secask p{margin:4px 0 10px;font-size:14px;color:var(--muted)}
@@ -491,7 +492,10 @@ tbody tr:hover .open,tbody tr:focus-within .open{opacity:1}
           <option value="lo">Mortgage Originator</option>
           <option value="attorney">Attorney</option>
           <option value="buyer">Home buyer or seller</option>
-          <option value="other">Other (title, managing agent…)</option>
+          <option value="owner">Unit owner</option>
+          <option value="board">Board member / HOA</option>
+          <option value="mgmt">Managing agent</option>
+          <option value="other">Other (title, appraiser…)</option>
         </select></div>
       <button class="outline hide" id="google" type="button"><span class="g">G</span>Continue with Google</button>
       <div class="divider hide" id="googlediv">or use your work email</div>
@@ -751,7 +755,10 @@ let selected=null,awaiting=null,documentQueue=[],deal={};
 const listState={q:'',type:'All',lender:'',boro:'',sort:'closings',dir:-1,limit:150};
 
 /* ---------- theme & entry ---------- */
-const ROLES_U={agent:['Realtor workspace','LET\'S MOVE YOUR DEAL FORWARD','a real estate agent or broker. Be practical about what to ask the listing agent, board and lender.'],lo:['Originator workspace','VET THE PROJECT BEFORE YOU LOCK','a mortgage broker or lender. Be precise about Fannie Mae/Freddie Mac project rules, review types and documentation.'],attorney:['Attorney workspace','DILIGENCE BEFORE THE CONTRACT','a real estate attorney. Emphasize litigation, assessments, liens, recorded documents and contract terms; note what to verify in the offering plan, questionnaire and title.'],buyer:['Buyer workspace','KNOW THE BUILDING BEFORE YOU BUY','a home buyer or seller, not a professional. Use plain language, explain any jargon briefly, and suggest what to ask their agent, lender or attorney. Do not give legal or financial advice.'],other:['Pro workspace','VET THE BUILDING','a real estate professional (title, managing agent or similar).']};
+const ROLES_U={agent:['Realtor workspace','LET\'S MOVE YOUR DEAL FORWARD','a real estate agent or broker. Be practical about what to ask the listing agent, board and lender.'],lo:['Originator workspace','VET THE PROJECT BEFORE YOU LOCK','a mortgage broker or lender. Be precise about Fannie Mae/Freddie Mac project rules, review types and documentation.'],attorney:['Attorney workspace','DILIGENCE BEFORE THE CONTRACT','a real estate attorney. Emphasize litigation, assessments, liens, recorded documents and contract terms; note what to verify in the offering plan, questionnaire and title.'],buyer:['Buyer workspace','KNOW THE BUILDING BEFORE YOU BUY','a home buyer or seller, not a professional. Use plain language, explain any jargon briefly, and suggest what to ask their agent, lender or attorney. Do not give legal or financial advice.'],owner:['Owner workspace','KNOW WHAT LENDERS SEE IN YOUR BUILDING','a unit owner, not a professional. Explain in plain language what lenders look for, how findings could affect a sale or refinance, and what to ask the board or managing agent to do.'],
+board:['Board workspace','GET YOUR BUILDING LENDER-READY','a condo or co-op board member or HOA officer. Act as an advisor helping the association become eligible for lenders: for each finding, give the practical steps the association can take (budget and reserve changes, reserve study, insurance coverage, repairs and how to fund them, questionnaire answers, governance), the documents that would show a lender it is resolved, a realistic order and timeline, and when to bring in the association’s attorney, accountant, engineer or insurance broker. Do not give legal advice.'],
+mgmt:['Management workspace','GET YOUR BUILDINGS LENDER-READY','a managing agent. Act as an advisor helping the buildings they manage become eligible for lenders: for each finding, give the concrete fix (budget line, reserve contribution, coverage amount, repair plan, questionnaire answer), the document that proves it to a lender, and the order to tackle them; note what needs board approval or the association’s attorney, accountant or engineer.'],
+other:['Pro workspace','VET THE BUILDING','a real estate professional (title, appraiser or similar).']};
 let PROFILE={};try{PROFILE=JSON.parse(localStorage.getItem('lendable:profile:v1'))||{}}catch(e){}
 function applyProfile(){const r=ROLES_U[PROFILE.role]||ROLES_U.agent;$('userrole').textContent=r[0];$('welcomeeyebrow').textContent=r[1];const n=(PROFILE.name||'').trim();if(n){$('username').textContent=n;$('avatar').textContent=n.split(/\s+/).map(x=>x[0]).slice(0,2).join('').toUpperCase()}}
 (()=>{if(PROFILE.name)$('name').value=PROFILE.name;if(PROFILE.email)$('email').value=PROFILE.email;if(PROFILE.role)$('role').value=PROFILE.role;})();
@@ -1161,6 +1168,7 @@ function assessHtml(b,dob,loading,shared){const id=mineId(b),as=MINE[id]&&MINE[i
     deckHtml(b,id,F,loading)+
     '<div class="tiles"><div class="tile"><small>Agency eligibility</small><strong>'+elig+'</strong><small>Not lender verified</small></div><div class="tile"><small>Documents reviewed</small><strong>'+(as?as.docs.length+' document'+(as.docs.length>1?'s':''):shF.length?shF.length+' shared finding'+(shF.length>1?'s':''):'None yet')+'</strong><small>'+(as?esc(as.period||'Uploaded '+fmtDateS(new Date(as.at).toISOString().slice(0,10))):shF.length?'From other users’ documents · <button class="linkbtn" data-assessup>Add yours →</button>':'<button class="linkbtn" data-assessup>Upload to assess →</button>')+'</small></div></div>'+
 
+    (as&&['board','mgmt','owner'].includes(PROFILE.role)&&F.some(f=>f.tier!=='meets')?'<div class="fixplan"><div><strong>Get this building lender-ready</strong><p>A step-by-step plan for each finding: what to change, what proves it to a lender, and in what order.</p></div><button class="secup" data-fixplan>Build the plan</button></div>':'')+
     '<div class="nextstep"><strong>Recommended next step</strong>'+esc(next)+'</div>'+
     '<div class="afoot">Findings reflect documents and records as of the dates shown; conditions may have changed since. Get the most current documents before relying on them. Findings are informational and do not constitute project approval, loan eligibility, or a lending commitment. A negative preliminary assessment isn’t proof that no mortgage is available: portfolio, non-agency and exception lenders may still finance buildings that miss standard agency requirements.</div></div>'}
 function deckHtml(b,id,F,loading){const L=LENDSEC[id],open=DECK[id]||null;
@@ -1177,6 +1185,8 @@ document.addEventListener('click',e=>{const t=e.target.closest('[data-sec]'),bk=
   a.querySelector('.deckrow').classList.toggle('hide',!!key);const h=a.querySelector('.deckhint');if(h)h.classList.toggle('hide',!!key);const ak=a.querySelector('.deckask');if(ak)ak.classList.toggle('hide',!!key);
   a.querySelectorAll('.secpanel').forEach(p=>p.classList.toggle('hide',p.dataset.panel!==key));
   const target=key?a.querySelector('.secpanel[data-panel="'+key+'"]'):a.querySelector('.deckrow');try{target.scrollIntoView({block:key?'start':'nearest',behavior:'smooth'})}catch(err){}});
+document.addEventListener('click',e=>{if(!e.target.closest('[data-fixplan]'))return;const a=e.target.closest('.assess');if(a){const id=a.dataset.assess;const sv=saveTargets.get(id);if(sv)selected=sv}
+  add(PROFILE.role==='owner'?'Build a plan to get this building lender-ready':'Build our plan to get this building lender-ready',true);askAI('What can the association do, step by step, to make this building eligible for agency lenders? Go finding by finding in order of priority: the fix, the document that proves it to a lender, rough timing, and who needs to be involved.')});
 const SHARED={};
 async function sharedFor(b){const k=mineId(b);if(k in SHARED)return SHARED[k];SHARED[k]=[];try{const sb=await sbInit();if(!sb)return [];
   const {data,error}=await sb.from('building_findings').select('category,tier,statement,doc_type,as_of,created_at').eq('building_key',k).order('created_at',{ascending:false}).limit(30);
