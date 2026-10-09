@@ -748,9 +748,12 @@ function authMode(signin){authSignin=signin;$('namefield').classList.toggle('hid
 $('authmode').onclick=()=>authMode(!authSignin);
 function rememberProfile(em){PROFILE=Object.assign({},PROFILE,{name:$('name').value.trim()||PROFILE.name||'',email:em||PROFILE.email||'',role:$('role').value||PROFILE.role||''});if(em&&!FREE_MAIL.test(em))PROFILE.workEmail=em;try{localStorage.setItem('lendable:profile:v1',JSON.stringify(PROFILE))}catch(e){}}
 const FREE_MAIL=/@(gmail|googlemail|yahoo|ymail|icloud|me|mac|outlook|hotmail|live|msn|aol|proton|protonmail|gmx|comcast|verizon|att)\.[a-z.]+$/i;
+async function pwnedCount(pw){try{const h=[...new Uint8Array(await crypto.subtle.digest('SHA-1',new TextEncoder().encode(pw)))].map(x=>x.toString(16).padStart(2,'0')).join('').toUpperCase();
+  const r=await fetch('https://api.pwnedpasswords.com/range/'+h.slice(0,5),{headers:{'Add-Padding':'true'}});if(!r.ok)return 0;const t=await r.text();const line=t.split('\n').find(l=>l.startsWith(h.slice(5)));return line?parseInt(line.split(':')[1])||0:0}catch(e){return 0}}
 async function needSB(){const sb=await sbInit();if(!sb)authMsg('Sign-in isn’t connected ('+(window.__authOff||'server unreachable')+'). You can explore without an account for now.',true);return sb}
 async function authStart(){const em=$('email').value.trim(),pw=$('pw').value;if(!em||!pw)return;if(pw.length<8){authMsg('Use at least 8 characters for your password.',true);return}
   if(!authSignin&&!$('role').value){authMsg('Pick what you do (“I am a…”) so we can tailor your workspace.',true);$('role').focus();return}
+  if(!authSignin){const n=await pwnedCount(pw);if(n>0){authMsg('That password has shown up in known data breaches, so it’s easy for attackers to guess. Please choose a different one.',true);$('pw').focus();return}}
   rememberProfile(em);const sb=await needSB();if(!sb)return;$('authsend').disabled=true;authMsg(authSignin?'Signing you in…':'Creating your account…');
   let r;if(authSignin)r=await sb.auth.signInWithPassword({email:em,password:pw});
   else r=await sb.auth.signUp({email:em,password:pw,options:{emailRedirectTo:location.origin+location.pathname,data:{name:$('name').value.trim(),role:$('role').value}}});
@@ -774,7 +777,7 @@ $('maillink').onclick=async()=>{const em=$('email').value.trim();if(!em){authMsg
 $('google').onclick=async()=>{rememberProfile('');const sb=await needSB();if(!sb)return;if(!window.__googleOn){authMsg('Google sign-in is being set up. Use your work email for now.',true);return}authMsg('Opening Google…');
   const {error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname,queryParams:{prompt:'select_account'}}});
   if(error)authMsg(/not enabled|provider/i.test(error.message)?'Google sign-in is being set up. Use your work email for now.':'Couldn’t open Google: '+error.message,true)};
-$('pwresetform').onsubmit=async e=>{e.preventDefault();const pw=$('pw2').value;if(pw.length<8)return;const {error}=await SB.auth.updateUser({password:pw});
+$('pwresetform').onsubmit=async e=>{e.preventDefault();const pw=$('pw2').value;if(pw.length<8)return;if(await pwnedCount(pw)>0){authMsg('That password has shown up in known data breaches. Please choose a different one.',true);return}const {error}=await SB.auth.updateUser({password:pw});
   if(error){authMsg('Couldn’t save: '+error.message,true);return}$('pwresetform').classList.add('hide');$('signupform').classList.remove('hide');const {data}=await SB.auth.getUser();await authDone(data.user)};
 $('otpback').onclick=()=>{$('otpform').classList.add('hide');$('signupform').classList.remove('hide');authMsg('')};
 $('otpform').onsubmit=async e=>{e.preventDefault();const code=$('otp').value.replace(/\D/g,'');if(code.length<6)return;$('otpgo').disabled=true;authMsg('Signing you in…');
