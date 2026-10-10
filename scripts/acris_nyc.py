@@ -167,7 +167,6 @@ def main():
         if blk == ('MN', 16): f['g'] = 'Battery Park City Authority'
         elif blk == ('MN', 1373): f['g'] = 'Roosevelt Island Operating Corporation'
         if f: flags[str(int(float(p['bbl'])))] = f
-    json.dump({'source': 'NYC MapPLUTO owner names', 'asOf': dt.date.today().isoformat(), 'flags': flags}, open('data/nyc_flags.json', 'w'), separators=(',', ':'))
     log('flags: HDFC', sum(1 for v in flags.values() if v.get('h')), '| land owner / ground lessor', sum(1 for v in flags.values() if v.get('g')),
         collections.Counter(v['g'] for v in flags.values() if v.get('g')).most_common())
     byblock = collections.defaultdict(list); bybbl = {}
@@ -189,6 +188,44 @@ def main():
             for x in cc:
                 if x['_k'].split(' ', 1)[-1] == k.split(' ', 1)[-1] and x['_k'].split(' ')[0] == k.split(' ')[0]: return x
         return None
+
+    # ---- ground leases recorded in ACRIS: leases / memoranda of lease where the building's co-op or condo is the tenant ----
+    try:
+        RES_LESSEE = re.compile(r'OWNERS\s+(CORP|INC|ASSOC)|APARTMENT\s+OWNERS|APARTMENTS?\s+(CORP|INC|OWNERS)|TENANTS?\s+(CORP|INC)|HOUSING\s+CORP|COOPERATIVE|CO-?OP\b|CONDOMINIUM|BOARD OF MANAGERS|HOUSING DEV\w*\s+FUND|\bHDFC\b|MUTUAL\s+(HOUSING|REDEVELOPMENT)', re.I)
+        lm = paged(RP_MASTER, "doc_type in('LEAS','MLEA')", select='document_id,doc_type,document_date,recorded_datetime')
+        log('ACRIS leases / memoranda of lease', len(lm))
+        lmm = {r['document_id']: r for r in lm}
+        ll = by_ids(RP_LEGALS, list(lmm), select='document_id,borough,block,lot,street_number,street_name', n=200)
+        hit = collections.defaultdict(set)
+        for r in ll:
+            bi = ACRIS_BORO.get(str(r.get('borough')))
+            if bi is None: continue
+            try: blk, lot = int(r['block']), int(r['lot'])
+            except Exception: continue
+            pp = building_for(bi, blk, lot, r.get('street_number'), r.get('street_name'))
+            if pp and (pp['bldgclass'][:1] in 'RCD'): hit[str(int(float(pp['bbl'])))].add(r['document_id'])
+        ids = sorted({x for v in hit.values() for x in v})
+        log('lease docs on condo/co-op lots', len(ids), 'buildings', len(hit))
+        pts = by_ids(RP_PARTIES, ids, select='document_id,party_type,name', n=200) if ids else []
+        lessor, lessee = collections.defaultdict(list), collections.defaultdict(list)
+        for r in pts:
+            (lessor if str(r.get('party_type')) == '1' else lessee)[r['document_id']].append((r.get('name') or '').strip())
+        gl = 0
+        for bbl, docs in hit.items():
+            best = None
+            for did in docs:
+                tenants = lessee.get(did, []); owners = lessor.get(did, [])
+                if not any(RES_LESSEE.search(t) for t in tenants): continue        # a store or office lease, not the building
+                if any(RES_LESSEE.search(o) for o in owners) and not any(not RES_LESSEE.search(o) for o in owners): continue   # building leasing out its own space
+                dd = (lmm[did].get('document_date') or lmm[did].get('recorded_datetime') or '')[:4]
+                if not best or dd > best[1]: best = (owners[0] if owners else 'a separate land owner', dd)
+            if best:
+                f = flags.setdefault(bbl, {})
+                if not f.get('g'): f['g'] = ' '.join(w.capitalize() if not re.fullmatch(r'(LLC|LP|L\.P\.|INC|CORP|II|III|NY|NYC)', w) else w for w in best[0].split()); f['gy'] = best[1]; f['gs'] = 'acris'; gl += 1
+        log('ground leases from ACRIS', gl)
+    except Exception as e:
+        log('ground lease scan skipped:', str(e)[:200])
+    json.dump({'source': 'NYC MapPLUTO owner names; ACRIS leases and memoranda of lease', 'asOf': dt.date.today().isoformat(), 'flags': flags}, open('data/nyc_flags.json', 'w'), separators=(',', ':'))
 
     # ---- real property: sales + mortgages + tax lien sale certs ----
     where = "recorded_datetime >= '%s' AND recorded_datetime <= '%sT23:59:59' AND doc_type in('DEED','MTGE','RPTT','RPTT&RET','TLS')" % (pre, end)
