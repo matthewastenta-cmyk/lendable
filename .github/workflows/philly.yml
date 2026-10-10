@@ -1,0 +1,16 @@
+name: build Philadelphia
+on:
+  workflow_dispatch:
+  schedule: [{ cron: "17 10 * * 1" }]   # Mondays
+permissions: { contents: write }
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          set +e
+          python3 scripts/build_philly.py 2> /tmp/pa_log.txt; code=$?; echo "exit $code" >> /tmp/pa_log.txt
+          if [ $code -eq 0 ]; then git add data/philly.json; git diff --cached --quiet || (git -c user.name="lendable-bot" -c user.email="noreply@anthropic.com" commit -m "Rebuild Philadelphia" && git pull -q --rebase && git push); fi
+          mkdir /tmp/log && cd /tmp/log && cp /tmp/pa_log.txt . && git init -q && git checkout -q -b data-logs && git add -A && git -c user.name=bot -c user.email=bot@example.com commit -qm log && git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" data-logs
+          exit $code
