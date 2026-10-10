@@ -2,7 +2,10 @@ name: PLUTO owner probe
 on:
   workflow_dispatch:
     inputs:
-      where: { description: "SoQL where", default: "borough='MN' AND block in(16,10,13)" }
+      ds: { description: "dataset id", default: "64uk-42ks" }
+      select: { description: "SoQL select", default: "address,ownername,bldgclass,bbl,unitsres" }
+      where: { description: "SoQL where", default: "borough='MN' AND block in(16)" }
+      group: { description: "SoQL group", default: "" }
 permissions: { contents: write }
 jobs:
   probe:
@@ -10,5 +13,7 @@ jobs:
     steps:
       - run: |
           mkdir /tmp/log && cd /tmp/log
-          curl -sG "https://data.cityofnewyork.us/resource/64uk-42ks.json" --data-urlencode "\$select=address,ownername,bldgclass,bbl,unitsres" --data-urlencode "\$where=${{ inputs.where }}" --data-urlencode "\$limit=400" > probe.json
+          args=(--data-urlencode "\$select=${{ inputs.select }}" --data-urlencode "\$where=${{ inputs.where }}" --data-urlencode "\$limit=2000")
+          if [ -n "${{ inputs.group }}" ]; then args+=(--data-urlencode "\$group=${{ inputs.group }}"); fi
+          curl -sG "https://data.cityofnewyork.us/resource/${{ inputs.ds }}.json" "${args[@]}" > probe.json
           git init -q && git checkout -q -b data-logs && git add -A && git -c user.name=bot -c user.email=bot@example.com commit -qm probe && git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" data-logs
