@@ -1,0 +1,14 @@
+name: URL probe
+on:
+  workflow_dispatch:
+    inputs:
+      url: { description: "URL to fetch", required: true }
+permissions: { contents: write }
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          mkdir /tmp/log && cd /tmp/log
+          curl -sL -A "Mozilla/5.0 pocketapproval-research" --max-time 120 "${{ inputs.url }}" -o probe.out; head -c 300000 probe.out > probe.txt; rm probe.out
+          git init -q && git checkout -q -b data-logs && git add -A && git -c user.name=bot -c user.email=bot@example.com commit -qm probe && git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" data-logs
