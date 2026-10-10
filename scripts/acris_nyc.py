@@ -143,9 +143,36 @@ def main():
     idlo = pre.strftime('%Y%m%d')
 
     # ---- PLUTO: condo + co-op buildings in the four boroughs ----
-    sel = 'borough,block,lot,bbl,address,zipcode,bldgclass,numfloors,unitsres,yearbuilt,histdist,landmark'
+    sel = 'borough,block,lot,bbl,address,zipcode,bldgclass,numfloors,unitsres,yearbuilt,histdist,landmark,ownername'
     pl = paged(PLUTO, "borough in('MN','BK','QN','BX') AND (bldgclass like 'R%' OR bldgclass in('D4','C6','D0','C8','D9','D7'))", select=sel, order='bbl')
     log('PLUTO condo/co-op lots', len(pl))
+    # ---- flags from the tax-lot owner: HDFC co-ops and land held by a ground lessor ----
+    HDFC_RX = re.compile(r'HOUSING\s+DEV\w*\s+FUND|\bH\.?\s?D\.?\s?F\.?\s?C\b|HSG\.?\s+DEV\w*\s+F(UN)?D|HOUSING\s+DEVELOP\w*\s+FD', re.I)
+    LESSORS = [(re.compile(rx, re.I), nm) for rx, nm in [
+        (r'BATTERY PARK CITY|HUGH L\.? CAREY', 'Battery Park City Authority'),
+        (r'ROOSEVELT IS(LAND)?\b|\bRIOC\b', 'Roosevelt Island Operating Corporation'),
+        (r'URBAN DEV(ELOPMENT)? CORP|NYS URBAN DEV|EMPIRE STATE DEV', 'NYS Urban Development Corporation'),
+        (r'TRINITY CHURCH|CORP(ORATION)? OF TRINITY|RECTOR.*TRINITY', 'Trinity Church'),
+        (r'HUDSON RIVER PARK', 'Hudson River Park Trust'),
+        (r'BROOKLYN BRIDGE PARK', 'Brooklyn Bridge Park Corporation'),
+        (r'QUEENS WEST DEV', 'Queens West Development Corporation'),
+        (r'PORT AUTH', 'Port Authority of NY & NJ'),
+        (r'COLUMBIA UNIV|TRUSTEES OF COLUMBIA', 'Columbia University'),
+        (r'NEW YORK CITY HOUSING AUTH|NYC HOUSING AUTH', 'NYC Housing Authority'),
+        (r'^(THE )?CITY OF NEW YORK\b|^NYC DCAS|DEPT OF CITYWIDE ADMIN', 'City of New York'),
+    ]]
+    flags = {}
+    for p in pl:
+        own = (p.get('ownername') or '').strip()
+        if not own: continue
+        f = {}
+        if HDFC_RX.search(own): f['h'] = 1
+        for rx, nm in LESSORS:
+            if rx.search(own): f['g'] = nm; break
+        if f: flags[str(int(float(p['bbl'])))] = f
+    json.dump({'source': 'NYC MapPLUTO owner names', 'asOf': dt.date.today().isoformat(), 'flags': flags}, open('data/nyc_flags.json', 'w'), separators=(',', ':'))
+    log('flags: HDFC', sum(1 for v in flags.values() if v.get('h')), '| land owner / ground lessor', sum(1 for v in flags.values() if v.get('g')),
+        collections.Counter(v['g'] for v in flags.values() if v.get('g')).most_common())
     byblock = collections.defaultdict(list); bybbl = {}
     for p in pl:
         bi = PLUTO_BORO[p['borough']]; p['_b'] = bi; p['_k'] = akey('', p.get('address', ''))
