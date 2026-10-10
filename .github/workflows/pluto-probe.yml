@@ -1,0 +1,14 @@
+name: PLUTO owner probe
+on:
+  workflow_dispatch:
+    inputs:
+      where: { description: "SoQL where", default: "borough='MN' AND block in(16,10,13)" }
+permissions: { contents: write }
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          mkdir /tmp/log && cd /tmp/log
+          curl -sG "https://data.cityofnewyork.us/resource/64uk-42ks.json" --data-urlencode "\$select=address,ownername,bldgclass,bbl,unitsres" --data-urlencode "\$where=${{ inputs.where }}" --data-urlencode "\$limit=400" > probe.json
+          git init -q && git checkout -q -b data-logs && git add -A && git -c user.name=bot -c user.email=bot@example.com commit -qm probe && git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" data-logs
