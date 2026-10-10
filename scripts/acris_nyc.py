@@ -191,7 +191,7 @@ def main():
 
     # ---- ground leases recorded in ACRIS: leases / memoranda of lease where the building's co-op or condo is the tenant ----
     try:
-        RES_LESSEE = re.compile(r'OWNERS\s+(CORP|INC|ASSOC)|APARTMENT\s+OWNERS|APARTMENTS?\s+(CORP|INC|OWNERS)|TENANTS?\s+(CORP|INC)|HOUSING\s+CORP|COOPERATIVE|CO-?OP\b|CONDOMINIUM|BOARD OF MANAGERS|HOUSING DEV\w*\s+FUND|\bHDFC\b|MUTUAL\s+(HOUSING|REDEVELOPMENT)', re.I)
+        RES_LESSEE = re.compile(r'OWNERS,?\s+(CORP|INC|ASSOC)|APARTMENT\s+OWNERS|APARTMENTS?\s+(CORP|INC|OWNERS)|TENANTS?\s+(CORP|INC)|HOUSING\s+CORP|COOPERATIVE|CO-?OP\b|CONDOMINIUM|BOARD OF MANAGERS|HOUSING DEV\w*\s+FUND|\bHDFC\b|MUTUAL\s+(HOUSING|REDEVELOPMENT)', re.I)
         lm = paged(RP_MASTER, "doc_type in('LEAS','MLEA')", select='document_id,doc_type,document_date,recorded_datetime')
         log('ACRIS leases / memoranda of lease', len(lm))
         lmm = {r['document_id']: r for r in lm}
@@ -217,6 +217,7 @@ def main():
                 tenants = lessee.get(did, []); owners = lessor.get(did, [])
                 if not any(RES_LESSEE.search(t) for t in tenants): continue        # a store or office lease, not the building
                 if any(RES_LESSEE.search(o) for o in owners): continue   # the co-op/condo is the landlord (leasing out its own space)
+                if any(re.search(r'GARAGE|CAR\s?PARK|PARKING|UNSOLD\s?SHARES|\bBANK\b|BANKFSB|TEA COMPANY', o, re.I) for o in owners): continue   # garage, sponsor-unit or store leases
                 dd = (lmm[did].get('document_date') or lmm[did].get('recorded_datetime') or '')[:4]
                 if not best or dd > best[1]: best = (owners[0] if owners else 'a separate land owner', dd)
             if best:
