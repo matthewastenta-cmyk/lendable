@@ -203,7 +203,7 @@ def main():
             try: blk, lot = int(r['block']), int(r['lot'])
             except Exception: continue
             pp = building_for(bi, blk, lot, r.get('street_number'), r.get('street_name'))
-            if pp and (pp['bldgclass'][:1] in 'RCD'): hit[str(int(float(pp['bbl'])))].add(r['document_id'])
+            if pp and (pp['bldgclass'][:1] == 'R' or pp['bldgclass'] in ('C6', 'C8', 'D0', 'D4')): hit[str(int(float(pp['bbl'])))].add(r['document_id'])
         ids = sorted({x for v in hit.values() for x in v})
         log('lease docs on condo/co-op lots', len(ids), 'buildings', len(hit))
         pts = by_ids(RP_PARTIES, ids, select='document_id,party_type,name', n=200) if ids else []
@@ -216,7 +216,7 @@ def main():
             for did in docs:
                 tenants = lessee.get(did, []); owners = lessor.get(did, [])
                 if not any(RES_LESSEE.search(t) for t in tenants): continue        # a store or office lease, not the building
-                if any(RES_LESSEE.search(o) for o in owners) and not any(not RES_LESSEE.search(o) for o in owners): continue   # building leasing out its own space
+                if any(RES_LESSEE.search(o) for o in owners): continue   # the co-op/condo is the landlord (leasing out its own space)
                 dd = (lmm[did].get('document_date') or lmm[did].get('recorded_datetime') or '')[:4]
                 if not best or dd > best[1]: best = (owners[0] if owners else 'a separate land owner', dd)
             if best:
