@@ -232,6 +232,14 @@ input:focus,textarea:focus,select:focus{border-color:var(--accent)}
 .tryrow{margin-top:22px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;font-size:13px;color:var(--muted)}
 .messages{flex:1;overflow:auto;padding:30px 36px}
 .fixplan{display:flex;gap:12px;align-items:center;justify-content:space-between;border:1px solid var(--glow);background:var(--soft);border-radius:12px;padding:12px 14px;margin:12px 0}.fixplan strong{font-size:14.5px}.fixplan p{margin:3px 0 0;font-size:13px;color:var(--muted)}
+.sighero{margin:0;padding:16px 18px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.sighero .shtop{display:flex;gap:12px;align-items:flex-start}.sighero .shic{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:16px;color:#fff;margin-top:2px}
+.sighero .shtitle{font-size:21px;font-weight:700;line-height:1.2}.sighero .shnote{display:block;margin-top:6px;font-size:12px;color:var(--muted)}
+.sighero p{margin:6px 0 0;font-size:13.5px;line-height:1.45;color:var(--ink)}
+.sighero.sig-good{background:var(--good-bg);color:var(--good)}.sighero.sig-good .shic{background:var(--good)}
+.sighero.sig-caution{background:var(--warn-bg);color:var(--warn)}.sighero.sig-caution .shic{background:#d29a2c}
+.sighero.sig-warn{background:#fdecea;color:var(--bad)}.sighero.sig-warn .shic{background:var(--bad)}
+.lendbody{padding-top:12px}
 .sigbox{border-radius:12px;padding:12px 14px;margin:6px 0 12px;border:1px solid}.sigbox strong{font-size:14.5px}.sigbox p{margin:4px 0 0;font-size:13.5px;line-height:1.45}
 .sig-good{background:var(--good-bg);border-color:#bfe3cf;color:var(--good)}.sig-caution{background:var(--warn-bg);border-color:#f1dcb0;color:var(--warn)}.sig-warn{background:#fdecea;border-color:#f5c2bd;color:var(--bad)}
 .sigbox p{color:var(--ink)}
@@ -742,9 +750,9 @@ const isDemoQ=t=>/harbou?r\s?view/i.test(t);
 function showDemo(b,full){selected=b;setView('chat');if(!full){pickBox('Harborview Test Condominium','100 Harborview Plaza · Demo building',()=>showDemo(b,true));return}
   add('<p><strong>Harborview Test Condominium</strong> is a fictional sample building for demonstrations. Upload its document package to see a review.</p>'+
     '<div class="result"><div class="resultheader"><div><h3>Harborview Test Condominium</h3><p>100 Harborview Plaza · Sample building · Condo · 120 units · Built 1987 · 14 stories</p></div><div class="pillstack"><span class="pill">Demo building</span></div></div>'+
-    (LENDSEC[mineId(b)]={label:'Lenders',sum:'Example data',html:'<p class="secempty">On a real building, this tab lists the lenders that recently financed units here, from recorded mortgages, with closing counts and dates. This demo building has no real records, so the rows below are examples only.</p>'+
-      [['Example Bank A',3],['Example Credit Union B',2],['Example Mortgage Co. C',1]].map(([n,c])=>'<div class="resultlender"><span>'+n+'</span><small class="num">'+c+' closing'+(c>1?'s':'')+'</small></div>').join('')},'')+
-    '<div class="resultfooter">Fictional building used for demonstrations. Not a real property or public record. Findings for this building are never shared.</div></div>'+assessSlot(b)+
+    lendInline(LENDSEC[mineId(b)]={label:'Lenders',sig:{lvl:'good',pill:'Likely Eligible for Financing',text:'Example: on a real building this names the FDIC-insured banks that lent there in the last 24 months.',note:'Demo building, example data only.'},sum:'Example data',html:'<p class="secempty">On a real building, this lists the lenders that recently financed units here, from recorded mortgages, with closing counts and dates. This demo building has no real records, so the rows below are examples only.</p>'+
+      [['Example Bank A',3],['Example Credit Union B',2],['Example Mortgage Co. C',1]].map(([n,c])=>'<div class="resultlender"><span>'+n+'</span><small class="num">'+c+' closing'+(c>1?'s':'')+'</small></div>').join('')})+
+    '<div class="resultfooter">Fictional building used for demonstrations. Not a real property or public record. Findings for this building are never shared.</div><button class="reviewbtn" data-assessup>Request an AI review</button></div>'+assessSlot(b)+
     '<div class="choices">'+saveBtn(b)+choices(['Check another building']).replace(/^<div class="choices">|<\/div>$/g,'')+'</div>');
   try{renderBrief(b)}catch(e){}awaiting=null}
 function tlsPill(b){return b&&b.tls?'<span class="pill red" title="ACRIS tax lien sale certificate: the city sold unpaid property tax or charges on this building lot or on '+(b.tls[0]>1?b.tls[0]+' of its units':'one of its units')+'. Ask whether it is the building or a single unit.">⚑ City tax lien sold'+(b.tls[0]>1?' ('+b.tls[0]+' lots)':'')+' · '+esc(monYr(b.tls[1]))+'</span>':''}
@@ -892,10 +900,10 @@ function showBuilding(b,full){if(b&&b.demo)return showDemo(b,full);if(!full){sel
   const idText=b.lenders.length?b.lenders.length+' identified lender'+(b.lenders.length>1?'s':''):'no identified lender';
   add('<p>I found <strong>'+address+'</strong> in recent mortgage activity: '+b.closings+' financed closing'+(b.closings>1?'s':'')+', '+idText+'.</p>'+
     '<div class="result"><div class="resultheader"><div><h3>'+address+'</h3><p>'+loc+'</p></div><div class="pillstack">'+sigPill(b.sig=finSignal(b.lenders.map(l=>l.name),b.closings,{window:'in the last 24 months'}))+tlsPill(b)+fhaSlot(b)+dobSlot(b)+'</div></div>'+
-    (LENDSEC[mineId(b)]={label:'Lenders',sig:b.sig,sum:b.lenders.length+' lender'+(b.lenders.length!==1?'s':'')+' · '+b.closings+' closing'+(b.closings!==1?'s':''),html:sigBox(b.sig)+'<small style="display:block;font-size:12px;letter-spacing:.4px;color:var(--muted);margin-bottom:4px">LENDERS RECENTLY FINANCING THIS BUILDING</small>'+rows+finShare(b)+
-    '<div class="stats" style="margin-top:10px"><div><small>Financed closings</small><strong class="num">'+b.closings+'</strong></div><div><small>Latest activity</small><strong class="num">'+esc(b.latest)+'</strong></div><div><small>Identified lenders</small><strong class="num">'+b.lenders.length+'</strong></div></div>'},'')+
-    '<div class="resultfooter">From public records, as filed. Not a project approval, loan decision or legal advice. Confirm with your lender and attorney.</div><button class="reviewbtn" data-review>Request a building review</button></div>'+assessSlot(b)+
-    '<div class="choices">'+saveBtn(b)+choices(['Next steps','Check another building']).replace(/^<div class="choices">|<\/div>$/g,'')+'</div>');
+    lendInline(LENDSEC[mineId(b)]={label:'Lenders',sig:b.sig,sum:b.lenders.length+' lender'+(b.lenders.length!==1?'s':'')+' · '+b.closings+' closing'+(b.closings!==1?'s':''),html:sigBox(b.sig)+'<small style="display:block;font-size:12px;letter-spacing:.4px;color:var(--muted);margin-bottom:4px">LENDERS RECENTLY FINANCING THIS BUILDING</small>'+rows+finShare(b)+
+    '<div class="stats" style="margin-top:10px"><div><small>Financed closings</small><strong class="num">'+b.closings+'</strong></div><div><small>Latest activity</small><strong class="num">'+esc(b.latest)+'</strong></div><div><small>Identified lenders</small><strong class="num">'+b.lenders.length+'</strong></div></div>'})+
+    '<div class="resultfooter">From public records, as filed. Not a project approval, loan decision or legal advice. Confirm with your lender and attorney.</div><button class="reviewbtn" data-assessup>Request an AI review</button></div>'+assessSlot(b)+
+    '<div class="choices">'+saveBtn(b)+choices(['Request a building review','Next steps','Check another building']).replace(/^<div class="choices">|<\/div>$/g,'')+'</div>');
   renderBrief(b);
   awaiting='buyer';
 }
@@ -935,12 +943,12 @@ function njLenders(m){return '<div class="resultbody"><small style="display:bloc
 function showMiami(m,full){const b=miaB(m);selected=b;setView('chat');deal={};const nj=isNJ(m);if(!full){pickBox(b.address,(m.c||'')+', '+(nj?'NJ':'FL')+' · '+(m.t||''),()=>showMiami(m,true));return}
   add('<p>Found <strong>'+esc(b.address)+'</strong> in '+(nj?esc(m.c)+' (Hudson County, NJ) tax records':'Miami-Dade county records')+': '+m.u+' '+(m.t==='Co-op'?'co-op':'condo')+' units'+(m.y?', built '+m.y:'')+'.</p>'+
     '<div class="result"><div class="resultheader"><div><h3>'+esc(b.address)+'</h3><p>'+esc(m.c)+', '+(nj?'NJ':'FL')+' '+esc(m.z)+' · '+esc(m.t)+'</p></div><div class="pillstack">'+(nj?'':sigPill(b.sig=finSignal((m.l||[]).map(([n])=>lenderName(n)),(m.l||[]).reduce((a,[,c])=>a+c,0),{window:'since '+fmtDateS(MIA.meta.mortgagesSince||''),weak:m.fc&&m.fc[0]===0&&m.fc[1]>=3?null:'No mortgages recorded here since we started tracking county filings ('+fmtDateS(MIA.meta.mortgagesSince||'')+'). That window is short, so this isn’t conclusive. Ask a lender to review the questionnaire before contract.'})))+sirsPill(m)+miaFhaPill(m)+'</div></div>'+
-    (LENDSEC[mineId(b)]={label:'Lenders',sig:b.sig,sum:m.u+' units · '+m.s+' recent sale'+(m.s!==1?'s':''),html:sigBox(b.sig)+(nj?njLenders(m):miaLenders(m))+'<div class="stats"><div><small>Units</small><strong class="num">'+m.u+'</strong></div><div><small>Year built</small><strong class="num">'+(m.y||'—')+'</strong></div><div><small>Recent sales</small><strong class="num">'+m.s+'</strong></div></div>'+
+    lendInline(LENDSEC[mineId(b)]={label:'Lenders',sig:b.sig,sum:m.u+' units · '+m.s+' recent sale'+(m.s!==1?'s':''),html:sigBox(b.sig)+(nj?njLenders(m):miaLenders(m))+'<div class="stats"><div><small>Units</small><strong class="num">'+m.u+'</strong></div><div><small>Year built</small><strong class="num">'+(m.y||'—')+'</strong></div><div><small>Recent sales</small><strong class="num">'+m.s+'</strong></div></div>'+
     '<div class="resultbody">'+(nj?njReserve(m):sirsDetail(m))+(m.s?'<div class="metric"><span>Median recorded sale</span><strong>'+money(m.sp)+'</strong></div><div class="metric"><span>Latest sale in '+(nj?'state deed file':'county file')+'</span><strong>'+esc(m.sl||'—')+'</strong></div>':'')+
     (!nj&&m.y&&new Date().getFullYear()-m.y>=25?'<div class="metric" style="display:block"><span>Built '+m.y+': milestone inspections and 40/50-year recertification apply. Check status before underwriting.</span></div>':'')+
-    '<div style="margin-top:8px">'+(nj?NJ_LINKS:MIA_LINKS)+'</div></div>'},'')+
+    '<div style="margin-top:8px">'+(nj?NJ_LINKS:MIA_LINKS)+'</div></div>'})+
     '<div class="resultfooter">From public records, as filed. Not a project approval, loan decision or legal advice. Confirm with your lender and attorney.</div></div>'+assessSlot(b)+
-    '<div class="choices">'+saveBtn(b)+choices(['Check another building']).replace(/^<div class="choices">|<\/div>$/g,'')+'</div>');
+    '<div class="choices">'+saveBtn(b)+choices(['Request a building review','Check another building']).replace(/^<div class="choices">|<\/div>$/g,'')+'</div>');
   $('brief').innerHTML='<div class="buildingicon">▤</div><h2>'+esc(b.address)+'</h2><small>'+esc(m.c)+', '+(nj?'NJ':'FL')+' · '+esc(m.t)+'</small>'+
     '<div class="panelsection"><h3>Reserves &amp; structure</h3>'+(nj?njReserve(m):sirsDetail(m))+'</div>'+
     '<div class="panelsection"><h3>Project approval</h3>'+(m.fha?'<div class="metric" style="display:block;font-size:13.5px"><span>HUD FHA list: '+esc(m.fha.status.replace(/\|+/g,' · '))+(m.fha.exp?' · expires '+esc(fmtDateS(m.fha.exp)):'')+' ('+esc(m.fha.method)+')</span></div>':'<div class="metric" style="display:block;font-size:13.5px"><span>Not on HUD’s FHA-approved list.</span></div>')+
@@ -983,7 +991,7 @@ function renderBrief(b){setTimeout(()=>briefDOB(b),0);
   $('brief').innerHTML='<div class="buildingicon">▤</div><h2>'+address+'</h2><p class="location">'+loc+'</p><span class="pill">History found</span>'+saveBtn(b)+'<div class="panelsection" id="dobbrief">'+DOB_LOADING+'</div>'+(b.city?'<div class="panelsection"><h3>Building facts</h3>'+cityFacts(b.city)+'</div>':'')+
     '<div class="panelsection"><h3>Recent mortgage activity</h3><div class="metric"><span>Financed closings</span><strong class="num">'+b.closings+'</strong></div><div class="metric"><span>Latest activity</span><strong class="num">'+esc(b.latest)+'</strong></div><div class="metric"><span>Identified lenders</span><strong class="num">'+b.lenders.length+'</strong></div><div class="chips" style="margin-top:8px">'+lenderChips(b)+'</div></div>'+
     '<div class="panelsection"><h3>Building rules</h3>'+['Sublet policy','Pet policy','Flip tax','Financing limit','Board approval'].map(r=>'<div class="rulesrow"><span>'+r+'</span><em>Not collected yet</em></div>').join('')+'<small style="display:block;margin-top:8px">Confirm in the proprietary lease, house rules or offering plan, or with the managing agent.</small></div>'+
-    '<div class="panelsection"><h3>Project approval</h3>'+fnmaHint(b)+'<div class="statusbox"><strong>Not yet verified</strong>Past financing is useful evidence. Confirm current eligibility with the lender and request the building package.</div><button class="reviewbtn" data-review>Request a building review</button></div>'+
+    '<div class="panelsection"><h3>Project approval</h3>'+fnmaHint(b)+'<div class="statusbox"><strong>Not yet verified</strong>Past financing is useful evidence. Confirm current eligibility with the lender and request the building package.</div><button class="reviewbtn" data-assessup>Request an AI review</button></div>'+
     '<div class="panelsection"><h3>Source & city records</h3><small>Source: NYC ACRIS recorded deeds, mortgages and co-op filings, '+esc(FIN.window)+'. Lenders seen financing units here, not lender approvals. City links open record-search portals.</small>'+cityLinks+'</div>';
 }
 function noMatch(t){
@@ -1153,13 +1161,17 @@ function pubFindings(b,dob){const F=[],add=(tier,title,detail,src)=>F.push({tier
 const LENDSEC={},DECK={};
 const BANK_RX=/\b(bank|banc|bancorp|savings|trust company|trust co)\b|^(jpmorgan chase|citibank|wells fargo|hsbc|chase|newbank)$/i,NONBANK_RX=/mortgage bankers|credit union|funding|lending|mortgage(?! bank)|financial(?! bank)/i;
 const isBank=n=>BANK_RX.test(n)&&!/mortgage bank/i.test(n);
-function finSignal(names,financed,opts){opts=opts||{};const banks=[...new Set(names.filter(isBank))];
-  if(banks.length)return {lvl:'good',pill:'Likely Eligible for Financing',title:'Likely Eligible for Financing',text:banks.length+' FDIC-insured bank'+(banks.length>1?'s':'')+' financed units here '+(opts.window||'recently')+' ('+banks.slice(0,4).join(', ')+(banks.length>4?'…':'')+'). Mainstream bank lending is a strong sign the building is eligible. Still confirm current project eligibility with the lender; banks can also make portfolio loans in non-warrantable buildings.'};
-  if(financed>0)return {lvl:'caution',pill:'Non-FDIC Lenders only',title:'Non-FDIC Lenders only',text:'Recent loans here came from non-FDIC lenders (mortgage companies or credit unions), not FDIC-insured banks. That can mean the building needs a non-agency or portfolio loan. Get the questionnaire and budget to a lender early.'};
-  if(opts.weak)return {lvl:'caution',pill:'No lender activity on record yet',title:'No lender activity on record yet',text:opts.weak};
-  return {lvl:'warn',pill:'Possibly Ineligible, no lender activity recently',title:'Possibly Ineligible, no lender activity recently',text:'No mortgages recorded here '+(opts.window||'in the last 24 months')+'. Treat the building as possibly non-warrantable until a lender reviews it. Submit the questionnaire, budget and insurance to a lender before going to contract.'}}
-const sigPill=g=>g?'<span class="pill '+({good:'',caution:'amber',warn:'red'}[g.lvl])+'">'+esc(g.pill)+'</span>':'';
-const sigBox=g=>g?'<div class="sigbox sig-'+g.lvl+'"><strong>'+esc(g.title)+'</strong><p>'+esc(g.text)+'</p></div>':'';
+function finSignal(names,financed,opts){opts=opts||{};const banks=[...new Set(names.filter(isBank))],w=opts.window||'in the last 24 months';
+  if(banks.length)return {banks,lvl:'good',pill:'Likely Eligible for Financing',title:'Likely Eligible for Financing',text:'FDIC-insured bank'+(banks.length>1?'s':'')+' lent here '+w+': '+banks.slice(0,4).join(', ')+(banks.length>4?' +'+(banks.length-4)+' more':'')+'.',note:'Confirm current project eligibility with the lender.'};
+  if(financed>0)return {lvl:'caution',pill:'Non-FDIC Lenders only',title:'Non-FDIC Lenders only',text:'Only mortgage companies or credit unions lent here '+w+'.',note:'Get the questionnaire and budget to a lender early.'};
+  if(opts.weak)return {lvl:'caution',pill:'No lender activity on record yet',title:'No lender activity on record yet',text:opts.weak,note:''};
+  return {lvl:'warn',pill:'Possibly Ineligible, no lender activity recently',title:'Possibly Ineligible, no lender activity recently',text:'No mortgages recorded here '+w+'.',note:'Have a lender review the questionnaire, budget and insurance before going to contract.'}}
+const sigPill=g=>'';const sigPillOld=g=>g?'<span class="pill '+({good:'',caution:'amber',warn:'red'}[g.lvl])+'">'+esc(g.pill)+'</span>':'';
+function lendInline(L){const g=L.sig;
+  const banks=g&&g.banks||[];
+  return (g?'<div class="sighero sig-'+g.lvl+'"><div class="shtop"><span class="shic">'+({good:'✓',caution:'!',warn:'!'}[g.lvl])+'</span><div><div class="shtitle">'+esc(g.pill)+'</div><p>'+esc(g.text)+'</p>'+(g.note?'<small class="shnote">'+esc(g.note)+'</small>':'')+'</div></div></div>':'')+
+    (L.html?'<div class="resultbody lendbody">'+L.html+'</div>':'')}
+const sigBox=g=>'';const sigBoxOld=g=>g?'<div class="sigbox sig-'+g.lvl+'"><strong>'+esc(g.title)+'</strong><p>'+esc(g.text)+'</p></div>':'';
 const CATSEC={reserves:'bud',special_assessment:'bud',operating:'fin',delinquency:'fin',capital_project:'fin',coop_financing:'fin',insurance:'ins',critical_repairs:'rep',litigation:'lit',single_entity:'proj',commercial:'proj',occupancy:'proj',hotel:'proj',house_rules:'proj',minutes_other:'min'};
 const SECS=[['proj','Questionnaire','the lender condo or co-op questionnaire'],['fin','Financials','the latest audited financial statements'],['bud','Budget','the current operating budget'],['ins','Insurance','the insurance certificate (master policy, liability, fidelity/crime and flood)'],['rep','Violations','engineering or inspection reports and any repair plan'],['lit','Litigation','the questionnaire’s litigation answer or an attorney’s litigation letter'],['min','Board minutes','the last 12 to 24 months of board minutes'],['oth','Other','']];
 function pubSec(t){return /litigation|lawsuit/i.test(t)?'lit':/vacate|facade|violation|unsafe|milestone|inspection/i.test(t)?'rep':/reserve|assessment|budget/i.test(t)?'bud':/tax lien/i.test(t)?'fin':/financing activity|FHA/i.test(t)?'lend':'oth'}
@@ -1184,7 +1196,7 @@ function assessHtml(b,dob,loading,shared){const id=mineId(b),as=MINE[id]&&MINE[i
     '<div class="nextstep"><strong>Recommended next step</strong>'+esc(next)+'</div>'+
     '<div class="afoot">Findings reflect documents and records as of the dates shown; conditions may have changed since. Get the most current documents before relying on them. Findings are informational and do not constitute project approval, loan eligibility, or a lending commitment. A negative preliminary assessment isn’t proof that no mortgage is available: portfolio, non-agency and exception lenders may still finance buildings that miss standard agency requirements.</div></div>'}
 function deckHtml(b,id,F,loading){const L=LENDSEC[id],open=DECK[id]||null;
-  const secs=(L?[['lend',L.label,'']]:[]).concat(SECS).map(([k,name,hint])=>({k,name,hint,items:F.filter(f=>((f.sec==='lend'&&!L)?'oth':(f.sec||'oth'))===k)})).filter(x=>x.k!=='oth'||x.items.length);
+  const secs=SECS.map(([k,name,hint])=>({k,name,hint,items:F.filter(f=>((f.sec==='lend')?'oth':(f.sec||'oth'))===k)})).filter(x=>x.k!=='oth'||x.items.length);
   const tile=x=>{let [c,t]=x.k==='lend'?[L.sig?{good:'green',caution:'amber',warn:'red'}[L.sig.lvl]:'blue',L.sig?L.sig.pill:L.sum]:secSum(x.items);if(x.k==='lend'&&x.items.length)x.items=x.items;if(loading&&x.k==='rep'&&!x.items.length){c='grey';t='Checking city records…'}
     return '<button class="sec s-'+c+'" data-sec="'+x.k+'"><span class="shead"><span class="sdot"></span>'+esc(x.name)+'</span><small>'+esc(t)+'</small><span class="sgo">View →</span></button>'};
   const panel=x=>'<div class="secpanel'+(open===x.k?'':' hide')+'" data-panel="'+x.k+'"><button class="secback" data-secback>← Back</button><h4>'+esc(x.name)+'</h4>'+
@@ -1379,15 +1391,15 @@ function showCityBuilding(r){
   selected=b;awaiting='buyer';
   const loc=esc(hoodOf(r))+' · '+BOROS[r[1]]+' · '+TYPES[r[3]];
   add('<p>Here’s <strong>'+esc(r[0])+'</strong> from city records. <strong>No mortgages were recorded here in the last 24 months</strong>, so have a lender review the building before going to contract.</p>'+
-    '<div class="result"><div class="resultheader"><div><h3>'+esc(r[0])+'</h3><p>'+loc+'</p></div><div class="pillstack">'+sigPill(b.sig=finSignal([],0,{window:'in the last 24 months'}))+fhaSlot(b)+dobSlot(b)+'</div></div>'+(LENDSEC[mineId(b)]={label:'Lenders',sig:b.sig,sum:'None in 24 months',html:sigBox(b.sig)},'')+
+    '<div class="result"><div class="resultheader"><div><h3>'+esc(r[0])+'</h3><p>'+loc+'</p></div><div class="pillstack">'+sigPill(b.sig=finSignal([],0,{window:'in the last 24 months'}))+fhaSlot(b)+dobSlot(b)+'</div></div>'+lendInline(LENDSEC[mineId(b)]={label:'Lenders',sig:b.sig,sum:'None in 24 months',html:''})+
     '<div class="stats"><div><small>Year built</small><strong class="num">'+(r[7]||'—')+'</strong></div><div><small>Floors</small><strong class="num">'+(r[5]||'—')+'</strong></div><div><small>Units</small><strong class="num">'+r[6]+'</strong></div></div>'+
-    '<div class="resultfooter">From public records, as filed. Not a project approval, loan decision or legal advice. Confirm with your lender and attorney.</div><button class="reviewbtn" data-review>Request a building review</button></div>'+assessSlot(b)+
-    '<div class="choices">'+saveBtn(b)+choices(['Next steps','Check another building']).replace(/^<div class="choices">|<\/div>$/g,'')+'</div>');
+    '<div class="resultfooter">From public records, as filed. Not a project approval, loan decision or legal advice. Confirm with your lender and attorney.</div><button class="reviewbtn" data-assessup>Request an AI review</button></div>'+assessSlot(b)+
+    '<div class="choices">'+saveBtn(b)+choices(['Request a building review','Next steps','Check another building']).replace(/^<div class="choices">|<\/div>$/g,'')+'</div>');
   $('brief').innerHTML='<div class="buildingicon">▤</div><h2>'+esc(r[0])+'</h2><p class="location">'+loc+'</p><span class="pill grey">City records</span>'+saveBtn(b)+'<div class="panelsection" id="dobbrief">'+DOB_LOADING+'</div>'+
     '<div class="panelsection"><h3>Building facts</h3>'+cityFacts(r)+'</div>'+
     '<div class="panelsection"><h3>Financing activity</h3><p class="emptyhint" style="margin:0">No records found in our current dataset.</p></div>'+
     '<div class="panelsection"><h3>Building rules</h3>'+['Sublet policy','Pet policy','Flip tax','Financing limit'].map(x=>'<div class="rulesrow"><span>'+x+'</span><em>Not collected yet</em></div>').join('')+'</div>'+amenityRows+
-    '<div class="panelsection"><h3>Project approval</h3>'+fnmaHint(b)+'<div class="statusbox"><strong>Not yet verified</strong>Confirm current eligibility with the lender and request the building package.</div><button class="reviewbtn" data-review>Request a building review</button></div>'+
+    '<div class="panelsection"><h3>Project approval</h3>'+fnmaHint(b)+'<div class="statusbox"><strong>Not yet verified</strong>Confirm current eligibility with the lender and request the building package.</div><button class="reviewbtn" data-assessup>Request an AI review</button></div>'+
     '<div class="panelsection"><h3>Source & city records</h3><small>Source: NYC MapPLUTO 26v1. Neighborhood by ZIP (approximate).</small>'+cityLinks+'</div>';
   setTimeout(()=>briefDOB(b),0);
 }
