@@ -1,0 +1,32 @@
+qualified sales in file: 41058 range 2025-01 to 2026-06
+buildings: 50 lookups queued: 250 budget: 250
+status Success No Records Found
+status Success No Records Found
+status Success No Records Found
+status Success No Records Found
+status Success No Records Found
+status Success No Records Found
+status Success No Records Found
+status Success No Records Found
+status Success No Records Found
+status Success No Records Found
+status Success No Records Found
+status Success No Records Found
+300 Biscayne Boulevard Way   2025-06 cash []
+300 Biscayne Boulevard Way   2025-06 cash []
+300 Biscayne Boulevard Way   2025-05 financed ['NEWREZ LLC']
+1200 Brickell Bay Dr         2025-03 financed ['HSBC BANKS USA NA']
+1200 Brickell Bay Dr         2025-02 cash []
+1200 Brickell Bay Dr         2025-02 financed ['LENDSURE MORTGAGE CORP']
+1200 Brickell Bay Dr         2025-02 cash []
+1200 Brickell Bay Dr         2025-01 financed ['NQM FUNDING LLC']
+status Success No Records Found
+status Success No Records Found
+398 Ne 5 St                  2025-01 financed ['HELM BANK USA']
+398 Ne 5 St                  2025-01 cash []
+398 Ne 5 St                  2025-01 cash []
+status Failed Reached Requests Limit
+stopping for today
+lookups: 11 balance now: 201 sales recorded: 201
+lenders attached: 387 buildings
+exit 0
