@@ -1,0 +1,6 @@
+qualified sales in file: 41058 range 2025-01 to 2026-06
+buildings: 50 lookups queued: 237 budget: 250
+stopping: budget/balance
+lookups: 0 balance now: None sales recorded: 249
+lenders attached: 429 buildings
+exit 0
